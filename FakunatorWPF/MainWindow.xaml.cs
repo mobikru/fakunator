@@ -2,10 +2,13 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Fakunator.Core;
+using Fakunator.Core.Updater;
 using Fakunator.ViewModels;
 using Fakunator.Views;
 using Microsoft.Win32;
@@ -29,6 +32,11 @@ public partial class MainWindow : Window
         // Версию в шапке подтягиваем из assembly — синхрон с csproj.
         var v = typeof(MainWindow).Assembly.GetName().Version;
         if (v != null) TxtVersion.Text = $"{v.Major}.{v.Minor}.{v.Build}";
+
+        // In-app updater — подписываемся ДО Start(), чтобы не пропустить первый чек.
+        UpdateService.Instance.UpdateAvailable += OnUpdateAvailable;
+        UpdateService.Instance.Start();
+
 
         _cleanupVm = new CleanupViewModel();
         ContentArea.DataContext = _cleanupVm;
@@ -237,5 +245,71 @@ public partial class MainWindow : Window
                 App.SwitchTheme(cfg.Theme);
         }
         catch { }
+    }
+
+    // ── Update notifications (in-app updater) ─────────────────────
+    private CancellationTokenSource? _updateCts;
+
+    private void OnUpdateAvailable(UpdateInfo info)
+    {
+        // Dispatched в UI поток UpdateService'ом
+        UpdateBadge.Visibility = Visibility.Visible;
+        TxtUpdateBadge.Text = $"доступно {info.RemoteVersion}";
+        TxtBannerTitle.Text = $"Fakunator {info.RemoteVersion}";
+        var notes = string.IsNullOrWhiteSpace(info.Manifest.Notes)
+            ? "Готово новое обновление."
+            : info.Manifest.Notes;
+        TxtBannerBody.Text = $"{notes}\n\nСкачает {info.DownloadSizeText}, перезапустит приложение.";
+        UpdateBanner.Visibility = Visibility.Visible;
+    }
+
+    private void OnUpdateBadgeClick(object sender, MouseButtonEventArgs e)
+    {
+        // Клик по badge — снова показывает баннер
+        if (UpdateService.Instance.Pending != null && UpdateBanner.Visibility != Visibility.Visible)
+            UpdateBanner.Visibility = Visibility.Visible;
+    }
+
+    private void OnUpdateBannerClose(object sender, RoutedEventArgs e)
+    {
+        UpdateBanner.Visibility = Visibility.Collapsed;
+        // Badge остаётся — юзер сможет вернуться к обновлению кликом по нему
+    }
+
+    private async void OnUpdateBannerApply(object sender, RoutedEventArgs e)
+    {
+        var pending = UpdateService.Instance.Pending;
+        if (pending == null) return;
+
+        BtnBannerUpdate.IsEnabled = false;
+        BtnBannerLater.IsEnabled = false;
+        UpdateProgressPanel.Visibility = Visibility.Visible;
+        _updateCts = new CancellationTokenSource();
+
+        var progress = new Progress<(double pct, string status)>(p =>
+        {
+            UpdateProgress.Value = p.pct;
+            TxtUpdateStatus.Text = $"{p.status}   {p.pct:0}%";
+        });
+
+        try
+        {
+            await UpdateService.Instance.ApplyAsync(progress, _updateCts.Token);
+            // Успех — обновляющий PowerShell-скрипт уже запущен и ждёт нашего выхода.
+            // Закрываем приложение → PS сделает copy-over и перезапустит.
+            Application.Current.Shutdown();
+        }
+        catch (OperationCanceledException)
+        {
+            TxtUpdateStatus.Text = "Отменено";
+            BtnBannerUpdate.IsEnabled = true;
+            BtnBannerLater.IsEnabled = true;
+        }
+        catch (Exception ex)
+        {
+            TxtUpdateStatus.Text = "Ошибка: " + ex.Message;
+            BtnBannerUpdate.IsEnabled = true;
+            BtnBannerLater.IsEnabled = true;
+        }
     }
 }

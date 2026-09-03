@@ -8,11 +8,12 @@
     <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
     <AssemblyName>Fakunator</AssemblyName>
     <RootNamespace>Fakunator</RootNamespace>
-    <Version>2.5.0</Version>
-    <PublishSingleFile>true</PublishSingleFile>
-    <SelfContained>true</SelfContained>
-    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <Version>2.5.2</Version>
+    <!-- По умолчанию: framework-dependent multi-file publish
+         (для split-release: code.zip + deps.zip раздельно).
+         Single-file self-contained можно получить через CLI:
+         dotnet publish -p:SelfContained=true -p:PublishSingleFile=true
+    -->
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>

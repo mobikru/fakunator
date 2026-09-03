@@ -59,23 +59,21 @@ public partial class MainWindow : Window
             var json = await _http.GetStringAsync(ManifestUrl);
             _manifest = JsonSerializer.Deserialize<ReleaseManifest>(json, new JsonSerializerOptions
             {
+                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
                 PropertyNameCaseInsensitive = true,
             });
-            if (_manifest == null || string.IsNullOrWhiteSpace(_manifest.ExeUrl))
+            if (_manifest == null || string.IsNullOrWhiteSpace(_manifest.CodeUrl))
                 throw new InvalidOperationException("Пустой манифест");
 
-            var sizeMb = (_manifest.ExeSize + _manifest.DataSize) / (1024.0 * 1024.0);
-            TxtVersionLine.Text = $"Готов установить  ·  Fakunator {_manifest.Version}";
-            TxtDescription.Text = string.IsNullOrWhiteSpace(_manifest.Notes)
-                ? $"Установщик скачает и настроит последнюю версию (~{sizeMb:0.#} MB)."
-                : _manifest.Notes;
+            var totalBytes = _manifest.CodeSize + _manifest.DepsSize + _manifest.DataSeedSize;
+            var sizeMb = totalBytes / (1024.0 * 1024.0);
+            TxtVersionLine.Text = $"Fakunator {_manifest.Version}  ·  {sizeMb:0.#} MB";
             TxtFooter.Text = $"v{_manifest.Version}  ·  GitHub Releases";
             BtnPrimary.IsEnabled = true;
         }
         catch (Exception ex)
         {
-            TxtVersionLine.Text = "Не удалось проверить обновления";
-            TxtDescription.Text = $"Проверь интернет-соединение и повтори. Ошибка: {ex.Message}";
+            TxtVersionLine.Text = "Нет связи с GitHub — попробуй Повторить";
             BtnPrimary.Content = "Повторить";
             BtnPrimary.IsEnabled = true;
         }
@@ -127,37 +125,64 @@ public partial class MainWindow : Window
         }
     }
 
-    // ── Основной сценарий инсталла ───────────────────────────────
+    // ── Основной сценарий инсталла (split-release: code + deps + data-seed) ─
+    // ВАЖНО: user-data (config.json, data/domains.db*, output/) НЕ ТРОГАЕМ.
+    // data-seed.zip качается только если папка data/ пустая или её нет — иначе
+    // это уже пере-установка поверх и локальные blocklists/email_providers.json
+    // могли быть отредактированы юзером или обновлены BlocklistUpdater'ом.
     private async Task DoInstallAsync(string targetDir, CancellationToken ct)
     {
         Directory.CreateDirectory(targetDir);
         var tmpDir = Path.Combine(Path.GetTempPath(), "FakunatorSetup_" + Guid.NewGuid().ToString("N")[..8]);
         Directory.CreateDirectory(tmpDir);
 
-        // 1. Fakunator.exe
-        var exeTmp = Path.Combine(tmpDir, "Fakunator.exe");
-        SetStatus("Скачивание Fakunator.exe…");
-        await DownloadWithProgressAsync(_manifest!.ExeUrl, exeTmp, _manifest.ExeSize, 0, 70, ct);
+        var dataDir = Path.Combine(targetDir, "data");
+        var isFirstInstall = !Directory.Exists(dataDir) ||
+                             (Directory.Exists(dataDir) && Directory.GetFiles(dataDir).Length == 0);
 
-        // 2. data.zip (blocklists + БД)
-        var dataTmp = Path.Combine(tmpDir, "data.zip");
-        SetStatus("Скачивание data.zip…");
-        await DownloadWithProgressAsync(_manifest.DataUrl, dataTmp, _manifest.DataSize, 70, 95, ct);
+        // 1. code.zip — Fakunator.exe + Fakunator.dll + deps.json + runtimeconfig.json
+        var codeZip = Path.Combine(tmpDir, "code.zip");
+        SetStatus("Скачивание кода приложения…");
+        await DownloadWithProgressAsync(_manifest!.CodeUrl, codeZip, _manifest.CodeSize, 0, 30, ct);
+        await VerifySha256Async(codeZip, _manifest.CodeSha256, ct);
 
-        // 3. Убить работающий Fakunator если запущен
+        // 2. deps.zip — NuGet DLL + native libs (SkiaSharp, OpenTK, Telegram.Bot, ...)
+        var depsZip = Path.Combine(tmpDir, "deps.zip");
+        SetStatus("Скачивание библиотек…");
+        await DownloadWithProgressAsync(_manifest.DepsUrl, depsZip, _manifest.DepsSize, 30, 75, ct);
+        await VerifySha256Async(depsZip, _manifest.DepsSha256, ct);
+
+        // 3. data-seed.zip — blocklists + names.db + email_providers.json (без domains.db)
+        //    Качаем только если это первая установка. При переустановке — сохраняем локальные данные.
+        string? dataSeedZip = null;
+        if (isFirstInstall && !string.IsNullOrWhiteSpace(_manifest.DataSeedUrl))
+        {
+            dataSeedZip = Path.Combine(tmpDir, "data-seed.zip");
+            SetStatus("Скачивание стартовых данных…");
+            await DownloadWithProgressAsync(_manifest.DataSeedUrl, dataSeedZip, _manifest.DataSeedSize, 75, 95, ct);
+        }
+
+        // 4. Убить работающий Fakunator если запущен
         SetStatus("Установка файлов…");
         TryKillRunning();
+        await Task.Delay(500, ct);
 
-        // 4. Копируем exe в targetDir
-        var exeDst = Path.Combine(targetDir, "Fakunator.exe");
-        File.Copy(exeTmp, exeDst, overwrite: true);
+        // 5. Распаковка code.zip и deps.zip в targetDir (поверх существующих файлов — это только код/depsы)
+        ExtractZipOverwrite(codeZip, targetDir);
+        ExtractZipOverwrite(depsZip, targetDir);
 
-        // 5. Распаковка data.zip → targetDir\data
-        var dataDst = Path.Combine(targetDir, "data");
-        if (Directory.Exists(dataDst)) Directory.Delete(dataDst, recursive: true);
-        ZipFile.ExtractToDirectory(dataTmp, targetDir);
+        // 6. data-seed.zip → в targetDir/data (только при первой установке)
+        if (dataSeedZip != null)
+        {
+            Directory.CreateDirectory(dataDir);
+            ExtractZipOverwrite(dataSeedZip, dataDir);
+        }
 
-        // 6. Кладём копию setup рядом — как uninstaller
+        // 7. Маркерный файл deps.version — in-app updater сравнивает со свежим манифестом
+        //    и решает нужно ли качать deps.zip заново.
+        File.WriteAllText(Path.Combine(targetDir, "deps.version"), _manifest.DepsVersion ?? "");
+
+        // 8. Кладём копию setup рядом — как uninstaller
         var selfPath = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName;
         if (!string.IsNullOrEmpty(selfPath) && File.Exists(selfPath))
         {
@@ -168,6 +193,32 @@ public partial class MainWindow : Window
         SetProgress(100, "Завершение…");
         try { Directory.Delete(tmpDir, recursive: true); } catch { }
         await Task.Delay(300, ct);
+    }
+
+    /// <summary>Распаковка zip'а с перезаписью — стандартный ExtractToDirectory кидает
+    /// если файл уже существует. Обходим через ручную распаковку.</summary>
+    private static void ExtractZipOverwrite(string zipPath, string targetDir)
+    {
+        using var archive = ZipFile.OpenRead(zipPath);
+        foreach (var entry in archive.Entries)
+        {
+            if (string.IsNullOrEmpty(entry.Name)) continue; // директория
+            var destPath = Path.GetFullPath(Path.Combine(targetDir, entry.FullName));
+            // Zip Slip защита: destPath должен быть внутри targetDir
+            if (!destPath.StartsWith(Path.GetFullPath(targetDir), StringComparison.OrdinalIgnoreCase)) continue;
+            Directory.CreateDirectory(Path.GetDirectoryName(destPath)!);
+            entry.ExtractToFile(destPath, overwrite: true);
+        }
+    }
+
+    private static async Task VerifySha256Async(string filePath, string expectedHex, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(expectedHex)) return; // манифест не всегда содержит хеш
+        await using var fs = File.OpenRead(filePath);
+        var hash = await System.Security.Cryptography.SHA256.HashDataAsync(fs, ct);
+        var got = Convert.ToHexString(hash).ToLowerInvariant();
+        if (!string.Equals(got, expectedHex.Trim().ToLowerInvariant(), StringComparison.Ordinal))
+            throw new InvalidOperationException($"SHA-256 не совпал для {Path.GetFileName(filePath)}. Файл повреждён при скачивании.");
     }
 
     // ── Скачивание с прогрессом (маппится в диапазон fromPct-toPct) ─
@@ -326,8 +377,7 @@ public partial class MainWindow : Window
     // ── Удаление ─────────────────────────────────────────────────
     private async Task StartUninstallAsync()
     {
-        TxtVersionLine.Text = "Удаление Факунатора…";
-        TxtDescription.Text = "Файлы, ярлыки и запись в «Программах и компонентах» будут удалены.";
+        TxtVersionLine.Text = "Удаление Факунатора";
         BtnPrimary.Content = "Удалить";
         BtnPrimary.IsEnabled = true;
         BtnPrimary.Click -= OnPrimaryClick;
@@ -373,16 +423,21 @@ public partial class MainWindow : Window
         };
     }
 
-    // ── Манифест ─────────────────────────────────────────────────
+    // ── Манифест v2 (split-release: code + deps + data-seed) ──────
+    // Поля из latest.json на GitHub Release, все имена — snake_case,
+    // System.Text.Json c PropertyNameCaseInsensitive маппит их корректно.
     private class ReleaseManifest
     {
-        public string Version { get; set; } = "";
-        public string ExeUrl  { get; set; } = "";
-        public long   ExeSize { get; set; }
-        public string ExeSha256 { get; set; } = "";
-        public string DataUrl { get; set; } = "";
-        public long   DataSize { get; set; }
-        public string DataSha256 { get; set; } = "";
-        public string Notes { get; set; } = "";
+        public string Version       { get; set; } = "";
+        public string CodeUrl       { get; set; } = "";
+        public long   CodeSize      { get; set; }
+        public string CodeSha256    { get; set; } = "";
+        public string DepsUrl       { get; set; } = "";
+        public long   DepsSize      { get; set; }
+        public string DepsSha256    { get; set; } = "";
+        public string DepsVersion   { get; set; } = "";
+        public string DataSeedUrl   { get; set; } = "";
+        public long   DataSeedSize  { get; set; }
+        public string Notes         { get; set; } = "";
     }
 }

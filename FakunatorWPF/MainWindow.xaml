@@ -43,7 +43,21 @@
                            FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
                 <TextBlock x:Name="TxtVersion" DockPanel.Dock="Left" Text="2.5.0" FontSize="11"
                            Foreground="{DynamicResource Fg4Brush}"
-                           VerticalAlignment="Center" Margin="0,0,16,0"/>
+                           VerticalAlignment="Center" Margin="0,0,10,0"/>
+
+                <!-- Update badge — виден только когда UpdateService нашёл новую версию -->
+                <Border x:Name="UpdateBadge" DockPanel.Dock="Left"
+                        Visibility="Collapsed" VerticalAlignment="Center"
+                        Background="#fef2f2" BorderBrush="#fecaca" BorderThickness="1"
+                        CornerRadius="10" Padding="8,3" Margin="0,0,10,0"
+                        Cursor="Hand" MouseLeftButtonDown="OnUpdateBadgeClick"
+                        ToolTip="Доступна новая версия — открыть баннер">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="6" Height="6" Fill="#ef4444" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock x:Name="TxtUpdateBadge" Text="доступно 2.6.0" FontSize="10.5"
+                                   FontWeight="SemiBold" Foreground="#b91c1c" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
 
                 <!-- Settings gear (right-docked) -->
                 <Button x:Name="BtnSettings" DockPanel.Dock="Right" Content="⚙"
@@ -175,5 +189,51 @@
                 </Grid>
             </Grid>
         </Grid>
+
+        <!-- ── Update toast (overlay bottom-right, hidden by default) ── -->
+        <Border x:Name="UpdateBanner" Grid.RowSpan="2"
+                Visibility="Collapsed"
+                HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                Margin="0,0,20,20" MaxWidth="360"
+                Background="{DynamicResource Bg1Brush}"
+                BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1"
+                CornerRadius="12" Padding="18,14">
+            <Border.Effect>
+                <DropShadowEffect Color="Black" Opacity="0.22" ShadowDepth="0" BlurRadius="24"/>
+            </Border.Effect>
+            <StackPanel>
+                <DockPanel Margin="0,0,0,8">
+                    <TextBlock DockPanel.Dock="Left" FontSize="15" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Fg1Brush}">
+                        <Run Text="🎉 "/><Run x:Name="TxtBannerTitle" Text="Fakunator 2.6.0"/>
+                    </TextBlock>
+                    <Button DockPanel.Dock="Right" Content="✕" FontSize="11" Cursor="Hand"
+                            Background="Transparent" BorderThickness="0"
+                            Foreground="{DynamicResource Fg4Brush}"
+                            Padding="6,2" Click="OnUpdateBannerClose"/>
+                </DockPanel>
+                <TextBlock x:Name="TxtBannerBody" TextWrapping="Wrap" FontSize="12"
+                           Foreground="{DynamicResource Fg3Brush}" LineHeight="17"
+                           Text="Доступно новое обновление. Скачает 0.9 MB, установит и перезапустится."
+                           Margin="0,0,0,12"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="BtnBannerLater" Content="Позже"
+                            Style="{DynamicResource GhostBtn}" Padding="12,6"
+                            FontSize="11.5" Margin="0,0,8,0" Cursor="Hand"
+                            Click="OnUpdateBannerClose"/>
+                    <Button x:Name="BtnBannerUpdate" Content="Обновить"
+                            Style="{DynamicResource AccentBtn}" Padding="18,6"
+                            FontSize="11.5" FontWeight="SemiBold" Cursor="Hand"
+                            Click="OnUpdateBannerApply"/>
+                </StackPanel>
+                <!-- Прогресс-панель (только при работе) -->
+                <StackPanel x:Name="UpdateProgressPanel" Visibility="Collapsed" Margin="0,10,0,0">
+                    <TextBlock x:Name="TxtUpdateStatus" Text="…" FontSize="10.5"
+                               Foreground="{DynamicResource Fg4Brush}" Margin="0,0,0,4"/>
+                    <ProgressBar x:Name="UpdateProgress" Height="6" Minimum="0" Maximum="100"
+                                 Background="{DynamicResource Bg3Brush}" Foreground="#6366f1" BorderThickness="0"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
     </Grid>
 </Window>
