@@ -3,15 +3,46 @@
 > Windows desktop приложение для маркетингового email-workflow:
 > очистка/валидация баз → SMTP-проверка через прокси → AI-определение пол/страна
 > → сканирование доменов → управление DNS через ISPmanager → полностью автоматическая
-> регистрация и верификация домена в mail.ru Postmaster.
+> регистрация и верификация домена в mail.ru Postmaster → **AMS Enterprise рассылки
+> с preview → PMTA-мониторинг → Telegram-бот с командами и push-нотификациями**.
 >
-> **Версия:** 2.0.0 (WPF · .NET 8 · C#) — single-file self-contained exe.
-> **Автор:** rumobik@gmail.com. Личный инструмент, не для публикации.
-> **Дата ревизии README:** 2026-08-29.
+> **Версия:** 2.5.4 (WPF · .NET 8 · C#) — split-release (framework-dep, установщик
+> с GitHub Releases). Legacy single-file self-contained доступен через CLI-override.
+> **GitHub-репо:** <https://github.com/mobikru/fakunator> (publisher: `FakunatorSetup.exe`).
+> **Автор:** rumobik@gmail.com.
+> **Дата ревизии README:** 2026-09-03.
 
 Этот файл — единая точка правды для новой сессии Claude Code. Держим его в
 актуальном состоянии — если что-то в коде разошлось, фикси README в тот же
 момент.
+
+---
+
+## 0. Что нового с версии 2.0.0 (обзор для быстрого въезда)
+
+**Три новых раздела в приложении:**
+
+| Раздел | Что делает | Ключевые файлы |
+|---|---|---|
+| **AMS Enterprise** | JSON-RPC клиент к AMS API 2.x: список рассылок, старт/стоп/рестарт, live-progress, campaign launcher, email preview с Gmail-shell (WebView2), подсветка макросов `[%%…%%]`, syntax-highlighted HTML view (VS Code palette), режимы Gmail/Raw/Mobile/Code | `Core/AmsApi/`, `ViewModels/AmsViewModel.cs`, `Views/AmsView.xaml`, `Views/MessagePreviewDialog.xaml` |
+| **PMTA v5 monitoring** | POST `format=json` к Web-Monitor: `/status`, `/queues`, `/domains`, `/vmtas`, `/jobs`, `/command`. LiveCharts2 realtime-графики (rate + queue depth), overview всех панелей, per-panel details с топ-очередями, сводкой ошибок, стек чекбоксов управляющих команд (pause/resume/reset counters/set queue --mode=normal/delete --older-than=0s/reload) | `Core/Pmta/`, `ViewModels/PmtaViewModel.cs`, `Views/PmtaView.xaml`, `Views/PmtaCommandDialog.xaml` |
+| **Telegram-бот** | Long-polling (без открытых портов), whitelist chat_id, кнопки/меню, push-нотификации по событиям AMS/Scanner/Analyze/SMTP, preview письма HTML-файлом | `Core/TelegramBot/` (TelegramBotService, CommandDispatcher, NotificationHub, AmsMonitorService) |
+
+**Distribution + auto-update (см. раздел 8 ниже):**
+- `FakunatorSetup.exe` (604 KB) — web-installer, качает split-release с GitHub Releases (`mobikru/fakunator`)
+- Split-release: `code.zip` (0.9 MB, каждое обновление) + `deps.zip` (10 MB, только при bump NuGet) + `data-seed.zip` (6.5 MB, только первая установка) + `latest.json` (600 B, манифест)
+- In-app updater: чек раз в час, красный чип в шапке, всплывающий баннер, SHA-256 верификация, PowerShell-скрипт замены с UAC + автоматический рестарт
+- **Гарантия:** обновление физически не может тронуть `config.json`, `data/domains.db`, `output/` — они не в архивах
+
+**UX-фиксы:**
+- Тема по умолчанию — светлая (`Config.Theme = "light"`)
+- Версия в шапке подтягивается из assembly (`MainWindow.xaml.cs`)
+- В настройках → О программе: сноска про партнёрство + строка «Обновления» с кнопкой `Проверить`/`Обновить сейчас`
+- AMS: заглушка «AMS Enterprise не подключён» вместо выцветшего скелета UI при отсутствии AmsApiHost/AmsApiKey
+- AMS: чип «недавние 20» вместо «пауза» в фильтре списка рассылок
+- Автодетект CP1251/UTF-8 в base64-контенте AMS
+
+---
 
 ---
 
@@ -69,10 +100,33 @@ SparklineChart, ToggleSwitch) подписаны на `App.ThemeChanged` — в�
 
 ### Deploy-модель
 
-**Single-file self-contained exe** (~73 MB): `dotnet publish -c Release -r win-x64
---self-contained true -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true`.
-Все зависимости внутри, .NET 8 runtime не нужен на машине. `config.json` и папка
-`data/` — рядом с exe.
+Начиная с 2.5.x основной канал распространения — **web-installer + split-release на
+GitHub Releases**. Подробно расписано в **разделе 8 — Distribution & Auto-Update**.
+Кратко:
+
+- **Web-installer `FakunatorSetup.exe`** (604 KB, framework-dep single-file) — юзер качает
+  один раз навсегда, при запуске стягивает свежий split-release с
+  <https://github.com/mobikru/fakunator/releases/latest/download/…>
+- **Split-release** — 3 архива в каждом Release:
+  - `code.zip` (0.9 MB) — Fakunator.exe + Fakunator.dll + `.deps.json` + `.runtimeconfig.json`
+  - `deps.zip` (10 MB) — NuGet-DLL и native-либы (SkiaSharp, OpenTK, HarfBuzz, e_sqlite3, Telegram.Bot, WebView2)
+  - `data-seed.zip` (6.5 MB) — стартовые blocklists + names.db + email_providers.json
+  - `latest.json` (~600 B) — манифест (URL, размеры, SHA-256, `deps_version`, notes)
+- **In-app auto-updater** — чек раз в час, качает только `code.zip` если `deps_version`
+  не изменился → типовое обновление **0.9 MB** вместо 30 MB монолита.
+- **Требует .NET 8 Desktop Runtime** на машине юзера (framework-dep). Windows 8+
+  сами предлагают установить его при первом запуске exe без runtime.
+
+Legacy single-file self-contained (~73 MB, не требует runtime) по-прежнему собирается
+через CLI-override:
+```
+dotnet publish -c Release -r win-x64 \
+  -p:SelfContained=true -p:PublishSingleFile=true \
+  -p:IncludeNativeLibrariesForSelfExtract=true \
+  -p:EnableCompressionInSingleFile=true
+```
+Используется только когда нужен полностью автономный exe (например, для запуска на
+машине без интернета/.NET).
 
 ---
 
@@ -718,5 +772,175 @@ $env:MR_LOGIN = "batalyora02@mail.ru"; $env:MR_PASS = "Win113322@"
 5. **Первое что открой** после Read этого файла: `Core/Config.cs`, `Views/MailRuVerifyDialog.cs`, `Core/Postmaster/MailRuWebSession.cs` — там сконцентрирована самая свежая логика.
 6. **Не начинай инициативно рефакторить или чинить warnings** — юзер даст задачу, тогда действуй.
 
-Всё. README актуален на **2026-08-29**. Если что-то поменялось — фикси в тот же
+---
+
+## 8. Distribution & Auto-Update (v2.5.x)
+
+### 8.1. Общая картинка
+
+Три звена работают вместе:
+
+```
+┌─ 1. Web-installer ──────┐   ┌─ 2. GitHub Releases ─────┐   ┌─ 3. In-app updater ──┐
+│  FakunatorSetup.exe     │──►│  mobikru/fakunator       │◄──│  UpdateService в     │
+│  604 KB, раздаётся      │   │  latest.json (600 B)     │   │  установленном       │
+│  юзерам НАВСЕГДА         │   │  code.zip (0.9 MB)       │   │  Fakunator.exe       │
+│  (не меняется между     │   │  deps.zip (10 MB)        │   │  чек раз в час       │
+│  релизами)              │   │  data-seed.zip (6.5 MB)  │   │                      │
+└─────────────────────────┘   └──────────────────────────┘   └──────────────────────┘
+        │                              ▲                              │
+        │ первая установка              │ выкатка релиза               │
+        │ (качает всё три)              │ (gh release create)          │
+        ▼                              │                              │
+┌────────────────────────────────────────────────────────────────────────────────────┐
+│  User's machine: C:\Users\<user>\Desktop\Fakunator\  (или Program Files)         │
+│  Fakunator.exe + Fakunator.dll + 26 DLL + data/ + config.json + deps.version    │
+└────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 8.2. Web-installer (`FakunatorSetup/`)
+
+Отдельный WPF-проект. Собирается как **framework-dependent single-file** (604 KB).
+Один exe, никаких DLL рядом. Требует .NET 8 Desktop Runtime.
+
+**Что делает:**
+1. Показывает окно с анимированным aurora-баннером (плавающие цветные орбы с BlurEffect + Storyboard-анимация, логотип с ScaleTransform-пульсацией)
+2. Стучится на `https://github.com/mobikru/fakunator/releases/latest/download/latest.json`
+3. Показывает чип с версией и общим размером, поле «Папка установки» (defaultку в `Program Files\Fakunator`, кнопка `Обзор`), чекбоксы «Ярлык на рабочем столе» / «В меню Пуск»
+4. По кнопке `Установить`:
+   - Качает `code.zip` (0-30% прогресса) + `deps.zip` (30-75%) + `data-seed.zip` (75-95%) — с прогресс-баром
+   - Каждый архив верифицируется по SHA-256 из манифеста
+   - `TryKillRunning()` — если Fakunator уже запущен, гасит его
+   - Распаковывает code + deps в install-папку (overwrite)
+   - Если папка `data/` пустая — распаковывает data-seed.zip туда. Иначе пропускает (защита `domains.db` при переустановке)
+   - Пишет маркер `deps.version` в install-папку (первые 12 hex SHA-256 от deps.zip)
+   - Копирует себя как `unins.exe` для последующего удаления
+   - Регистрирует в HKLM\...\Uninstall\Fakunator (Display-name, версия, InstallLocation, UninstallString, DisplayIcon)
+5. Финальный экран «Установлено» с кнопкой `Запустить`
+
+**Uninstall:** запуск с флагом `--uninstall` (Windows зовёт `unins.exe --uninstall` из UninstallString). Удаляет ярлыки, registry-key, всю install-папку через detached `cmd.bat`.
+
+**Ключевые файлы:**
+- `FakunatorSetup/FakunatorSetup.csproj`
+- `FakunatorSetup/app.manifest` — `requireAdministrator` (нужен для Program Files)
+- `FakunatorSetup/MainWindow.xaml` — aurora-баннер, состояния Ready/Installing/Done/Error
+- `FakunatorSetup/MainWindow.xaml.cs` — `DoInstallAsync`, `ExtractZipOverwrite` (Zip Slip защита), `VerifySha256Async`, `RegisterInAddRemovePrograms`, `CreateShortcut` (COM WScript.Shell)
+- `FakunatorSetup/latest.json.example` — образец манифеста
+- `FakunatorSetup/RELEASE_HOWTO.md` — инструкция по выпуску
+
+**Пересборка installer'а** (нужна только если менялся код FakunatorSetup):
+```
+dotnet publish FakunatorSetup/FakunatorSetup.csproj -c Release -r win-x64 \
+  -p:SelfContained=false -p:PublishSingleFile=true \
+  -p:IncludeNativeLibrariesForSelfExtract=true
+```
+Куда положить: любой хостинг (сайт, GitHub, TG-канал) — юзеры качают один раз, потом
+установщик сам ходит за свежими бинарями.
+
+### 8.3. Split-release на GitHub
+
+**Скрипт паковки:** `scripts/pack-release.ps1` — читает `<Version>` из csproj,
+делает `dotnet publish` (framework-dep multi-file), режет выхлоп на `code/` и `deps/`,
+пакует zip'ы, считает SHA-256, генерирует `latest.json`. Всё в `%TEMP%\fakunator_release_<version>\`.
+
+**Что делит:**
+- `code.zip` — `Fakunator.exe` + `Fakunator.dll` + `Fakunator.deps.json` + `Fakunator.runtimeconfig.json` (4 файла, ~0.9 MB после сжатия)
+- `deps.zip` — **всё остальное** из publish-выхлопа (26 DLL: SkiaSharp/Skia/OpenTK/HarfBuzz/Telegram.Bot/LiveCharts/WebView2/DnsClient/Sqlite и т.д., ~10 MB после сжатия)
+- `data-seed.zip` — содержимое `data/` из старого `Fakunator_v2.0.0_Lite/data/`, **кроме `domains.db*`** (те принадлежат юзеру)
+- `latest.json` — snake_case поля: `version`, `code_url`, `code_size`, `code_sha256`, `deps_url`, `deps_size`, `deps_sha256`, `deps_version` (первые 12 hex SHA-256 от deps.zip), `data_seed_url`, `data_seed_size`, `notes`
+
+**Как выкатить новую версию:**
+```powershell
+# 1. Bump версии в csproj:
+#    отредактировать FakunatorWPF/FakunatorWPF.csproj → <Version>2.5.5</Version>
+
+# 2. Собрать артефакты:
+& "c:\Users\Александр\Desktop\Clear Base\scripts\pack-release.ps1"
+
+# 3. Опционально — поправить notes в latest.json (было пусто из скрипта)
+$rel = "$env:TEMP\fakunator_release_2.5.5"
+$m = Get-Content (Join-Path $rel 'latest.json') -Raw | ConvertFrom-Json
+$m.notes = "Улучшили X, ускорили Y, 3 багфикса."
+$m | ConvertTo-Json -Depth 3 | Set-Content -LiteralPath (Join-Path $rel 'latest.json') -Encoding UTF8
+
+# 4. Залить на GitHub Release:
+& "C:\Program Files\GitHub CLI\gh.exe" release create v2.5.5 `
+  (Join-Path $rel 'code.zip') `
+  (Join-Path $rel 'deps.zip') `
+  (Join-Path $rel 'data-seed.zip') `
+  (Join-Path $rel 'latest.json') `
+  --repo mobikru/fakunator --title "Fakunator 2.5.5" --notes "…"
+
+# 5. Закоммитить bump csproj и запушить в main:
+git commit -am "v2.5.5: краткое описание"; git push
+```
+
+Через ≤1 часа все установленные Факунаторы увидят новую версию.
+
+### 8.4. In-app auto-updater (`Core/Updater/UpdateService.cs`)
+
+Синглтон + `DispatcherTimer` с интервалом **1 час**. Первый чек — через 30 сек после
+старта приложения (не блокирует UI). Слушает `Config` (можно расширить чтобы отключать).
+
+**CheckAsync():**
+1. `HttpClient.GetStringAsync` → `latest.json` (~600 B)
+2. Deserialize через `JsonNamingPolicy.SnakeCaseLower`
+3. Сравнить `manifest.Version` с `Assembly.GetName().Version` (Version.Parse)
+4. Если remote новее:
+   - Прочитать `deps.version` рядом с exe (маркер оставил installer)
+   - `NeedsDeps = local_deps_version != manifest.deps_version`
+   - `DownloadBytes = code_size + (needsDeps ? deps_size : 0)`
+   - Выставить `Pending = new UpdateInfo(...)`
+   - Fire event `UpdateAvailable` (через `Dispatcher.BeginInvoke`)
+5. Иначе — Pending = null, тишина
+
+**UI-сигналы (MainWindow.xaml):**
+- Красный чип `● доступно 2.5.5` в шапке справа от версии (`UpdateBadge`, `TxtUpdateBadge`)
+- Всплывающий тост-баннер снизу справа (`UpdateBanner`, DropShadowEffect, `Grid.RowSpan="2"` overlay), заголовок 🎉 + версия, notes, кнопки `[Позже] [Обновить]`, прогресс-панель (появляется во время скачивания)
+- В **Настройки → О программе → строка «Обновления»**: кнопка `Проверить` превращается в `Обновить сейчас` когда есть Pending, справа зелёным статус
+
+**ApplyAsync (что происходит по нажатию `Обновить`):**
+1. Создаёт `%TEMP%\FakunatorUpdate_<8hex>\stage`
+2. Качает `code.zip` (SHA-256 проверка) → `ExtractZipOverwrite` в staging
+3. Если `NeedsDeps` — качает `deps.zip` (SHA-256) → распаковка туда же
+4. Пишет PowerShell-скрипт `apply-update.ps1`:
+   ```powershell
+   # ждёт закрытия родительского PID (max 15 сек)
+   # Copy-Item stage\* → InstallDir -Recurse -Force
+   # обновляет deps.version маркер
+   # Start-Process Fakunator.exe
+   # Remove-Item tempRoot -Recurse -Force
+   ```
+5. Запускает `powershell.exe -ExecutionPolicy Bypass -File apply-update.ps1` с `Verb=runas` → **UAC-промпт** (нужен для записи в Program Files)
+6. Приложение вызывает `Application.Current.Shutdown()` → PS-скрипт видит exit → делает copy → рестарт
+
+**Гарантия сохранности данных:**
+- `config.json`, `data/`, `output/` **физически не содержатся** в `code.zip` / `deps.zip`
+- Copy-Item копирует только то что есть в архивах → user-data просто не видит их
+- `data-seed.zip` вообще не участвует в апдейте (только в первичной установке через installer, и только если `data/` пустая)
+
+**Тест-хук:** `UpdateService.DebugSimulateUpdate(version, notes, codeBytes)` — искусственно
+выставляет Pending для проверки UI без реального релиза.
+
+### 8.5. Ключевые файлы и артефакты
+
+**Исходники:**
+- `FakunatorWPF/Core/Updater/UpdateService.cs` — сервис + `ReleaseManifest`/`UpdateInfo` модели
+- `FakunatorWPF/MainWindow.xaml` + `.cs` — badge + banner + обработчики
+- `FakunatorWPF/Views/SettingsDialog.cs` — метод `AddUpdateRow`, строка «Обновления»
+- `FakunatorSetup/` — весь проект installer'а
+- `scripts/pack-release.ps1` — packing pipeline
+
+**Собранные артефакты (не в git, генерируются):**
+- `Clear Base\FakunatorSetup.exe` — публичный installer (**раздавать этот**)
+- `%TEMP%\fakunator_release_<version>\` — 4 файла для gh release create
+- `C:\Users\Александр\Desktop\Fakunator\` — установленная копия (у этого юзера)
+
+**Legacy артефакты (для offline-раздачи, если понадобится):**
+- `Fakunator_v2.0.0_SelfContained/` — self-contained (~80 MB) с реальным конфигом юзера
+- `Fakunator_v2.5.0_Lite/`, `.zip` — framework-dep single-file архив для оффлайн передачи
+
+---
+
+Всё. README актуален на **2026-09-03**. Если что-то поменялось — фикси в тот же
 момент, не проходи мимо.
