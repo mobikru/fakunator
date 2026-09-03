@@ -1,0 +1,216 @@
+<UserControl x:Class="Fakunator.Views.SidebarSmtpView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+        <!-- Setting-row template: icon + label + input + hint -->
+        <Style x:Key="SettingTextBox" TargetType="TextBox">
+            <Setter Property="Width" Value="56"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource Fg1Brush}"/>
+            <Setter Property="Background" Value="{DynamicResource Bg2Brush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Border2Brush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource Border3Brush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="14,16">
+
+            <!-- ── Header card ─────────────────────────────────── -->
+            <Border Background="{DynamicResource AccentSoftBrush}" CornerRadius="10"
+                    Padding="14,12" Margin="0,0,0,14">
+                <StackPanel>
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Left" Text="✉" FontSize="20"
+                                   Foreground="{DynamicResource Accent2Brush}"
+                                   VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="SMTP-проверка" FontSize="13" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Fg1Brush}"/>
+                            <TextBlock Text="Параметры валидации"
+                                       FontSize="10.5"
+                                       Foreground="{DynamicResource Fg3Brush}"
+                                       Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </DockPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ── Section: SMTP-сессии ────────────────────────── -->
+            <TextBlock Text="SMTP-СЕССИИ" FontSize="9.5" FontWeight="SemiBold"
+                       Foreground="{DynamicResource Fg3Brush}"
+                       Margin="2,0,0,8"/>
+
+            <Border Style="{StaticResource Card}" Margin="0,0,0,14" Padding="14,12">
+                <StackPanel>
+                    <!-- Размер батча -->
+                    <DockPanel Margin="0,0,0,10">
+                        <TextBox DockPanel.Dock="Right" x:Name="TxtBatchSize"
+                                 Style="{StaticResource SettingTextBox}"
+                                 Text="{Binding BatchSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 PreviewTextInput="OnNumericInput"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="📦  Размер батча" FontSize="12.5" FontWeight="Medium"
+                                       Foreground="{DynamicResource Fg1Brush}"/>
+                            <TextBlock Text="RCPT TO за одну сессию" FontSize="10"
+                                       Foreground="{DynamicResource Fg4Brush}"
+                                       Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </DockPanel>
+
+                    <Border Height="1" Background="{DynamicResource Border1Brush}" Margin="0,0,0,10"/>
+
+                    <!-- Потоков -->
+                    <DockPanel Margin="0,0,0,10">
+                        <TextBox DockPanel.Dock="Right" x:Name="TxtWorkers"
+                                 Style="{StaticResource SettingTextBox}"
+                                 Text="{Binding WorkersPerProxy, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 PreviewTextInput="OnNumericInput"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="🧵  Потоков на прокси" FontSize="12.5" FontWeight="Medium"
+                                       Foreground="{DynamicResource Fg1Brush}"/>
+                            <TextBlock Text="Параллельных сессий" FontSize="10"
+                                       Foreground="{DynamicResource Fg4Brush}"
+                                       Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </DockPanel>
+
+                    <Border Height="1" Background="{DynamicResource Border1Brush}" Margin="0,0,0,10"/>
+
+                    <!-- Таймаут -->
+                    <DockPanel>
+                        <TextBox DockPanel.Dock="Right" x:Name="TxtTimeout"
+                                 Style="{StaticResource SettingTextBox}"
+                                 Text="{Binding TimeoutSec, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 PreviewTextInput="OnNumericInput"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="⏱  Таймаут, сек" FontSize="12.5" FontWeight="Medium"
+                                       Foreground="{DynamicResource Fg1Brush}"/>
+                            <TextBlock Text="Максимальное ожидание" FontSize="10"
+                                       Foreground="{DynamicResource Fg4Brush}"
+                                       Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </DockPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ── Section: Восстановление прокси ──────────────── -->
+            <TextBlock Text="ОБРАБОТКА ОШИБОК" FontSize="9.5" FontWeight="SemiBold"
+                       Foreground="{DynamicResource Fg3Brush}"
+                       Margin="2,0,0,8"/>
+
+            <Border Style="{StaticResource Card}" Margin="0,0,0,14" Padding="14,12">
+                <StackPanel>
+                    <!-- Отключение прокси -->
+                    <DockPanel Margin="0,0,0,10">
+                        <TextBox DockPanel.Dock="Right" x:Name="TxtMaxErrors"
+                                 Style="{StaticResource SettingTextBox}"
+                                 Text="{Binding MaxConsecErrors, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 PreviewTextInput="OnNumericInput"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="⛔  Порог отключения" FontSize="12.5" FontWeight="Medium"
+                                       Foreground="{DynamicResource Fg1Brush}"/>
+                            <TextBlock Text="Ошибок подряд → ban" FontSize="10"
+                                       Foreground="{DynamicResource Fg4Brush}"
+                                       Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </DockPanel>
+
+                    <Border Height="1" Background="{DynamicResource Border1Brush}" Margin="0,0,0,10"/>
+
+                    <!-- Повторов -->
+                    <DockPanel Margin="0,0,0,10">
+                        <TextBox DockPanel.Dock="Right" x:Name="TxtRetries"
+                                 Style="{StaticResource SettingTextBox}"
+                                 Text="{Binding Retries, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 PreviewTextInput="OnNumericInput"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="🔁  Повторов на ошибку" FontSize="12.5" FontWeight="Medium"
+                                       Foreground="{DynamicResource Fg1Brush}"/>
+                            <TextBlock Text="Retry перед сдачей" FontSize="10"
+                                       Foreground="{DynamicResource Fg4Brush}"
+                                       Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </DockPanel>
+
+                    <Border Height="1" Background="{DynamicResource Border1Brush}" Margin="0,0,0,10"/>
+
+                    <!-- Восстановление -->
+                    <DockPanel>
+                        <TextBox DockPanel.Dock="Right" x:Name="TxtRecovery"
+                                 Style="{StaticResource SettingTextBox}"
+                                 Text="{Binding RecoveryMin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 PreviewTextInput="OnNumericInput"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="🔓  Восстановление, мин" FontSize="12.5" FontWeight="Medium"
+                                       Foreground="{DynamicResource Fg1Brush}"/>
+                            <TextBlock Text="Пауза перед re-enable" FontSize="10"
+                                       Foreground="{DynamicResource Fg4Brush}"
+                                       Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </DockPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ── Section: Тайминги ──────────────────────────── -->
+            <TextBlock Text="ТАЙМИНГИ" FontSize="9.5" FontWeight="SemiBold"
+                       Foreground="{DynamicResource Fg3Brush}"
+                       Margin="2,0,0,8"/>
+
+            <Border Style="{StaticResource Card}" Padding="14,12">
+                <StackPanel>
+                    <!-- Пауза -->
+                    <DockPanel>
+                        <TextBox DockPanel.Dock="Right" x:Name="TxtSessionDelay"
+                                 Style="{StaticResource SettingTextBox}"
+                                 Text="{Binding SessionDelaySec, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 PreviewTextInput="OnNumericInput"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="⏸  Пауза между сессиями, сек" FontSize="12.5" FontWeight="Medium"
+                                       Foreground="{DynamicResource Fg1Brush}"/>
+                            <TextBlock Text="Задержка после батча" FontSize="10"
+                                       Foreground="{DynamicResource Fg4Brush}"
+                                       Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </DockPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ── Info footer ──────────────────────────────────── -->
+            <Border Background="{DynamicResource Bg2Brush}" CornerRadius="8"
+                    Padding="10,8" Margin="0,14,0,0">
+                <TextBlock Text="ℹ Письма не отправляются — только handshake RCPT TO. HELO авто-определяется по rDNS прокси."
+                           FontSize="10" TextWrapping="Wrap"
+                           Foreground="{DynamicResource Fg4Brush}"/>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

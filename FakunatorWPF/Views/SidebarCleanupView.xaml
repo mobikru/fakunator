@@ -1,0 +1,183 @@
+<UserControl x:Class="Fakunator.Views.SidebarCleanupView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:Fakunator.Controls">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="12,14">
+
+            <!-- ══ Section 1: КАТЕГОРИИ ══════════════════════════ -->
+            <TextBlock Text="КАТЕГОРИИ" FontSize="10" FontWeight="SemiBold"
+                       Foreground="{DynamicResource Fg3Brush}" Margin="0,0,0,8">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                        <Setter Property="FontSize" Value="10"/>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <Button x:Name="BtnCategoryDropdown" Style="{StaticResource GhostBtn}"
+                    HorizontalContentAlignment="Center"
+                    HorizontalAlignment="Stretch" Click="OnCategoryDropdownClick">
+                <TextBlock x:Name="TxtCategoryBtn" Text="Все категории · 9 / 9 ▾" FontSize="12.5"/>
+            </Button>
+
+            <!-- Category popup -->
+            <Popup x:Name="CategoryPopup" StaysOpen="False" AllowsTransparency="True"
+                   Placement="Bottom" PlacementTarget="{Binding ElementName=BtnCategoryDropdown}"
+                   PopupAnimation="Fade">
+                <Border Background="{DynamicResource Bg2Brush}"
+                        BorderBrush="{DynamicResource Border2Brush}"
+                        BorderThickness="1" CornerRadius="8" Padding="6,6"
+                        MinWidth="260">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="16" Opacity="0.3" ShadowDepth="4"/>
+                    </Border.Effect>
+                    <StackPanel x:Name="CategoryCheckList"/>
+                </Border>
+            </Popup>
+
+            <!-- ══ Spacer ══════════════════════════════════════════ -->
+            <Border Height="16"/>
+
+            <!-- ══ Section 2: ЧЁРНЫЕ СПИСКИ ══════════════════════ -->
+            <TextBlock Text="ЧЁРНЫЕ СПИСКИ" FontSize="10" FontWeight="SemiBold"
+                       Foreground="{DynamicResource Fg3Brush}" Margin="0,0,0,8">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                        <Setter Property="FontSize" Value="10"/>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <!-- Card 1: Одноразовые сервисы -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,6">
+                <StackPanel>
+                    <DockPanel>
+                        <Ellipse DockPanel.Dock="Left" Width="8" Height="8" Fill="#f97316"
+                                 VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock DockPanel.Dock="Right" Text="197 957"
+                                   Foreground="{DynamicResource Fg3Brush}" FontSize="12"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="Одноразовые сервисы" FontWeight="SemiBold" FontSize="12.5"
+                                   VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <TextBlock Text="Mailinator, 10minutemail и аналоги"
+                               Foreground="{DynamicResource Fg4Brush}" FontSize="11"
+                               Margin="16,4,0,4"/>
+                    <TextBlock Text="Открыть файл →" Foreground="{DynamicResource AccentBrush}"
+                               FontSize="11" Cursor="Hand" Margin="16,0,0,0"
+                               MouseLeftButtonDown="OnOpenBlacklistFile" Tag="disposable"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Card 2: Спам-ловушки -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,6">
+                <StackPanel>
+                    <DockPanel>
+                        <Ellipse DockPanel.Dock="Left" Width="8" Height="8" Fill="#ef4444"
+                                 VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock DockPanel.Dock="Right" Text="59"
+                                   Foreground="{DynamicResource Fg3Brush}" FontSize="12"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="Спам-ловушки" FontWeight="SemiBold" FontSize="12.5"
+                                   VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <TextBlock Text="Honeypot и trap-домены"
+                               Foreground="{DynamicResource Fg4Brush}" FontSize="11"
+                               Margin="16,4,0,4"/>
+                    <TextBlock Text="Открыть файл →" Foreground="{DynamicResource AccentBrush}"
+                               FontSize="11" Cursor="Hand" Margin="16,0,0,0"
+                               MouseLeftButtonDown="OnOpenBlacklistFile" Tag="trap"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Card 3: Ролевые префиксы -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,6">
+                <StackPanel>
+                    <DockPanel>
+                        <Ellipse DockPanel.Dock="Left" Width="8" Height="8" Fill="#a855f7"
+                                 VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock DockPanel.Dock="Right" Text="188"
+                                   Foreground="{DynamicResource Fg3Brush}" FontSize="12"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="Ролевые префиксы" FontWeight="SemiBold" FontSize="12.5"
+                                   VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <TextBlock Text="info, support, admin, sales, ..."
+                               Foreground="{DynamicResource Fg4Brush}" FontSize="11"
+                               Margin="16,4,0,4"/>
+                    <TextBlock Text="Открыть файл →" Foreground="{DynamicResource AccentBrush}"
+                               FontSize="11" Cursor="Hand" Margin="16,0,0,0"
+                               MouseLeftButtonDown="OnOpenBlacklistFile" Tag="role"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Card 4: Whitelist -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,6">
+                <StackPanel>
+                    <DockPanel>
+                        <Ellipse DockPanel.Dock="Left" Width="8" Height="8" Fill="#22c55e"
+                                 VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock DockPanel.Dock="Right" Text="962"
+                                   Foreground="{DynamicResource Fg3Brush}" FontSize="12"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="Whitelist (allow-list)" FontWeight="SemiBold" FontSize="12.5"
+                                   VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <TextBlock Text="Заведомо легитимные провайдеры, override-safeguard"
+                               Foreground="{DynamicResource Fg4Brush}" FontSize="11"
+                               Margin="16,4,0,4" TextWrapping="Wrap"/>
+                    <TextBlock Text="Открыть файл →" Foreground="{DynamicResource AccentBrush}"
+                               FontSize="11" Cursor="Hand" Margin="16,0,0,0"
+                               MouseLeftButtonDown="OnOpenBlacklistFile" Tag="whitelist"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Refresh button -->
+            <Button x:Name="BtnRefreshGitHub" Content="↻ Обновить из GitHub"
+                    Style="{StaticResource GhostBtn}"
+                    HorizontalAlignment="Stretch" Margin="0,4,0,0"
+                    Click="OnRefreshFromGitHub"/>
+
+            <!-- Update progress text -->
+            <TextBlock x:Name="TxtUpdateProgress" Text="" FontSize="11"
+                       Foreground="{DynamicResource Fg3Brush}"
+                       TextWrapping="Wrap" Margin="0,6,0,0"
+                       Visibility="Collapsed"/>
+
+            <!-- ══ Spacer ══════════════════════════════════════════ -->
+            <Border Height="16"/>
+
+            <!-- ══ Section 3: ДОП. ПРОВЕРКИ ══════════════════════ -->
+            <TextBlock Text="ДОП. ПРОВЕРКИ" FontSize="10" FontWeight="SemiBold"
+                       Foreground="{DynamicResource Fg3Brush}" Margin="0,0,0,8">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                        <Setter Property="FontSize" Value="10"/>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <DockPanel Margin="0,0,0,4">
+                <controls:ToggleSwitch x:Name="SpamhausToggle" DockPanel.Dock="Right"
+                                       VerticalAlignment="Center" Margin="8,0,0,0"
+                                       Toggled="OnSpamhausToggled"/>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Spamhaus DBL" FontSize="12.5" FontWeight="SemiBold"/>
+                    <TextBlock Text="DNS blacklist доменов" FontSize="11"
+                               Foreground="{DynamicResource Fg3Brush}"/>
+                </StackPanel>
+            </DockPanel>
+
+            <!-- ══ Spacer ══════════════════════════════════════════ -->
+            <Border Height="16"/>
+
+            <!-- ══ Footer ════════════════════════════════════════ -->
+            <TextBlock Text="ℹ Никаких SMTP/MX-проверок — только локальные правила"
+                       FontSize="10.5" Foreground="{DynamicResource Fg4Brush}"
+                       TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,135 @@
+<UserControl x:Class="Fakunator.Views.SmtpIdleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid Margin="20,14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>     <!-- 2-column area fills available height -->
+            <RowDefinition Height="Auto"/>  <!-- Bottom run row -->
+        </Grid.RowDefinitions>
+
+            <!-- ── 2-column row: Emails | Proxies ──────── -->
+            <Grid Grid.Row="0" Margin="0,0,0,14">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- ════ LEFT: EMAIL-АДРЕСА ════════════════════════ -->
+                <Border Grid.Column="0" Style="{StaticResource Card}">
+                    <DockPanel>
+                        <!-- Header -->
+                        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+                            <TextBlock Text="EMAIL-АДРЕСА" FontSize="10" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Fg3Brush}"
+                                       VerticalAlignment="Center"/>
+                            <TextBlock x:Name="TxtEmailCount" DockPanel.Dock="Right"
+                                       Text="0 строк" FontSize="11"
+                                       Foreground="{DynamicResource Fg4Brush}"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        </DockPanel>
+
+                        <!-- Bottom buttons -->
+                        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,10,0,0">
+                            <Button Content="Загрузить .txt..." Style="{StaticResource GhostBtn}"
+                                    Padding="12,6" Margin="0,0,6,0"
+                                    Click="OnLoadEmailsFile"/>
+                            <Button Content="Из последней чистки" Style="{StaticResource GhostBtn}"
+                                    Padding="12,6"
+                                    Click="OnLoadFromCleanup"/>
+                        </StackPanel>
+
+                        <TextBox x:Name="TxtEmails"
+                                 AcceptsReturn="True" AcceptsTab="False"
+                                 TextWrapping="NoWrap"
+                                 VerticalScrollBarVisibility="Auto"
+                                 HorizontalScrollBarVisibility="Auto"
+                                 FontFamily="{StaticResource MonoFont}"
+                                 FontSize="12"
+                                 Foreground="{DynamicResource Fg1Brush}"
+                                 Background="{DynamicResource Bg2Brush}"
+                                 BorderBrush="{DynamicResource Border1Brush}"
+                                 BorderThickness="1"
+                                 Padding="8,6"
+                                 MinHeight="300"
+                                 TextChanged="OnEmailsTextChanged"/>
+                    </DockPanel>
+                </Border>
+
+                <!-- ════ RIGHT: ПРОКСИ ════════════════════════════ -->
+                <Border Grid.Column="2" Style="{StaticResource Card}">
+                    <DockPanel>
+                        <!-- Header -->
+                        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="ПРОКСИ" FontSize="10" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource Fg3Brush}"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Text=" · HOST:PORT:USER:PASS" FontSize="10"
+                                           Foreground="{DynamicResource Fg4Brush}"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock x:Name="TxtProxyCount" DockPanel.Dock="Right"
+                                       Text="0 прокси" FontSize="11"
+                                       Foreground="{DynamicResource Fg4Brush}"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        </DockPanel>
+
+                        <!-- Bottom buttons -->
+                        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,10,0,0">
+                            <Button Content="▶  Проверить прокси" Style="{StaticResource PrimaryBtn}"
+                                    Padding="12,6" Margin="0,0,6,0"
+                                    x:Name="BtnCheckProxies"
+                                    Click="OnCheckProxies"/>
+                            <Button Content="Загрузить .txt..." Style="{StaticResource GhostBtn}"
+                                    Padding="12,6" Margin="0,0,6,0"
+                                    Click="OnLoadProxiesFile"/>
+                            <TextBlock x:Name="TxtProxyStatus" FontSize="11"
+                                       Foreground="{DynamicResource Fg3Brush}"
+                                       VerticalAlignment="Center" Margin="8,0,0,0"/>
+                        </StackPanel>
+
+                        <TextBox x:Name="TxtProxies"
+                                 AcceptsReturn="True" AcceptsTab="False"
+                                 TextWrapping="NoWrap"
+                                 VerticalScrollBarVisibility="Auto"
+                                 HorizontalScrollBarVisibility="Auto"
+                                 FontFamily="{StaticResource MonoFont}"
+                                 FontSize="12"
+                                 Foreground="{DynamicResource Fg1Brush}"
+                                 Background="{DynamicResource Bg2Brush}"
+                                 BorderBrush="{DynamicResource Border1Brush}"
+                                 BorderThickness="1"
+                                 Padding="8,6"
+                                 MinHeight="300"
+                                 TextChanged="OnProxiesTextChanged"/>
+                    </DockPanel>
+                </Border>
+            </Grid>
+
+            <!-- ── Bottom run row ─────────────────────────────────── -->
+            <DockPanel Grid.Row="1" Margin="0,0,0,0">
+                <!-- Right-aligned info -->
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <TextBlock x:Name="TxtRunInfo" FontSize="12"
+                               Foreground="{DynamicResource Fg4Brush}"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Buttons -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="BtnStart" Content="Запустить проверку"
+                            Style="{StaticResource PrimaryBtn}"
+                            Padding="24,10" FontSize="14"
+                            Click="OnStartClick"/>
+                    <Button Content="Открыть папку результатов"
+                            Style="{StaticResource GhostBtn}"
+                            Padding="12,8" Margin="8,0,0,0"
+                            Click="OnOpenOutputFolder"/>
+                </StackPanel>
+            </DockPanel>
+
+    </Grid>
+</UserControl>

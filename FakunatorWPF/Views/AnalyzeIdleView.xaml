@@ -1,0 +1,86 @@
+<UserControl x:Class="Fakunator.Views.AnalyzeIdleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid Margin="20,14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>   <!-- Main preview area -->
+            <RowDefinition Height="Auto"/> <!-- Bottom start row -->
+        </Grid.RowDefinitions>
+
+            <!-- Email preview (full-width, settings moved to sidebar) -->
+            <Border Grid.Row="0" Style="{StaticResource Card}" Margin="0,0,0,14">
+                <DockPanel>
+                    <!-- Header -->
+                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+                        <TextBlock Text="EMAIL-АДРЕСА ДЛЯ АНАЛИЗА" FontSize="10" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource Fg3Brush}"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock x:Name="TxtEmailCount" DockPanel.Dock="Right"
+                                   Text="0 строк" FontSize="11"
+                                   Foreground="{DynamicResource Fg4Brush}"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                    </DockPanel>
+
+                    <!-- Bottom: file info -->
+                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,10,0,0">
+                        <Button Content="Загрузить .txt / .csv..."
+                                Style="{StaticResource GhostBtn}"
+                                Padding="12,6" Margin="0,0,8,0"
+                                Click="OnLoadFileClick"/>
+                        <TextBlock x:Name="TxtFileInfo" FontSize="11"
+                                   Foreground="{DynamicResource Fg4Brush}"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- DataGrid preview -->
+                    <Border Background="{DynamicResource Bg2Brush}"
+                            BorderBrush="{DynamicResource Border1Brush}"
+                            BorderThickness="1" CornerRadius="8"
+                            ClipToBounds="True" Padding="0" MinHeight="200">
+                        <DataGrid x:Name="PreviewGrid"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="None"
+                                  CanUserResizeRows="False"
+                                  CanUserReorderColumns="False"
+                                  CanUserSortColumns="False"
+                                  SelectionMode="Single"
+                                  SelectionUnit="FullRow"
+                                  BorderThickness="0"
+                                  Background="Transparent"
+                                  RowBackground="Transparent"
+                                  AlternatingRowBackground="{DynamicResource Bg3Brush}"
+                                  Foreground="{DynamicResource Fg1Brush}"
+                                  FontFamily="{StaticResource MonoFont}"
+                                  FontSize="12"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="50"
+                                                    FontSize="11" Foreground="{DynamicResource Fg4Brush}"/>
+                                <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+                </DockPanel>
+            </Border>
+
+            <!-- Bottom: Start button row -->
+            <DockPanel Grid.Row="1" Margin="0,10,0,0">
+                <TextBlock DockPanel.Dock="Right" FontSize="12"
+                           Foreground="{DynamicResource Fg4Brush}"
+                           VerticalAlignment="Center"
+                           Text="в файл analyze_results.csv"/>
+                <StackPanel Orientation="Horizontal">
+                    <Button x:Name="BtnStart"
+                            Content="&#x25B6;  Запустить анализ"
+                            Style="{StaticResource PrimaryBtn}"
+                            Padding="24,10" FontSize="14"
+                            Click="OnStartClick"/>
+                </StackPanel>
+            </DockPanel>
+
+    </Grid>
+</UserControl>

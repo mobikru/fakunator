@@ -1,0 +1,179 @@
+<Window x:Class="Fakunator.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:Fakunator.Views"
+        xmlns:controls="clr-namespace:Fakunator.Controls"
+        xmlns:vm="clr-namespace:Fakunator.ViewModels"
+        xmlns:conv="clr-namespace:Fakunator.Converters"
+        Title="Факунатор" Width="1200" Height="900"
+        MinWidth="1100" MinHeight="820"
+        Background="{DynamicResource WindowBgBrush}"
+        WindowStartupLocation="CenterScreen"
+        Icon="Assets/icon.ico">
+
+    <Window.Resources>
+        <vm:StateToVisibilityConverter x:Key="StateToVis"/>
+        <vm:SmtpStateToVisibilityConverter x:Key="SmtpStateToVis"/>
+        <vm:AnalyzeStateToVisibilityConverter x:Key="AnalyzeStateToVis"/>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48"/>  <!-- Header -->
+            <RowDefinition Height="*"/>   <!-- Body -->
+        </Grid.RowDefinitions>
+
+        <!-- ── Header ──────────────────────────────────────────── -->
+        <Border Grid.Row="0" Background="{DynamicResource HeaderBgBrush}"
+                BorderBrush="{DynamicResource Border1Brush}" BorderThickness="0,0,0,1">
+            <DockPanel Margin="16,0,12,0">
+                <!-- Logo -->
+                <Border DockPanel.Dock="Left" Width="22" Height="22" CornerRadius="5"
+                        Margin="0,0,8,0" VerticalAlignment="Center">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#5e6ad2" Offset="0"/>
+                            <GradientStop Color="#818cf8" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <TextBlock Text="e" Foreground="White" FontWeight="Bold" FontSize="13"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <TextBlock DockPanel.Dock="Left" Text="Факунатор" FontWeight="SemiBold"
+                           FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <TextBlock x:Name="TxtVersion" DockPanel.Dock="Left" Text="2.5.0" FontSize="11"
+                           Foreground="{DynamicResource Fg4Brush}"
+                           VerticalAlignment="Center" Margin="0,0,16,0"/>
+
+                <!-- Settings gear (right-docked) -->
+                <Button x:Name="BtnSettings" DockPanel.Dock="Right" Content="⚙"
+                        Style="{StaticResource IconBtn}"
+                        ToolTip="Настройки" Margin="4,0,0,0"
+                        Click="OnSettingsClick"/>
+
+                <!-- Theme toggle (right-docked) -->
+                <Button x:Name="BtnMoon" DockPanel.Dock="Right" Content="☾"
+                        Style="{StaticResource IconBtn}" Click="OnThemeToggle"
+                        ToolTip="Тёмная тема"/>
+                <Button x:Name="BtnSun" DockPanel.Dock="Right" Content="☀"
+                        Style="{StaticResource IconBtn}" Click="OnThemeToggle"
+                        ToolTip="Светлая тема"/>
+
+                <!-- Spacer before context buttons -->
+                <Border DockPanel.Dock="Right" Width="8"/>
+
+                <!-- Context buttons (will be toggled by state later) -->
+                <Button x:Name="BtnExport" DockPanel.Dock="Right" Content="↓  Экспорт всех"
+                        Style="{StaticResource AccentBtn}" Visibility="Collapsed" Margin="4,0"/>
+                <Button x:Name="BtnNew" DockPanel.Dock="Right" Content="↑  Новый файл"
+                        Style="{StaticResource GhostBtn}" Visibility="Collapsed" Margin="4,0"/>
+
+                <!-- Tab buttons -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,0">
+                    <RadioButton x:Name="TabCleanup" Content="📧  Очистка" IsChecked="True"
+                                 GroupName="Tabs" Style="{DynamicResource TabBtnStyle}"
+                                 Checked="OnTabChanged"/>
+                    <RadioButton x:Name="TabSmtp" Content="✉  SMTP-проверка"
+                                 GroupName="Tabs" Style="{DynamicResource TabBtnStyle}"
+                                 Checked="OnTabChanged"/>
+                    <RadioButton x:Name="TabAnalyze" Content="🔬  Анализ"
+                                 GroupName="Tabs" Style="{DynamicResource TabBtnStyle}"
+                                 Checked="OnTabChanged"/>
+                    <RadioButton x:Name="TabDomains" Content="🌐  Сканер доменов"
+                                 GroupName="Tabs" Style="{DynamicResource TabBtnStyle}"
+                                 Checked="OnTabChanged"/>
+                    <RadioButton x:Name="TabDomainsMgr" Content="🌍  Домены"
+                                 GroupName="Tabs" Style="{DynamicResource TabBtnStyle}"
+                                 Checked="OnTabChanged"/>
+                    <RadioButton x:Name="TabAms" Content="📮  AMS"
+                                 GroupName="Tabs" Style="{DynamicResource TabBtnStyle}"
+                                 Checked="OnTabChanged"/>
+                    <RadioButton x:Name="TabPmta" Content="📡  PMTA"
+                                 GroupName="Tabs" Style="{DynamicResource TabBtnStyle}"
+                                 Checked="OnTabChanged"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- ── Body ────────────────────────────────────────────── -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="SidebarColumn" Width="300"/>  <!-- Sidebar -->
+                <ColumnDefinition Width="*"/>    <!-- Content -->
+            </Grid.ColumnDefinitions>
+
+            <!-- Sidebar (tab-specific; only one visible at a time) -->
+            <Border x:Name="SidebarBorder" Grid.Column="0" Background="{DynamicResource SidebarBgBrush}"
+                    BorderBrush="{DynamicResource Border1Brush}" BorderThickness="0,0,1,0">
+                <Grid>
+                    <views:SidebarCleanupView x:Name="SidebarCleanup"/>
+                    <views:SidebarSmtpView x:Name="SidebarSmtp" Visibility="Collapsed"/>
+                    <views:SidebarAnalyzeView x:Name="SidebarAnalyze" Visibility="Collapsed"/>
+                    <views:SidebarDomainScannerView x:Name="SidebarDomains" Visibility="Collapsed"/>
+                    <views:SidebarDomainsManagerView x:Name="SidebarDomainsMgr" Visibility="Collapsed"/>
+                </Grid>
+            </Border>
+
+            <!-- Main content area — tab-switched panels -->
+            <Grid Grid.Column="1">
+                <!-- Cleanup panel (state-switched views) -->
+                <Grid x:Name="CleanupPanel">
+                    <Grid x:Name="ContentArea">
+                        <views:CleanupIdleView x:Name="IdleView"
+                            Visibility="{Binding State, Converter={StaticResource StateToVis}, ConverterParameter=Idle}"/>
+                        <views:CleanupLoadedView x:Name="LoadedView"
+                            Visibility="{Binding State, Converter={StaticResource StateToVis}, ConverterParameter=Loaded}"/>
+                        <views:CleanupRunningView x:Name="RunningView"
+                            Visibility="{Binding State, Converter={StaticResource StateToVis}, ConverterParameter=Running}"/>
+                        <views:CleanupDoneView x:Name="DoneView"
+                            Visibility="{Binding State, Converter={StaticResource StateToVis}, ConverterParameter=Done}"/>
+                    </Grid>
+                </Grid>
+
+                <!-- SMTP panel (state-switched views) -->
+                <Grid x:Name="SmtpPanel" Visibility="Collapsed">
+                    <Grid x:Name="SmtpContentArea">
+                        <views:SmtpIdleView x:Name="SmtpIdleView"
+                            Visibility="{Binding State, Converter={StaticResource SmtpStateToVis}, ConverterParameter=Idle}"/>
+                        <views:SmtpRunningView x:Name="SmtpRunningView"
+                            Visibility="{Binding State, Converter={StaticResource SmtpStateToVis}, ConverterParameter=Running}"/>
+                        <views:SmtpDoneView x:Name="SmtpDoneView"
+                            Visibility="{Binding State, Converter={StaticResource SmtpStateToVis}, ConverterParameter=Done}"/>
+                    </Grid>
+                </Grid>
+
+                <!-- Analyze panel (state-switched views) -->
+                <Grid x:Name="AnalyzePanel" Visibility="Collapsed">
+                    <Grid x:Name="AnalyzeContentArea">
+                        <views:AnalyzeIdleView x:Name="AnalyzeIdleView"
+                            Visibility="{Binding State, Converter={StaticResource AnalyzeStateToVis}, ConverterParameter=Idle}"/>
+                        <views:AnalyzeRunningView x:Name="AnalyzeRunningView"
+                            Visibility="{Binding State, Converter={StaticResource AnalyzeStateToVis}, ConverterParameter=Running}"/>
+                        <views:AnalyzeDoneView x:Name="AnalyzeDoneView"
+                            Visibility="{Binding State, Converter={StaticResource AnalyzeStateToVis}, ConverterParameter=Done}"/>
+                    </Grid>
+                </Grid>
+
+                <!-- Domain Scanner panel -->
+                <Grid x:Name="DomainsPanel" Visibility="Collapsed">
+                    <views:DomainScannerView x:Name="DomainsView"/>
+                </Grid>
+
+                <!-- Domains Manager panel -->
+                <Grid x:Name="DomainsMgrPanel" Visibility="Collapsed">
+                    <views:DomainsManagerView x:Name="DomainsMgrView"/>
+                </Grid>
+
+                <!-- AMS panel -->
+                <Grid x:Name="AmsPanel" Visibility="Collapsed">
+                    <views:AmsView x:Name="AmsView"/>
+                </Grid>
+
+                <!-- PMTA panel -->
+                <Grid x:Name="PmtaPanel" Visibility="Collapsed">
+                    <views:PmtaView x:Name="PmtaViewCtrl"/>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

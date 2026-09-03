@@ -1,0 +1,299 @@
+<UserControl x:Class="Fakunator.Views.AnalyzeRunningView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                  Background="Transparent">
+    <StackPanel Margin="20,12" x:Name="RootPanel">
+
+        <!-- Progress card -->
+        <Border Style="{StaticResource Card}" Margin="0,0,0,10">
+            <StackPanel>
+                <DockPanel Margin="0,0,0,12">
+                    <!-- Big percentage -->
+                    <TextBlock x:Name="TxtPercent" DockPanel.Dock="Left"
+                               FontSize="28" FontWeight="Bold"
+                               FontFamily="{StaticResource MonoFont}"
+                               Foreground="{DynamicResource Fg1Brush}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,16,0"
+                               Text="0.0%"/>
+
+                    <!-- Phase + processed -->
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock x:Name="TxtPhase" FontSize="13"
+                                   Foreground="{DynamicResource Accent2Brush}"
+                                   FontWeight="SemiBold"
+                                   Text="Фаза: БД"/>
+                        <TextBlock x:Name="TxtProcessed" FontSize="12"
+                                   Foreground="{DynamicResource Fg3Brush}"
+                                   Margin="0,2,0,0"
+                                   Text="0 / 0 обработано"/>
+                    </StackPanel>
+                </DockPanel>
+
+                <!-- Progress bar -->
+                <Border Background="{DynamicResource Bg3Brush}" Height="8" CornerRadius="4"
+                        ClipToBounds="True">
+                    <Border x:Name="ProgressFill" HorizontalAlignment="Left"
+                            Width="0" Height="8" CornerRadius="4">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#5e6ad2" Offset="0"/>
+                                <GradientStop Color="#818cf8" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
+                </Border>
+
+                <!-- Pass2 progress (виден только когда Pass2 активен) -->
+                <StackPanel x:Name="Pass2Panel" Visibility="Collapsed" Margin="0,10,0,0">
+                    <DockPanel Margin="0,0,0,4">
+                        <TextBlock x:Name="TxtPass2Label" DockPanel.Dock="Left"
+                                   FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource Accent2Brush}"
+                                   Text="🔄 Pass 2: перепроверка"/>
+                        <TextBlock x:Name="TxtPass2Count" HorizontalAlignment="Right"
+                                   FontSize="11" FontFamily="{StaticResource MonoFont}"
+                                   Foreground="{DynamicResource Fg3Brush}"
+                                   Text="0 / 0"/>
+                    </DockPanel>
+                    <Border Background="{DynamicResource Bg3Brush}" Height="5" CornerRadius="3"
+                            ClipToBounds="True">
+                        <Border x:Name="Pass2Fill" HorizontalAlignment="Left"
+                                Width="0" Height="5" CornerRadius="3"
+                                Background="#f59e0b"/>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- 7 KPI cards -->
+        <UniformGrid Rows="1" Columns="7" Margin="0,0,0,10">
+            <!-- ОБРАБОТАНО -->
+            <Border Style="{StaticResource Card}" Margin="0,0,6,0">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="ОБРАБОТАНО" FontSize="10" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Fg3Brush}"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="KpiProcessed" Text="0" FontSize="18"
+                               FontWeight="Bold" FontFamily="{StaticResource MonoFont}"
+                               Foreground="{DynamicResource Fg1Brush}"
+                               HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- ЧЕРЕЗ БД -->
+            <Border Style="{StaticResource Card}" Margin="3,0,3,0">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="ЧЕРЕЗ БД" FontSize="10" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Fg3Brush}"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="KpiDb" Text="0" FontSize="18"
+                               FontWeight="Bold" FontFamily="{StaticResource MonoFont}"
+                               Foreground="#22c55e"
+                               HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- ЧЕРЕЗ AI -->
+            <Border Style="{StaticResource Card}" Margin="3,0,3,0">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="ЧЕРЕЗ AI" FontSize="10" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Fg3Brush}"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="KpiAi" Text="0" FontSize="18"
+                               FontWeight="Bold" FontFamily="{StaticResource MonoFont}"
+                               Foreground="#a78bfa"
+                               HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- МУСОР (junk) -->
+            <Border Style="{StaticResource Card}" Margin="3,0,3,0">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="МУСОР" FontSize="10" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Fg3Brush}"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="KpiJunk" Text="0" FontSize="18"
+                               FontWeight="Bold" FontFamily="{StaticResource MonoFont}"
+                               Foreground="#9ca3af"
+                               HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- ОЧЕРЕДЬ AI -->
+            <Border Style="{StaticResource Card}" Margin="3,0,3,0">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="ОЧЕРЕДЬ AI" FontSize="10" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Fg3Brush}"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="KpiAiQueue" Text="0" FontSize="18"
+                               FontWeight="Bold" FontFamily="{StaticResource MonoFont}"
+                               Foreground="#f97316"
+                               HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- СКОРОСТЬ -->
+            <Border Style="{StaticResource Card}" Margin="6,0,0,0">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="СКОРОСТЬ" FontSize="10" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Fg3Brush}"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="KpiSpeed" Text="0/с" FontSize="18"
+                               FontWeight="Bold" FontFamily="{StaticResource MonoFont}"
+                               Foreground="{DynamicResource Fg1Brush}"
+                               HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <!-- Token usage card -->
+        <Border Style="{StaticResource Card}" Margin="0,0,0,10">
+            <StackPanel>
+                <TextBlock Text="РАСХОД ТОКЕНОВ" FontSize="10" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Fg3Brush}" Margin="0,0,0,8"/>
+                <UniformGrid Rows="1" Columns="3">
+                    <StackPanel>
+                        <TextBlock Text="Входных токенов" FontSize="10"
+                                   Foreground="{DynamicResource Fg4Brush}"/>
+                        <TextBlock x:Name="TxtInTokens" Text="0" FontSize="15"
+                                   FontWeight="Bold" FontFamily="{StaticResource MonoFont}"
+                                   Foreground="{DynamicResource Fg1Brush}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock Text="Выходных токенов" FontSize="10"
+                                   Foreground="{DynamicResource Fg4Brush}"/>
+                        <TextBlock x:Name="TxtOutTokens" Text="0" FontSize="15"
+                                   FontWeight="Bold" FontFamily="{StaticResource MonoFont}"
+                                   Foreground="{DynamicResource Fg1Brush}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock Text="Стоимость" FontSize="10"
+                                   Foreground="{DynamicResource Fg4Brush}"/>
+                        <TextBlock x:Name="TxtCostUsd" Text="$ 0.00" FontSize="15"
+                                   FontWeight="Bold" FontFamily="{StaticResource MonoFont}"
+                                   Foreground="#eab308" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </UniformGrid>
+            </StackPanel>
+        </Border>
+
+        <!-- Middle row: Country bars (left) + Live results DataGrid (right) -->
+        <Grid Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="350"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left: Top countries bar chart -->
+            <Border Grid.Column="0" Style="{StaticResource Card}" MinHeight="300">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="ТОП СТРАН" FontSize="10"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource Fg3Brush}"
+                               Margin="0,0,0,10"/>
+                    <StackPanel x:Name="CountryBarsPanel"/>
+                </DockPanel>
+            </Border>
+
+            <!-- Right: Live results DataGrid -->
+            <Border Grid.Column="2"
+                    Background="{DynamicResource Bg2Brush}"
+                    BorderBrush="{DynamicResource Border1Brush}"
+                    BorderThickness="1" CornerRadius="12"
+                    ClipToBounds="True" Padding="0"
+                    MinHeight="300" MaxHeight="420">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="12,10,12,6">
+                        <Ellipse Width="6" Height="6" Fill="#22c55e"
+                                 VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="РЕЗУЛЬТАТЫ" FontSize="10" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource Fg3Brush}"/>
+                        <TextBlock Text=" · live" FontSize="10"
+                                   Foreground="{DynamicResource Fg4Brush}"/>
+                    </StackPanel>
+                    <DataGrid x:Name="LiveGrid"
+                              ItemsSource="{Binding LiveResults}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="None"
+                              CanUserResizeRows="False"
+                              CanUserReorderColumns="False"
+                              SelectionMode="Single"
+                              SelectionUnit="FullRow"
+                              BorderThickness="0"
+                              Background="Transparent"
+                              RowBackground="Transparent"
+                              AlternatingRowBackground="{DynamicResource Bg3Brush}"
+                              Foreground="{DynamicResource Fg1Brush}"
+                              FontSize="11"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              VirtualizingPanel.IsVirtualizing="True"
+                              VirtualizingPanel.VirtualizationMode="Recycling"
+                              EnableRowVirtualization="True"
+                              EnableColumnVirtualization="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Email" Binding="{Binding Email}"
+                                                Width="*" MinWidth="160">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource Fg2Brush}"/>
+                                        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Имя" Binding="{Binding NameToken}" Width="80">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{DynamicResource Fg2Brush}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Пол" Binding="{Binding Gender}" Width="50">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTemplateColumn Header="Страна" Width="120">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0">
+                                            <Image Source="{Binding Iso, Converter={StaticResource IsoToFlagImage}}"
+                                                   Width="18" Height="13" Stretch="Uniform"
+                                                   Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding Iso}" FontFamily="{StaticResource MonoFont}"
+                                                       FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Источник" Binding="{Binding Source}" Width="70">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </Border>
+        </Grid>
+
+        <!-- Stop button -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+            <Button Content="&#x25A0;  Стоп" Style="{StaticResource DangerBtn}"
+                    Padding="20,8" Click="OnStopClick"/>
+        </StackPanel>
+
+    </StackPanel>
+    </ScrollViewer>
+</UserControl>

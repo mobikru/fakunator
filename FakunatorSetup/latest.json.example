@@ -1,0 +1,10 @@
+{
+  "version": "2.5.0",
+  "exeUrl":  "https://github.com/yourname/fakunator/releases/download/v2.5.0/Fakunator.exe",
+  "exeSize": 29883800,
+  "exeSha256": "",
+  "dataUrl": "https://github.com/yourname/fakunator/releases/download/v2.5.0/data.zip",
+  "dataSize": 19821000,
+  "dataSha256": "",
+  "notes": "AMS Enterprise + PMTA monitoring + Telegram-бот. Первый релиз с автообновлением."
+}

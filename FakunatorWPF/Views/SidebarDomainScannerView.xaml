@@ -1,0 +1,336 @@
+<UserControl x:Class="Fakunator.Views.SidebarDomainScannerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+        <!-- Input с закруглёнными углами (плоский, без карточек как на скриншоте) -->
+        <Style x:Key="ScanTextBox" TargetType="TextBox">
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="{DynamicResource Fg1Brush}"/>
+            <Setter Property="Background" Value="{DynamicResource Bg1Brush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Border2Brush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="brd" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="brd" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Pill-toggle: активный = заполненный accent, остальные — outlined -->
+        <Style x:Key="TopPillActive" TargetType="Button">
+            <Setter Property="FontSize" Value="10.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border CornerRadius="10" Padding="10,3"
+                                Background="{DynamicResource AccentBrush}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              TextBlock.Foreground="White"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="TopPillIdle" TargetType="Button">
+            <Setter Property="FontSize" Value="10.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="brd" CornerRadius="10" Padding="10,3"
+                                Background="Transparent"
+                                BorderBrush="{DynamicResource Border2Brush}" BorderThickness="1">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              TextBlock.Foreground="{DynamicResource Fg3Brush}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="brd" Property="Background"
+                                        Value="{DynamicResource AccentSoftBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <!-- DockPanel: верх фиксирован (параметры/кнопки/статус/заголовок топ), низ = скролл списка провайдеров.
+         Раньше был один ScrollViewer на всё — при 30 провайдерах параметры выталкивались за экран. -->
+    <DockPanel Margin="16,16,16,20" LastChildFill="True">
+        <StackPanel DockPanel.Dock="Top">
+
+            <!-- ── Section title ────────────────────────────────────── -->
+            <TextBlock Text="ПАРАМЕТРЫ СКАНИРОВАНИЯ"
+                       FontSize="9.5" FontWeight="SemiBold"
+                       Foreground="{DynamicResource Fg3Brush}"
+                       Margin="0,0,0,10"
+                       Style="{x:Null}"/>
+
+            <!-- Zones + Threads: two columns -->
+            <Grid Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="86"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Зоны" FontSize="10.5"
+                               Foreground="{DynamicResource Fg2Brush}"
+                               Margin="2,0,0,4"/>
+                    <TextBox Style="{StaticResource ScanTextBox}"
+                             Text="{Binding Zones, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="Потоки" FontSize="10.5"
+                               Foreground="{DynamicResource Fg2Brush}"
+                               Margin="2,0,0,4"/>
+                    <TextBox Style="{StaticResource ScanTextBox}"
+                             TextAlignment="Center"
+                             Text="{Binding Concurrency, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Target NS -->
+            <StackPanel Margin="0,0,0,14">
+                <StackPanel Orientation="Horizontal" Margin="2,0,0,4">
+                    <TextBlock Text="Целевой NS" FontSize="10.5"
+                               Foreground="{DynamicResource Fg2Brush}"/>
+                    <TextBlock Text=" — опционально" FontSize="10.5"
+                               Foreground="{DynamicResource Fg4Brush}"/>
+                </StackPanel>
+                <Grid>
+                    <TextBox x:Name="TxtTargetNs"
+                             Style="{StaticResource ScanTextBox}"
+                             Text="{Binding TargetNs, UpdateSourceTrigger=PropertyChanged}"/>
+                    <!-- Placeholder-надпись поверх пустого поля -->
+                    <TextBlock Text="a.ns.selectel.ru или ns1.reg*"
+                               IsHitTestVisible="False"
+                               Foreground="{DynamicResource Fg4Brush}"
+                               FontFamily="{StaticResource MonoFont}" FontSize="11"
+                               Margin="12,0,0,0" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Text, ElementName=TxtTargetNs}" Value="">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
+            </StackPanel>
+
+            <!-- Старт (зелёная) и Стоп (красная) в одной линии -->
+            <Grid Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="▶  Старт"
+                        Command="{Binding StartCommand}"
+                        Style="{StaticResource PrimaryBtn}"
+                        Padding="0,10"/>
+                <Button Grid.Column="2" Content="■  Стоп"
+                        Command="{Binding StopCommand}"
+                        Style="{StaticResource DangerBtn}"
+                        Padding="0,10"/>
+            </Grid>
+
+            <!-- Опасная зона: очистка БД -->
+            <Button Content="🗑  Очистить базу"
+                    Command="{Binding ClearDbCommand}"
+                    Style="{StaticResource GhostBtn}"
+                    Foreground="#ef4444"
+                    BorderBrush="#40ef4444"
+                    HorizontalAlignment="Stretch"
+                    FontSize="11"
+                    Padding="0,7" Margin="0,0,0,10"/>
+
+            <!-- Status pill: dot + label + elapsed time -->
+            <Border Background="{DynamicResource Bg2Brush}" CornerRadius="10"
+                    Padding="12,10" Margin="0,0,0,22">
+                <DockPanel>
+                    <Ellipse Width="8" Height="8" DockPanel.Dock="Left"
+                             Margin="0,0,10,0"
+                             VerticalAlignment="Center">
+                        <Ellipse.Fill>
+                            <SolidColorBrush Color="{Binding StatusDotColor, Converter={StaticResource HexToColor}}"/>
+                        </Ellipse.Fill>
+                    </Ellipse>
+                    <TextBlock Text="{Binding ElapsedText}" DockPanel.Dock="Right"
+                               FontFamily="{StaticResource MonoFont}" FontSize="12"
+                               Foreground="{DynamicResource Fg3Brush}"
+                               VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding StatusText}" FontSize="12"
+                               Foreground="{DynamicResource Fg2Brush}"
+                               TextTrimming="CharacterEllipsis"
+                               VerticalAlignment="Center"/>
+                </DockPanel>
+            </Border>
+
+            <!-- ── Top NS providers ────────────────────────────────── -->
+            <DockPanel Margin="2,0,0,8">
+                <TextBlock DockPanel.Dock="Left" Text="ТОП NS-ПРОВАЙДЕРОВ"
+                           FontSize="10" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Fg3Brush}"
+                           VerticalAlignment="Center"/>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                            HorizontalAlignment="Right">
+                    <Button x:Name="PillAll" Content="все" Tag="" Click="OnTopFilterClick"
+                            Style="{StaticResource TopPillActive}"/>
+                    <Button x:Name="PillRu" Content="ru" Tag="ru" Click="OnTopFilterClick"
+                            Style="{StaticResource TopPillIdle}" Margin="6,0,0,0"/>
+                    <Button x:Name="PillCom" Content="com" Tag="com" Click="OnTopFilterClick"
+                            Style="{StaticResource TopPillIdle}" Margin="6,0,0,0"/>
+                </StackPanel>
+            </DockPanel>
+
+            <!-- Поиск провайдера в списке -->
+            <Grid Margin="0,0,0,10">
+                <TextBox x:Name="TxtProviderSearch"
+                         Style="{StaticResource ScanTextBox}"
+                         Height="28"
+                         Text="{Binding ProviderSearch, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Text="🔍  поиск провайдера"
+                           IsHitTestVisible="False"
+                           Foreground="{DynamicResource Fg4Brush}"
+                           FontSize="11"
+                           Margin="12,0,0,0" VerticalAlignment="Center">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Text, ElementName=TxtProviderSearch}" Value="">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Grid>
+
+        </StackPanel>
+
+        <!-- Список провайдеров скроллится отдельно, не выталкивая параметры за экран -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding TopProviders}" Margin="0,0,10,0">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <!-- Каждая строка = кнопка → фильтр по провайдеру -->
+                        <Button Command="{Binding DataContext.PickProviderCommand,
+                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding Name}"
+                                HorizontalContentAlignment="Stretch"
+                                Background="Transparent" BorderThickness="0"
+                                Padding="2,7,2,4" Cursor="Hand"
+                                ToolTip="Показать домены этого провайдера в браузере ниже">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="brd" CornerRadius="4"
+                                            Padding="{TemplateBinding Padding}"
+                                            Background="Transparent">
+                                        <ContentPresenter/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="brd" Property="Background"
+                                                    Value="{DynamicResource AccentSoftBrush}"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <StackPanel>
+                                <DockPanel Margin="0,0,0,6">
+                                    <!-- Звёздочка избранного — векторная Path-иконка -->
+                                    <Button DockPanel.Dock="Left"
+                                            Background="Transparent" BorderThickness="0"
+                                            Padding="0" Margin="0,0,10,0"
+                                            Cursor="Hand"
+                                            Width="16" Height="16"
+                                            VerticalAlignment="Center"
+                                            ToolTip="Помечать провайдера как избранный — всегда сверху"
+                                            Command="{Binding DataContext.ToggleFavoriteProviderCommand,
+                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Viewbox Stretch="Uniform">
+                                                    <Path x:Name="starPath"
+                                                          Data="M 12,17.27 L 18.18,21 L 16.54,13.97 L 22,9.24 L 14.81,8.62 L 12,2 L 9.19,8.62 L 2,9.24 L 7.45,13.97 L 5.82,21 Z"
+                                                          StrokeThickness="1.6"
+                                                          StrokeLineJoin="Round"
+                                                          Stroke="{DynamicResource Fg4Brush}"
+                                                          Fill="Transparent"/>
+                                                </Viewbox>
+                                                <ControlTemplate.Triggers>
+                                                    <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                                                        <Setter TargetName="starPath" Property="Fill" Value="#eab308"/>
+                                                        <Setter TargetName="starPath" Property="Stroke" Value="#eab308"/>
+                                                    </DataTrigger>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="starPath" Property="Stroke" Value="#eab308"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+                                    <TextBlock Text="{Binding Count, StringFormat=N0}"
+                                               DockPanel.Dock="Right"
+                                               FontFamily="{StaticResource MonoFont}" FontSize="12"
+                                               Foreground="{DynamicResource Fg1Brush}"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Name}" FontSize="12"
+                                               Foreground="{DynamicResource Fg1Brush}"
+                                               VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"/>
+                                </DockPanel>
+                                <!-- Progress-полоска пропорциональна доле от лидера -->
+                                <Grid Height="2">
+                                    <Border Background="{DynamicResource Border1Brush}"
+                                            CornerRadius="1"/>
+                                    <Border HorizontalAlignment="Left"
+                                            Background="{DynamicResource AccentBrush}"
+                                            CornerRadius="1">
+                                        <Border.Width>
+                                            <MultiBinding Converter="{StaticResource PercentWidth}">
+                                                <Binding Path="Percent"/>
+                                                <Binding Path="ActualWidth"
+                                                         RelativeSource="{RelativeSource AncestorType=Grid}"/>
+                                            </MultiBinding>
+                                        </Border.Width>
+                                    </Border>
+                                </Grid>
+                            </StackPanel>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

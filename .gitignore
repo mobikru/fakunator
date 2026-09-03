@@ -1,0 +1,45 @@
+# ── .NET build artifacts ──────────────────────────────────
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.vs/
+.vscode/
+
+# ── Публичные артефакты (уходят в GitHub Releases, не в repo) ─
+Fakunator_v*_Lite/
+Fakunator_v*_SelfContained/
+Fakunator_v*_Lite.zip
+FakunatorSetup.exe
+
+# ── Данные / БД / блоклисты (55MB, регенерируются) ─────────
+/data/
+output/
+
+# ── Юзерский config: ключи, прокси, пароли ─────────────────
+config.json
+**/config.json
+*.env
+.env
+
+# ── Секреты и сертификаты ──────────────────────────────────
+*.pfx
+*.snk
+*.p12
+*.pem
+*.key
+credentials.json
+
+# ── OS / editor мусор ──────────────────────────────────────
+Thumbs.db
+Desktop.ini
+*.swp
+*~
+
+# ── Claude / IDE helpers ───────────────────────────────────
+.claude/
+CLAUDE.md
