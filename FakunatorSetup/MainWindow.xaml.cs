@@ -16,8 +16,8 @@ namespace FakunatorSetup;
 
 public partial class MainWindow : Window
 {
-    // ▸▸▸ ЗАМЕНИ на свой репо: user/repo ▸▸▸
-    private const string GITHUB_REPO = "yourname/fakunator";
+    // Публичный репозиторий с релизами: github.com/mobikru/fakunator
+    private const string GITHUB_REPO = "mobikru/fakunator";
 
     // Стабильный URL манифеста — GitHub "latest" редиректит на самый свежий релиз.
     private static string ManifestUrl =>
