@@ -8,7 +8,7 @@
     <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
     <AssemblyName>Fakunator</AssemblyName>
     <RootNamespace>Fakunator</RootNamespace>
-    <Version>2.5.2</Version>
+    <Version>2.5.3</Version>
     <!-- По умолчанию: framework-dependent multi-file publish
          (для split-release: code.zip + deps.zip раздельно).
          Single-file self-contained можно получить через CLI:

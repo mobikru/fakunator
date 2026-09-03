@@ -38,6 +38,7 @@ public partial class MainWindow : Window
         UpdateService.Instance.Start();
 
 
+
         _cleanupVm = new CleanupViewModel();
         ContentArea.DataContext = _cleanupVm;
 

@@ -54,6 +54,30 @@ public class UpdateService
         Task.Run(async () => { await Task.Delay(TimeSpan.FromSeconds(30)); await CheckAsync(); });
     }
 
+    /// <summary>DEBUG-hook: искусственно выставляет Pending — только для проверки UI.
+    /// В релизе не вызывается.</summary>
+    public void DebugSimulateUpdate(string remoteVersion, string notes, long codeBytes)
+    {
+        Pending = new UpdateInfo(
+            Manifest: new ReleaseManifest { Version = remoteVersion, Notes = notes, CodeSize = codeBytes },
+            LocalVersion: typeof(UpdateService).Assembly.GetName().Version?.ToString(3) ?? "0.0.0",
+            NeedsDeps: false,
+            InstallDir: "",
+            DownloadBytes: codeBytes);
+        RepublishPending();
+    }
+
+    /// <summary>Повторно шлёт событие UpdateAvailable с текущим Pending — если он есть.
+    /// Используется когда UI-элемент (кнопка в настройках) хочет вернуть баннер.</summary>
+    public void RepublishPending()
+    {
+        if (Pending == null) return;
+        Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
+        {
+            UpdateAvailable?.Invoke(Pending);
+        }));
+    }
+
     /// <summary>Ручной чек (кнопка «Проверить обновления» в настройках).</summary>
     public async Task<bool> CheckAsync()
     {

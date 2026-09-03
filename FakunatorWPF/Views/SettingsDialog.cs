@@ -603,6 +603,10 @@ public class SettingsDialog : Window
         var version = typeof(SettingsDialog).Assembly.GetName().Version;
         var versionStr = version != null ? $"{version.Major}.{version.Minor}.{version.Build}" : "2.5.0";
         panel.Children.Add(MakeInfoRow("Версия:", versionStr));
+
+        // Кнопка «Проверить обновления» + статус доступного апдейта
+        AddUpdateRow(panel);
+
         panel.Children.Add(MakeLinkRow("Автор:", "@batalov", "https://t.me/batalov"));
 
         // Небольшая сноска под логином автора — предложение услуг.
@@ -872,10 +876,12 @@ public class SettingsDialog : Window
 
     private static UIElement WrapScroll(UIElement content)
     {
+        // Right padding, чтобы контент не прилипал к скроллбару
         return new ScrollViewer
         {
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            Padding = new Thickness(0, 0, 12, 0),
             Content = content,
         };
     }
@@ -938,6 +944,80 @@ public class SettingsDialog : Window
         row.Children.Add(link);
 
         return row;
+    }
+
+    // ── Панель управления обновлениями (в разделе «О программе») ──
+    private void AddUpdateRow(StackPanel panel)
+    {
+        var row = new DockPanel { Margin = new Thickness(0, 6, 0, 6) };
+
+        var lbl = new TextBlock
+        {
+            Text = "Обновления:",
+            FontSize = 12,
+            Width = 160,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        lbl.SetResourceReference(TextBlock.ForegroundProperty, "Fg3Brush");
+        row.Children.Add(lbl);
+
+        var statusText = new TextBlock
+        {
+            FontSize = 11.5,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 10, 0),
+        };
+        statusText.SetResourceReference(TextBlock.ForegroundProperty, "Fg4Brush");
+
+        var actionBtn = MakeSmallButton("Проверить");
+        actionBtn.Padding = new Thickness(14, 4, 14, 4);
+        actionBtn.MinWidth = 100;
+
+        // Первоначальное состояние: если сервис уже нашёл апдейт — сразу показываем «Обновить»
+        var pending = Fakunator.Core.Updater.UpdateService.Instance.Pending;
+        if (pending != null)
+        {
+            statusText.Text = $"Доступно {pending.RemoteVersion} · {pending.DownloadSizeText}";
+            statusText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+            actionBtn.Content = "Обновить сейчас";
+        }
+        else
+        {
+            statusText.Text = "нажми чтобы проверить";
+        }
+
+        actionBtn.Click += async (_, _) =>
+        {
+            var svc = Fakunator.Core.Updater.UpdateService.Instance;
+            if (svc.Pending != null)
+            {
+                // Уже знаем что апдейт есть — закрываем настройки, воскрешаем баннер.
+                this.Close();
+                svc.RepublishPending();
+                return;
+            }
+
+            actionBtn.IsEnabled = false;
+            statusText.Text = "Проверка…";
+            statusText.Foreground = (Brush)Application.Current.FindResource("Fg4Brush");
+            var found = await svc.CheckAsync();
+            actionBtn.IsEnabled = true;
+            if (found && svc.Pending != null)
+            {
+                statusText.Text = $"Доступно {svc.Pending.RemoteVersion} · {svc.Pending.DownloadSizeText}";
+                statusText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+                actionBtn.Content = "Обновить сейчас";
+            }
+            else
+            {
+                statusText.Text = $"всё актуально · проверено {DateTime.Now:HH:mm}";
+            }
+        };
+
+        DockPanel.SetDock(actionBtn, Dock.Right);
+        row.Children.Add(actionBtn);
+        row.Children.Add(statusText);
+        panel.Children.Add(row);
     }
 
     private static int CountLinesInFile(string path)
