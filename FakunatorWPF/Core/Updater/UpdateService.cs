@@ -41,7 +41,7 @@ public class UpdateService
         _http.DefaultRequestHeaders.UserAgent.ParseAdd("Fakunator-Updater/1.0");
         _http.Timeout = TimeSpan.FromMinutes(10);
 
-        _timer = new DispatcherTimer { Interval = TimeSpan.FromHours(6) };
+        _timer = new DispatcherTimer { Interval = TimeSpan.FromHours(1) };
         _timer.Tick += async (_, _) => await CheckAsync();
     }
 
