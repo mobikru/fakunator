@@ -33,7 +33,17 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        _http = new HttpClient(new HttpClientHandler { AllowAutoRedirect = true });
+        // Уважаем системный прокси (Windows WinINet + PAC + env HTTP_PROXY).
+        // .NET по умолчанию НЕ читает эти настройки — а браузер читает, отсюда
+        // «в браузере работает, в exe нет» у юзеров за корпоративным прокси или VPN.
+        var handler = new HttpClientHandler
+        {
+            AllowAutoRedirect = true,
+            UseProxy = true,
+            Proxy = System.Net.WebRequest.GetSystemWebProxy(),
+            DefaultProxyCredentials = System.Net.CredentialCache.DefaultCredentials,
+        };
+        _http = new HttpClient(handler);
         _http.DefaultRequestHeaders.UserAgent.ParseAdd("FakunatorSetup/1.0");
         _http.Timeout = TimeSpan.FromMinutes(5);
 
@@ -73,7 +83,12 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            TxtVersionLine.Text = "Нет связи с GitHub — попробуй Повторить";
+            // Показываем настоящую причину — иначе юзер не может диагностировать
+            // (таймаут, прокси, DNS, TLS, 404 и т.д.)
+            var real = ex.InnerException?.Message ?? ex.Message;
+            if (real.Length > 140) real = real[..140] + "…";
+            TxtVersionLine.Text = "Не удалось получить манифест";
+            TxtFooter.Text = real;
             BtnPrimary.Content = "Повторить";
             BtnPrimary.IsEnabled = true;
         }
