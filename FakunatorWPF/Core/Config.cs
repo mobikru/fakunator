@@ -9,7 +9,6 @@ namespace Fakunator.Core;
 public class Config
 {
     // ── App ──────────────────────────────────────────────────────────
-    public string Theme { get; set; } = "light";
     public string OutputDir { get; set; } = "";
     public bool GmailStrict { get; set; } = true;
     public List<string> EnabledFilters { get; set; } = new()
@@ -282,7 +281,6 @@ public class Config
 
         var fresh = new Config();
 
-        Theme = fresh.Theme;
         OutputDir = fresh.OutputDir;
         GmailStrict = fresh.GmailStrict;
         EnabledFilters = fresh.EnabledFilters;

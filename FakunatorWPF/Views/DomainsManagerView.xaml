@@ -488,16 +488,19 @@
                             </Style>
                         </DataGrid.CellStyle>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="ДОМЕН" Binding="{Binding Domain}" Width="*" MinWidth="180">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
-                                        <Setter Property="Foreground" Value="{DynamicResource Fg1Brush}"/>
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Margin" Value="10,0"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
+                            <DataGridTemplateColumn Header="ДОМЕН" Width="*" MinWidth="180">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding Domain, Mode=OneWay}" IsReadOnly="True"
+                                                 Background="Transparent" BorderThickness="0" Padding="10,0"
+                                                 FontFamily="{StaticResource MonoFont}"
+                                                 Foreground="{DynamicResource Fg1Brush}"
+                                                 VerticalAlignment="Center" VerticalContentAlignment="Center"
+                                                 Cursor="IBeam" SelectionBrush="#3d59a1"
+                                                 IsReadOnlyCaretVisible="False"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                             <DataGridTextColumn Header="ВОЗРАСТ" Binding="{Binding AgeText}" Width="90">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">

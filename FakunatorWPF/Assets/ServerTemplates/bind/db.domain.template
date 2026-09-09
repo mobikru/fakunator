@@ -1,0 +1,19 @@
+$ttl 2425
+@  IN  SOA  ns1.w00w.site.  info.w00w.site. (
+2026090310
+9050
+4020
+746180
+2425 )
+@  IN  NS  ns1.w00w.site.
+@  IN  NS  ns2.w00w.site.
+w00w.site.  IN  MX  11  nserren.w00w.site.
+ns2.w00w.site.  IN  A  146.103.115.104
+uhp._domainkey.w00w.site.  IN  TXT  "v=DKIM1; k=rsa; g=*; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCwVH4KKMX1KP+qNlDThuHMRupiYBZNUHJHCaqzt4Ud/NTv9WMOw/DV0TKs4MO78mIFNE1jMLUnX4Z4MrUEPfF6Pele3mSCGip98CMAf0WQqvPGRIEkTrhGXSezyEGKVddcpfemodrCf6STI7zC4H466lthtGtZq0ejEixDY5L0ewIDAQAB";
+*.w00w.site.  IN  A  146.103.115.104
+nserren.w00w.site.  IN  A  146.103.115.104
+ns1.w00w.site.  IN  A  146.103.115.104
+_dmarc.w00w.site.  IN  TXT  "v=DMARC1; aspf=r; ri=173970; p=reject; sp=quarantine; pct=30; ruf=mailto:dmarc@w00w.site; adkim=r"
+tencprod.w00w.site.  IN  A  146.103.115.104
+w00w.site.  IN  A  146.103.115.104
+w00w.site.  IN  TXT  "v=spf1 +a ip4:146.103.115.104 mx -all"

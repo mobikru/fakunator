@@ -1,0 +1,5 @@
+user = admin
+password = fakir
+hosts = 127.0.0.1
+dbname = postfix
+query = SELECT 1 FROM virtual_users WHERE email='%s'

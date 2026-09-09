@@ -1,0 +1,8 @@
+zone "w00w.site" {
+        type master;
+        file "/etc/bind/db.w00w.site";
+};
+zone "0.168.192.in-addr.arpa" {
+        type master;
+        file "/etc/bind/db.0.168.192";
+};

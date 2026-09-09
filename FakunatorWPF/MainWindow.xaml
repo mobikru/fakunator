@@ -19,8 +19,9 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="48"/>  <!-- Header -->
-            <RowDefinition Height="*"/>   <!-- Body -->
+            <RowDefinition Height="48"/>   <!-- Header -->
+            <RowDefinition Height="Auto"/> <!-- Sub-tab bar (visible only for "База") -->
+            <RowDefinition Height="*"/>    <!-- Body -->
         </Grid.RowDefinitions>
 
         <!-- ── Header ──────────────────────────────────────────── -->
@@ -65,13 +66,6 @@
                         ToolTip="Настройки" Margin="4,0,0,0"
                         Click="OnSettingsClick"/>
 
-                <!-- Theme toggle (right-docked) -->
-                <Button x:Name="BtnMoon" DockPanel.Dock="Right" Content="☾"
-                        Style="{StaticResource IconBtn}" Click="OnThemeToggle"
-                        ToolTip="Тёмная тема"/>
-                <Button x:Name="BtnSun" DockPanel.Dock="Right" Content="☀"
-                        Style="{StaticResource IconBtn}" Click="OnThemeToggle"
-                        ToolTip="Светлая тема"/>
 
                 <!-- Spacer before context buttons -->
                 <Border DockPanel.Dock="Right" Width="8"/>
@@ -84,13 +78,9 @@
 
                 <!-- Tab buttons -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,0">
-                    <RadioButton x:Name="TabCleanup" Content="📧  Очистка" IsChecked="True"
-                                 GroupName="Tabs" Style="{DynamicResource TabBtnStyle}"
-                                 Checked="OnTabChanged"/>
-                    <RadioButton x:Name="TabSmtp" Content="✉  SMTP-проверка"
-                                 GroupName="Tabs" Style="{DynamicResource TabBtnStyle}"
-                                 Checked="OnTabChanged"/>
-                    <RadioButton x:Name="TabAnalyze" Content="🔬  Анализ"
+                    <!-- «База» объединяет Очистку / SMTP-проверку / Анализ — они появляются
+                         как sub-tab bar в отдельной строке ниже. -->
+                    <RadioButton x:Name="TabDatabase" Content="🗄  База" IsChecked="True"
                                  GroupName="Tabs" Style="{DynamicResource TabBtnStyle}"
                                  Checked="OnTabChanged"/>
                     <RadioButton x:Name="TabDomains" Content="🌐  Сканер доменов"
@@ -105,12 +95,32 @@
                     <RadioButton x:Name="TabPmta" Content="📡  PMTA"
                                  GroupName="Tabs" Style="{DynamicResource TabBtnStyle}"
                                  Checked="OnTabChanged"/>
+                    <RadioButton x:Name="TabServerInstall" Content="🖥  Сервера"
+                                 GroupName="Tabs" Style="{DynamicResource TabBtnStyle}"
+                                 Checked="OnTabChanged"/>
                 </StackPanel>
             </DockPanel>
         </Border>
 
+        <!-- ── Sub-tab bar (для «База»: Очистка / SMTP / Анализ) ──────────── -->
+        <Border x:Name="DbSubTabBar" Grid.Row="1"
+                Background="{DynamicResource HeaderBgBrush}"
+                BorderBrush="{DynamicResource Border1Brush}" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" Margin="16,4,16,4" VerticalAlignment="Center">
+                <RadioButton x:Name="SubCleanup" Content="📧  Очистка" IsChecked="True"
+                             GroupName="DbSubTabs" Style="{DynamicResource TabBtnStyle}"
+                             Checked="OnDbSubTabChanged"/>
+                <RadioButton x:Name="SubSmtp" Content="✉  SMTP-проверка"
+                             GroupName="DbSubTabs" Style="{DynamicResource TabBtnStyle}"
+                             Checked="OnDbSubTabChanged"/>
+                <RadioButton x:Name="SubAnalyze" Content="🔬  Анализ"
+                             GroupName="DbSubTabs" Style="{DynamicResource TabBtnStyle}"
+                             Checked="OnDbSubTabChanged"/>
+            </StackPanel>
+        </Border>
+
         <!-- ── Body ────────────────────────────────────────────── -->
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="SidebarColumn" Width="300"/>  <!-- Sidebar -->
                 <ColumnDefinition Width="*"/>    <!-- Content -->
@@ -187,11 +197,16 @@
                 <Grid x:Name="PmtaPanel" Visibility="Collapsed">
                     <views:PmtaView x:Name="PmtaViewCtrl"/>
                 </Grid>
+
+                <!-- Server Install panel -->
+                <Grid x:Name="ServerInstallPanel" Visibility="Collapsed">
+                    <views:ServerInstallView x:Name="ServerInstallViewCtrl"/>
+                </Grid>
             </Grid>
         </Grid>
 
         <!-- ── Update toast (overlay bottom-right, hidden by default) ── -->
-        <Border x:Name="UpdateBanner" Grid.RowSpan="2"
+        <Border x:Name="UpdateBanner" Grid.RowSpan="3"
                 Visibility="Collapsed"
                 HorizontalAlignment="Right" VerticalAlignment="Bottom"
                 Margin="0,0,20,20" MaxWidth="360"

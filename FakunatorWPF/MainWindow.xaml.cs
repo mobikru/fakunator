@@ -104,19 +104,6 @@ public partial class MainWindow : Window
             _cleanupVm.StopCommand.Execute(null);
     }
 
-    // ── Theme toggle ─────────────────────────────────────────────────
-
-    private void OnThemeToggle(object sender, RoutedEventArgs e)
-    {
-        if (sender is Button btn)
-        {
-            var theme = btn.Name == "BtnSun" ? "light" : "dark";
-            App.SwitchTheme(theme);
-            Config.Current.Theme = theme;
-            Config.Current.Save();
-        }
-    }
-
     // ── Settings gear button ─────────────────────────────────────────
 
     private void OnSettingsClick(object sender, RoutedEventArgs e)
@@ -127,10 +114,10 @@ public partial class MainWindow : Window
 
     private void OnTabChanged(object sender, RoutedEventArgs e)
     {
-        if (CleanupPanel == null || SmtpPanel == null || AnalyzePanel == null || DomainsPanel == null || DomainsMgrPanel == null || AmsPanel == null || PmtaPanel == null)
+        if (CleanupPanel == null || SmtpPanel == null || AnalyzePanel == null || DomainsPanel == null || DomainsMgrPanel == null || AmsPanel == null || PmtaPanel == null || ServerInstallPanel == null)
             return; // not yet initialized
 
-        void SetAll(Visibility cln, Visibility smtp, Visibility anz, Visibility dom, Visibility mgr, Visibility ams, Visibility pmta)
+        void SetAll(Visibility cln, Visibility smtp, Visibility anz, Visibility dom, Visibility mgr, Visibility ams, Visibility pmta, Visibility srv)
         {
             CleanupPanel.Visibility = cln;
             SmtpPanel.Visibility = smtp;
@@ -139,6 +126,7 @@ public partial class MainWindow : Window
             DomainsMgrPanel.Visibility = mgr;
             AmsPanel.Visibility = ams;
             PmtaPanel.Visibility = pmta;
+            ServerInstallPanel.Visibility = srv;
             SidebarCleanup.Visibility = cln;
             SidebarSmtp.Visibility = smtp;
             SidebarAnalyze.Visibility = anz;
@@ -154,14 +142,62 @@ public partial class MainWindow : Window
         }
 
         var V = Visibility.Visible; var C = Visibility.Collapsed;
-        if (TabCleanup.IsChecked == true) { SetAll(V, C, C, C, C, C, C); ShowSidebar(true); }
-        else if (TabSmtp.IsChecked == true) { SetAll(C, V, C, C, C, C, C); ShowSidebar(true); }
-        else if (TabAnalyze.IsChecked == true) { SetAll(C, C, V, C, C, C, C); ShowSidebar(true); }
-        else if (TabDomains.IsChecked == true) { SetAll(C, C, C, V, C, C, C); ShowSidebar(true); }
-        else if (TabDomainsMgr.IsChecked == true) { SetAll(C, C, C, C, V, C, C); ShowSidebar(false); }
-        else if (TabAms.IsChecked == true) { SetAll(C, C, C, C, C, V, C); ShowSidebar(false); _amsVm.OnTabActivated(); }
-        else if (TabPmta.IsChecked == true) { SetAll(C, C, C, C, C, C, V); ShowSidebar(false); }
-        else { SetAll(C, C, C, C, C, C, C); ShowSidebar(true); }
+        // Sub-tab bar «База» видим только внутри вкладки «База»
+        if (DbSubTabBar != null)
+            DbSubTabBar.Visibility = TabDatabase.IsChecked == true ? V : C;
+
+        if (TabDatabase.IsChecked == true)
+        {
+            // Внутри «Базы» — какой из 3 sub-tab'ов активен решает ApplyDbSubTab()
+            ApplyDbSubTab();
+        }
+        else if (TabDomains.IsChecked == true) { SetAll(C, C, C, V, C, C, C, C); ShowSidebar(true); }
+        else if (TabDomainsMgr.IsChecked == true) { SetAll(C, C, C, C, V, C, C, C); ShowSidebar(false); }
+        else if (TabAms.IsChecked == true) { SetAll(C, C, C, C, C, V, C, C); ShowSidebar(false); _amsVm.OnTabActivated(); }
+        else if (TabPmta.IsChecked == true) { SetAll(C, C, C, C, C, C, V, C); ShowSidebar(false); }
+        else if (TabServerInstall.IsChecked == true) { SetAll(C, C, C, C, C, C, C, V); ShowSidebar(false); }
+        else { SetAll(C, C, C, C, C, C, C, C); ShowSidebar(true); }
+    }
+
+    private void OnDbSubTabChanged(object sender, RoutedEventArgs e)
+    {
+        if (TabDatabase == null || TabDatabase.IsChecked != true) return;
+        ApplyDbSubTab();
+    }
+
+    private void ApplyDbSubTab()
+    {
+        if (CleanupPanel == null || SmtpPanel == null || AnalyzePanel == null) return;
+
+        var V = Visibility.Visible; var C = Visibility.Collapsed;
+        // Скрываем всё, что не входит в «Базу», и левые side-панели тоже
+        DomainsPanel.Visibility = C;
+        DomainsMgrPanel.Visibility = C;
+        AmsPanel.Visibility = C;
+        PmtaPanel.Visibility = C;
+        ServerInstallPanel.Visibility = C;
+        SidebarDomains.Visibility = C;
+        SidebarDomainsMgr.Visibility = C;
+
+        // Sidebar-колонка видима для всех трёх sub-tab'ов
+        SidebarBorder.Visibility = V;
+        SidebarColumn.Width = new GridLength(300);
+
+        if (SubSmtp.IsChecked == true)
+        {
+            CleanupPanel.Visibility = C; SmtpPanel.Visibility = V; AnalyzePanel.Visibility = C;
+            SidebarCleanup.Visibility = C; SidebarSmtp.Visibility = V; SidebarAnalyze.Visibility = C;
+        }
+        else if (SubAnalyze.IsChecked == true)
+        {
+            CleanupPanel.Visibility = C; SmtpPanel.Visibility = C; AnalyzePanel.Visibility = V;
+            SidebarCleanup.Visibility = C; SidebarSmtp.Visibility = C; SidebarAnalyze.Visibility = V;
+        }
+        else // SubCleanup — default
+        {
+            CleanupPanel.Visibility = V; SmtpPanel.Visibility = C; AnalyzePanel.Visibility = C;
+            SidebarCleanup.Visibility = V; SidebarSmtp.Visibility = C; SidebarAnalyze.Visibility = C;
+        }
     }
 
     // ── Window geometry persistence via Config ───────────────────────
@@ -202,7 +238,6 @@ public partial class MainWindow : Window
         try
         {
             var cfg = Config.Current;
-            cfg.Theme = App.CurrentTheme;
 
             if (WindowState == WindowState.Normal)
             {
@@ -240,10 +275,6 @@ public partial class MainWindow : Window
 
             if (cfg.WindowMaximized)
                 WindowState = WindowState.Maximized;
-
-            // Restore theme
-            if (!string.IsNullOrEmpty(cfg.Theme))
-                App.SwitchTheme(cfg.Theme);
         }
         catch { }
     }

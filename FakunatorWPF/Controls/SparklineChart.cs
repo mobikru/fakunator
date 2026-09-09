@@ -14,11 +14,7 @@ public class SparklineChart : FrameworkElement
     {
         MinHeight = 100;
         ClipToBounds = true;
-        App.ThemeChanged += OnAppThemeChanged;
-        Unloaded += (_, _) => App.ThemeChanged -= OnAppThemeChanged;
     }
-
-    private void OnAppThemeChanged(object? sender, EventArgs e) => InvalidateVisual();
 
     public void AddPoint(double value)
     {

@@ -277,13 +277,30 @@ public partial class MessagePreviewDialog : Window
         var date = DateTime.Now.ToString("d MMM, HH:mm",
             System.Globalization.CultureInfo.GetCultureInfo("ru-RU"));
         var avatarColor = ColorForString(_senderName + _senderEmail);
-        var iframeWidth = mobile ? "420px" : "100%";
-        var maxWidth = mobile ? "460px" : "900px";
+        var maxWidth = "960px";
 
         var body = string.IsNullOrEmpty(letterHtml)
             ? "<html><body style='font-family:sans-serif;padding:20px;color:#666'>Письмо пустое</body></html>"
             : letterHtml;
         var b64Body = Convert.ToBase64String(Encoding.UTF8.GetBytes(body));
+
+        var sizeBar = mobile
+            ? @"<div class=""g-size-bar"">
+                <button class=""g-chip"" data-w=""360"">360 · Android S</button>
+                <button class=""g-chip"" data-w=""375"">375 · iPhone SE</button>
+                <button class=""g-chip active"" data-w=""390"">390 · iPhone 12–15</button>
+                <button class=""g-chip"" data-w=""414"">414 · iPhone Plus</button>
+                <button class=""g-chip"" data-w=""480"">480 · Android XL</button>
+                <button class=""g-chip"" data-w=""600"">600 · планшет</button>
+                <button class=""g-chip"" data-w=""768"">768 · iPad</button>
+                <span id=""widthReadout"" class=""g-readout"">390 px</span>
+              </div>"
+            : "";
+        var frameWrapClass = mobile ? "g-frame-wrap is-mobile" : "g-frame-wrap";
+        var frameWrapStyle = mobile ? "width:390px;height:640px;" : "width:100%;height:640px;";
+        var hint = mobile
+            ? @"<div class=""g-hint"">⤡ потяните правый нижний угол блока — свободное изменение ширины</div>"
+            : "";
 
         // Gmail-подобный layout. Используем системные Google-шрифты и палитру
         // из реального Gmail. Iframe изолирует стили письма.
@@ -311,7 +328,21 @@ body {
 .g-sender-to { font-size: 12px; color: #5f6368; margin-top: 2px; }
 .g-date { font-size: 12px; color: #5f6368; white-space: nowrap; }
 .g-body-wrap { padding: 8px 0; background: white; }
-.g-frame { width: " + iframeWidth + @"; margin: 0 auto; display: block; border: 0; min-height: 640px; background: white; }
+.g-size-bar { display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 4px 24px 12px; flex-wrap: wrap; }
+.g-chip { border: 1px solid #dadce0; background: white; border-radius: 14px;
+  padding: 4px 12px; font-size: 12px; color: #3c4043; cursor: pointer;
+  font-family: inherit; }
+.g-chip:hover { background: #f1f3f4; }
+.g-chip.active { background: #e8f0fe; border-color: #1a73e8; color: #1967d2; font-weight: 600; }
+.g-readout { font-size: 12px; color: #5f6368; font-variant-numeric: tabular-nums;
+  min-width: 68px; text-align: center; align-self: center; }
+.g-frame-wrap { margin: 0 auto; position: relative; }
+.g-frame-wrap.is-mobile { resize: horizontal; overflow: hidden; min-width: 280px;
+  max-width: 900px; border: 1px solid #dadce0; border-radius: 4px; }
+.g-frame-wrap:not(.is-mobile) { width: 100% !important; }
+.g-frame { width: 100%; height: 100%; display: block; border: 0; background: white; }
+.g-hint { text-align: center; font-size: 11px; color: #9aa0a6; padding: 6px 0 0; }
 .g-actions { padding: 14px 24px 20px; display: flex; gap: 8px; border-top: 1px solid #f1f3f4; }
 .g-btn { border: 1px solid #dadce0; background: white; border-radius: 24px;
   padding: 8px 22px; font-size: 14px; color: #202124;
@@ -322,17 +353,36 @@ body {
   font-weight: 500; text-transform: uppercase; letter-spacing: .3px; }
 ";
 
-        // Auto-resize iframe после загрузки — берём высоту документа.
+        // Авто-высота по контенту письма + управление шириной (пресеты/drag) в мобильном режиме.
         var js = @"
 window.addEventListener('DOMContentLoaded', function() {
   var f = document.getElementById('mail');
+  var wrap = document.getElementById('frameWrap');
   if (!f) return;
-  f.addEventListener('load', function() {
+  function applyHeight() {
     try {
       var doc = f.contentDocument || f.contentWindow.document;
-      var h = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight, 640);
-      f.style.height = h + 'px';
-    } catch(e) { /* cross-origin — просто оставим min-height */ }
+      var h = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight, 320);
+      if (wrap && wrap.classList.contains('is-mobile')) wrap.style.height = h + 'px';
+      else f.style.height = h + 'px';
+    } catch(e) { /* cross-origin — оставим текущую высоту */ }
+  }
+  f.addEventListener('load', applyHeight);
+
+  var readout = document.getElementById('widthReadout');
+  if (wrap && readout && window.ResizeObserver) {
+    var ro = new ResizeObserver(function() {
+      readout.textContent = Math.round(wrap.getBoundingClientRect().width) + ' px';
+    });
+    ro.observe(wrap);
+  }
+  document.querySelectorAll('.g-chip[data-w]').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      wrap.style.width = chip.getAttribute('data-w') + 'px';
+      document.querySelectorAll('.g-chip[data-w]').forEach(function(c) { c.classList.remove('active'); });
+      chip.classList.add('active');
+      applyHeight();
+    });
   });
 });
 ";
@@ -361,7 +411,11 @@ window.addEventListener('DOMContentLoaded', function() {
       </div>
     </div>
     <div class=""g-body-wrap"">
-      <iframe id=""mail"" class=""g-frame"" src=""data:text/html;charset=utf-8;base64,{b64Body}""></iframe>
+      {sizeBar}
+      <div id=""frameWrap"" class=""{frameWrapClass}"" style=""{frameWrapStyle}"">
+        <iframe id=""mail"" class=""g-frame"" src=""data:text/html;charset=utf-8;base64,{b64Body}""></iframe>
+      </div>
+      {hint}
     </div>
     <div class=""g-actions"">
       <button class=""g-btn"">← Ответить</button>

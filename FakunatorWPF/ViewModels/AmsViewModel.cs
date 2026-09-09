@@ -593,6 +593,7 @@ public class AmsViewModel : INotifyPropertyChanged
                     Model = l,
                     FullPath = path,
                     Depth = depth,
+                    IsFolder = byParent.ContainsKey(l.Id),
                 });
                 Walk(l.Id, depth + 1, path);
             }

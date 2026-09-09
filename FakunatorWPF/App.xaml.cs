@@ -9,20 +9,30 @@ namespace Fakunator;
 
 public partial class App : Application
 {
-    private static string _currentTheme = "dark";
-
-    public static string CurrentTheme => _currentTheme;
-
-    /// <summary>
-    /// Fires after MergedDictionaries swap. Custom-rendered controls
-    /// (SparklineChart, ParticleBackground, ToggleSwitch) subscribe so they
-    /// can InvalidateVisual and pick up new theme brushes.
-    /// </summary>
-    public static event EventHandler? ThemeChanged;
-
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // Глобальные обработчики крашей — записываем stack trace в файл + показываем
+        DispatcherUnhandledException += (_, ev) =>
+        {
+            LogCrash("Dispatcher", ev.Exception);
+            MessageBox.Show(
+                $"UI-поток упал:\n{ev.Exception.GetType().Name}: {ev.Exception.Message}\n\n" +
+                $"Полный лог: %APPDATA%\\Fakunator\\crash.log",
+                "Fakunator crash", MessageBoxButton.OK, MessageBoxImage.Error);
+            ev.Handled = true;
+        };
+        AppDomain.CurrentDomain.UnhandledException += (_, ev) =>
+        {
+            LogCrash("AppDomain", ev.ExceptionObject as Exception);
+        };
+        TaskScheduler.UnobservedTaskException += (_, ev) =>
+        {
+            LogCrash("Task", ev.Exception);
+            ev.SetObserved();
+        };
+
         if (e.Args.Length > 0 && e.Args[0] == "--test")
         {
             DebugTest.Run();
@@ -69,23 +79,17 @@ public partial class App : Application
         base.OnExit(e);
     }
 
-    public static void SwitchTheme(string theme)
+    private static void LogCrash(string source, Exception? ex)
     {
-        if (theme == _currentTheme) return;
-        _currentTheme = theme;
-
-        var mergedDicts = Current.Resources.MergedDictionaries;
-
-        // Remove current theme dictionary (index 1 — SharedStyles is at 0)
-        if (mergedDicts.Count > 1)
-            mergedDicts.RemoveAt(1);
-
-        var uri = theme == "light"
-            ? new Uri("Themes/LightTheme.xaml", UriKind.Relative)
-            : new Uri("Themes/DarkTheme.xaml", UriKind.Relative);
-
-        mergedDicts.Add(new ResourceDictionary { Source = uri });
-
-        ThemeChanged?.Invoke(null, EventArgs.Empty);
+        try
+        {
+            var dir = System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Fakunator");
+            System.IO.Directory.CreateDirectory(dir);
+            var path = System.IO.Path.Combine(dir, "crash.log");
+            System.IO.File.AppendAllText(path,
+                $"\n[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {source}\n{ex}\n");
+        }
+        catch { }
     }
 }

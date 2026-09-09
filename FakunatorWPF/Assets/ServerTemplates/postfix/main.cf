@@ -1,0 +1,76 @@
+#Указываем имя нашего хоста
+myhostname = nserren.w00w.site
+#Так наш сервер будет представляться при отправке и получении почты
+smtpd_banner = $myhostname ESMTP (Ubuntu)
+#Отключаем использование comsat
+biff = no
+#Запрещаем автоматически дополнять неполное доменное имя в адресе письма
+append_dot_mydomain = no
+# Указываем файл с псевдонимами почтовых ящиков, описываем доступ доменам, почтовым ящикам и т.д.
+virtual_mailbox_domains = mysql:/etc/postfix/mysql-virtual-mailbox-domains.cf
+virtual_mailbox_maps = mysql:/etc/postfix/mysql-virtual-mailbox-maps.cf
+virtual_alias_maps = mysql:/etc/postfix/mysql-virtual-alias-maps.cf
+
+alias_maps = hash:/etc/aliases
+alias_database = hash:/etc/aliases
+myorigin = w00w.site
+#Указываем, для каких доменов будем принимать почту
+mydestination = localhost
+relayhost=
+
+mynetworks = 127.0.0.0/8, 
+    192.168.0.0/24, 
+    192.168.1.0/24 
+
+
+# Не будем ограничивать размер почтовых ящиков
+mailbox_size_limit = 0
+recipient_delimiter = +
+#Указываем прослушивание на всех сетевых интерфейсах
+inet_interfaces = all
+#Указываем обязательность использование клиентами команды helo
+smtpd_helo_required = yes
+
+virtual_transport = lmtp:unix:private/dovecot-lmtp
+
+virtual_uid_maps = static:5000
+virtual_gid_maps = static:5000
+home_mailbox = /var/mail/vhosts
+#Указываем каталог очереди для Postfix
+queue_directory = /var/spool/postfix
+#Описываем авторизацию по SMTP для клиентов не из доверенной зоны
+smtpd_sasl_type = dovecot
+smtpd_sasl_auth_enable = yes
+smtpd_sasl_path = private/auth
+smtpd_sasl_security_options = noanonymous
+#broken_sasl_auth_clients = yes
+
+# запрещаем проверку отправителем существование адреса получателя
+# на этапе передачи заголовка
+disable_vrfy_command = yes
+
+# разрешаем дополнительные проверки пока отправитель
+# передает RCPT TO: и MAIL FROM: заголовки. Для детализации mail.log
+smtpd_delay_reject = yes
+
+# требуем от отправителя представиться
+# (на том, как себя представляет передающий комп,
+# основаны многие эффективные проверки "на вшивость"
+# автоматических рассылок от зомби и троянов)
+smtpd_helo_required = yes
+
+
+smtpd_recipient_restrictions =  
+    permit_mynetworks,  
+    permit_sasl_authenticated, 
+    reject_unauth_destination
+
+
+# TLS шифрование
+smtp_tls_mandatory_protocols = !SSLv2, !SSLv3
+smtpd_tls_mandatory_protocols = !SSLv2, !SSLv3
+smtpd_tls_cert_file=/etc/letsencrypt/live/nserren.w00w.site/fullchain.pem
+smtpd_tls_key_file=/etc/letsencrypt/live/nserren.w00w.site/privkey.pem
+smtpd_tls_security_level=may
+smtpd_use_tls = yes
+smtpd_tls_auth_only = yes

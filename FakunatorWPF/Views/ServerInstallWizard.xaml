@@ -1,0 +1,606 @@
+<Window x:Class="Fakunator.Views.ServerInstallWizard"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Установка сервера"
+        Width="1000" Height="720" MinWidth="900" MinHeight="620"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource Bg1Brush}"
+        WindowStyle="None" ResizeMode="CanResize" AllowsTransparency="False">
+
+    <Window.Resources>
+        <Style x:Key="StepPill" TargetType="Border">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="14,10"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+
+        <Style x:Key="StepNumber" TargetType="Border">
+            <Setter Property="Width" Value="24"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Background" Value="{DynamicResource Bg3Brush}"/>
+            <Setter Property="CornerRadius" Value="12"/>
+        </Style>
+
+        <Style x:Key="StepNumberText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource Fg3Brush}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="StepTitle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource Fg2Brush}"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="10,0,0,0"/>
+        </Style>
+
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource Fg3Brush}"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+
+        <Style x:Key="FieldInput" TargetType="TextBox">
+            <Setter Property="Background" Value="{DynamicResource Bg3Brush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Fg1Brush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Border1Brush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,7"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+        </Style>
+    </Window.Resources>
+
+    <Border BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Title bar (draggable, custom close) -->
+            <Border Grid.Row="0" Background="{DynamicResource Bg2Brush}" Padding="20,12"
+                    BorderBrush="{DynamicResource Border1Brush}" BorderThickness="0,0,0,1"
+                    MouseLeftButtonDown="OnTitleBarDown">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Left" Text="🖥  Установка сервера"
+                               FontSize="14" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Fg1Brush}" VerticalAlignment="Center"/>
+                    <Button DockPanel.Dock="Right" Content="✕" Width="30" Height="24"
+                            Padding="0" FontSize="12" Cursor="Hand"
+                            Background="Transparent" BorderThickness="0"
+                            Foreground="{DynamicResource Fg3Brush}"
+                            Click="OnCloseClick"/>
+                    <TextBlock/>
+                </DockPanel>
+            </Border>
+
+            <!-- Body: sidebar (steps) + main content -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="240"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Sidebar with step indicators -->
+                <Border Grid.Column="0" Background="{DynamicResource Bg2Brush}"
+                        BorderBrush="{DynamicResource Border1Brush}" BorderThickness="0,0,1,0"
+                        Padding="16,20">
+                    <StackPanel>
+                        <TextBlock Text="Шаги установки" Foreground="{DynamicResource Fg4Brush}"
+                                   FontSize="10.5" FontWeight="SemiBold" Margin="6,0,0,12"/>
+
+                        <Border x:Name="StepPill1" Style="{StaticResource StepPill}" Background="{DynamicResource AccentSoftBrush}">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource StepNumber}" Background="{DynamicResource Accent2Brush}">
+                                    <TextBlock Text="1" Style="{StaticResource StepNumberText}" Foreground="White"/>
+                                </Border>
+                                <TextBlock Text="Сервер и домен" Style="{StaticResource StepTitle}" Foreground="{DynamicResource Accent2Brush}" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border x:Name="StepPill2" Style="{StaticResource StepPill}">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource StepNumber}">
+                                    <TextBlock Text="2" Style="{StaticResource StepNumberText}"/>
+                                </Border>
+                                <TextBlock Text="Компоненты" Style="{StaticResource StepTitle}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border x:Name="StepPill3" Style="{StaticResource StepPill}">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource StepNumber}">
+                                    <TextBlock Text="3" Style="{StaticResource StepNumberText}"/>
+                                </Border>
+                                <TextBlock Text="Ссылки на пакеты" Style="{StaticResource StepTitle}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border x:Name="StepPill4" Style="{StaticResource StepPill}">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource StepNumber}">
+                                    <TextBlock Text="4" Style="{StaticResource StepNumberText}"/>
+                                </Border>
+                                <TextBlock Text="Проверка" Style="{StaticResource StepTitle}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border x:Name="StepPill5" Style="{StaticResource StepPill}">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource StepNumber}">
+                                    <TextBlock Text="5" Style="{StaticResource StepNumberText}"/>
+                                </Border>
+                                <TextBlock Text="Установка" Style="{StaticResource StepTitle}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border x:Name="StepPill6" Style="{StaticResource StepPill}">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource StepNumber}">
+                                    <TextBlock Text="6" Style="{StaticResource StepNumberText}"/>
+                                </Border>
+                                <TextBlock Text="Готово" Style="{StaticResource StepTitle}"/>
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </Border>
+
+                <!-- Main content — step 1..6 switched -->
+                <Grid Grid.Column="1">
+
+                    <!-- ══════════ STEP 1: Сервер и домен ══════════ -->
+                    <ScrollViewer x:Name="Step1" VerticalScrollBarVisibility="Auto" Padding="32,24">
+                        <StackPanel MaxWidth="500" HorizontalAlignment="Left">
+                            <TextBlock Text="Сервер и домен"
+                                       FontSize="20" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Fg1Brush}"/>
+                            <TextBlock Text="Куда ставим и какой домен привязываем"
+                                       FontSize="12" Margin="0,3,0,20"
+                                       Foreground="{DynamicResource Fg4Brush}"/>
+
+                            <TextBlock Text="Домен" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Style="{StaticResource FieldInput}" Text="mydomain.xyz"/>
+
+                            <TextBlock Text="IP сервера" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Style="{StaticResource FieldInput}" Text="185.44.22.9"/>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="120"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="SSH пользователь" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Style="{StaticResource FieldInput}" Text="root"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Порт" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Style="{StaticResource FieldInput}" Text="22"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <TextBlock Text="SSH пароль" Style="{StaticResource FieldLabel}"/>
+                            <PasswordBox Background="{DynamicResource Bg3Brush}"
+                                         Foreground="{DynamicResource Fg1Brush}"
+                                         BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1"
+                                         Padding="10,7" FontSize="12.5" Margin="0,0,0,12" Password="••••••••"/>
+
+                            <TextBlock Text="Email для Let's Encrypt" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Style="{StaticResource FieldInput}" Text="info@mydomain.xyz"/>
+
+                            <Border Background="{DynamicResource AccentSoftBrush}" CornerRadius="6" Padding="12,10" Margin="0,12,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="💡  DNS уже настроен?" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Accent2Brush}"/>
+                                    <TextBlock TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"
+                                               Foreground="{DynamicResource Fg2Brush}" LineHeight="16"
+                                               Text="У регистратора должны быть A-запись домена → 185.44.22.9 и NS-записи → тот же IP. Автопроверка на шаге 4."/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- ══════════ STEP 2: Компоненты ══════════ -->
+                    <ScrollViewer x:Name="Step2" VerticalScrollBarVisibility="Auto" Padding="32,24" Visibility="Collapsed">
+                        <StackPanel MaxWidth="580" HorizontalAlignment="Left">
+                            <TextBlock Text="Компоненты сервера"
+                                       FontSize="20" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Fg1Brush}"/>
+                            <TextBlock Text="Что установить (обязательные помечены)"
+                                       FontSize="12" Margin="0,3,0,20"
+                                       Foreground="{DynamicResource Fg4Brush}"/>
+
+                            <TextBlock Text="БАЗОВЫЕ (обязательно)" FontSize="10.5" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Fg4Brush}" Margin="0,0,0,8"/>
+                            <StackPanel Margin="0,0,0,16">
+                                <CheckBox IsChecked="True" IsEnabled="False" Foreground="{DynamicResource Fg2Brush}" Margin="0,3">
+                                    <TextBlock Text="Postfix — SMTP submission + relay" FontSize="12"/>
+                                </CheckBox>
+                                <CheckBox IsChecked="True" IsEnabled="False" Foreground="{DynamicResource Fg2Brush}" Margin="0,3">
+                                    <TextBlock Text="Dovecot — IMAP/POP3 mailbox сервер" FontSize="12"/>
+                                </CheckBox>
+                                <CheckBox IsChecked="True" IsEnabled="False" Foreground="{DynamicResource Fg2Brush}" Margin="0,3">
+                                    <TextBlock Text="MariaDB — виртуальные юзеры/домены" FontSize="12"/>
+                                </CheckBox>
+                                <CheckBox IsChecked="True" IsEnabled="False" Foreground="{DynamicResource Fg2Brush}" Margin="0,3">
+                                    <TextBlock Text="OpenDKIM — DKIM-подпись писем" FontSize="12"/>
+                                </CheckBox>
+                                <CheckBox IsChecked="True" IsEnabled="False" Foreground="{DynamicResource Fg2Brush}" Margin="0,3">
+                                    <TextBlock Text="Bind9 — авторитативный DNS для домена" FontSize="12"/>
+                                </CheckBox>
+                            </StackPanel>
+
+                            <TextBlock Text="ВЕБ" FontSize="10.5" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Fg4Brush}" Margin="0,0,0,8"/>
+                            <StackPanel Margin="0,0,0,16">
+                                <CheckBox IsChecked="True" Foreground="{DynamicResource Fg2Brush}" Margin="0,3">
+                                    <TextBlock Text="Apache2 + PHP 7.2" FontSize="12"/>
+                                </CheckBox>
+                                <CheckBox IsChecked="True" Foreground="{DynamicResource Fg2Brush}" Margin="0,3">
+                                    <TextBlock Text="Certbot (SSL для webmail и субдоменов)" FontSize="12"/>
+                                </CheckBox>
+                                <CheckBox IsChecked="True" Foreground="{DynamicResource Fg2Brush}" Margin="0,3">
+                                    <TextBlock Text="Roundcube — webmail на mail.{домен}" FontSize="12"/>
+                                </CheckBox>
+                                <CheckBox IsChecked="True" Foreground="{DynamicResource Fg2Brush}" Margin="0,3">
+                                    <TextBlock Text="phpMyAdmin — админка БД" FontSize="12"/>
+                                </CheckBox>
+                            </StackPanel>
+
+                            <TextBlock Text="ДОПОЛНИТЕЛЬНО" FontSize="10.5" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Fg4Brush}" Margin="0,0,0,8"/>
+                            <StackPanel Margin="0,0,0,16">
+                                <CheckBox IsChecked="True" Foreground="{DynamicResource Fg2Brush}" Margin="0,3">
+                                    <TextBlock Text="PMTA — производительный SMTP relay (пиратский или свой)" FontSize="12"/>
+                                </CheckBox>
+                                <CheckBox IsChecked="True" Foreground="{DynamicResource Fg2Brush}" Margin="0,3">
+                                    <TextBlock Text="zTDS — Traffic Distribution System" FontSize="12"/>
+                                </CheckBox>
+                                <CheckBox IsChecked="True" Foreground="{DynamicResource Fg2Brush}" Margin="0,3">
+                                    <TextBlock Text="Mailer-скрипты (PHPMailer + Sender.php)" FontSize="12"/>
+                                </CheckBox>
+                                <CheckBox IsChecked="False" Foreground="{DynamicResource Fg2Brush}" Margin="0,3">
+                                    <TextBlock Text="3proxy — SOCKS/HTTP proxy сервер" FontSize="12"/>
+                                </CheckBox>
+                                <CheckBox IsChecked="False" Foreground="{DynamicResource Fg2Brush}" Margin="0,3">
+                                    <TextBlock Text="Landing-архив (пример HTML-страниц)" FontSize="12"/>
+                                </CheckBox>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- ══════════ STEP 3: BYO URL поля ══════════ -->
+                    <ScrollViewer x:Name="Step3" VerticalScrollBarVisibility="Auto" Padding="32,24" Visibility="Collapsed">
+                        <StackPanel MaxWidth="640" HorizontalAlignment="Left">
+                            <TextBlock Text="Ссылки на пакеты"
+                                       FontSize="20" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Fg1Brush}"/>
+                            <TextBlock Text="Прямые URL к архивам которые нужно скачать при установке"
+                                       FontSize="12" Margin="0,3,0,20"
+                                       Foreground="{DynamicResource Fg4Brush}"/>
+
+                            <TextBlock Text="PMTA — .deb пакет" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Style="{StaticResource FieldInput}" Text=""/>
+
+                            <TextBlock Text="PMTA — pmtad бинарь" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Style="{StaticResource FieldInput}" Text=""/>
+
+                            <TextBlock Text="PMTA — pmtahttpd бинарь" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Style="{StaticResource FieldInput}" Text=""/>
+
+                            <TextBlock Text="PMTA — license файл" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Style="{StaticResource FieldInput}" Text=""/>
+
+                            <TextBlock Text="zTDS.zip" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Style="{StaticResource FieldInput}" Text=""/>
+
+                            <TextBlock Text="Mailer-скрипты (phpmailer.zip)" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Style="{StaticResource FieldInput}" Text=""/>
+
+                            <TextBlock Text="Landing-архив (опционально)" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Style="{StaticResource FieldInput}" Text=""/>
+
+                            <Border Background="{DynamicResource Bg2Brush}" CornerRadius="6" Padding="12,10" Margin="0,8,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="💾  Сохранить как пресет" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
+                                    <TextBlock TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"
+                                               Foreground="{DynamicResource Fg3Brush}" LineHeight="16"
+                                               Text="Ссылки сохранятся в %APPDATA%\Fakunator\install_presets.json — при следующей установке поля заполнятся автоматически."/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- ══════════ STEP 4: Проверка ══════════ -->
+                    <ScrollViewer x:Name="Step4" VerticalScrollBarVisibility="Auto" Padding="32,24" Visibility="Collapsed">
+                        <StackPanel MaxWidth="580" HorizontalAlignment="Left">
+                            <TextBlock Text="Проверка перед установкой"
+                                       FontSize="20" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Fg1Brush}"/>
+                            <TextBlock Text="Пробегусь по чек-листу — можно ли начинать"
+                                       FontSize="12" Margin="0,3,0,20"
+                                       Foreground="{DynamicResource Fg4Brush}"/>
+
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                    <TextBlock Text="✓" Foreground="#22c55e" FontSize="14" FontWeight="Bold" Width="20"/>
+                                    <TextBlock Text="SSH-соединение — установлено (root@185.44.22.9)" FontSize="12" Foreground="{DynamicResource Fg2Brush}"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                    <TextBlock Text="✓" Foreground="#22c55e" FontSize="14" FontWeight="Bold" Width="20"/>
+                                    <TextBlock Text="ОС: Ubuntu 22.04 LTS (совместимо)" FontSize="12" Foreground="{DynamicResource Fg2Brush}"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                    <TextBlock Text="✓" Foreground="#22c55e" FontSize="14" FontWeight="Bold" Width="20"/>
+                                    <TextBlock Text="Диск: 20 GB свободно (нужно ≥5 GB)" FontSize="12" Foreground="{DynamicResource Fg2Brush}"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                    <TextBlock Text="✓" Foreground="#22c55e" FontSize="14" FontWeight="Bold" Width="20"/>
+                                    <TextBlock Text="RAM: 2.0 GB (нужно ≥1 GB)" FontSize="12" Foreground="{DynamicResource Fg2Brush}"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                    <TextBlock Text="✓" Foreground="#22c55e" FontSize="14" FontWeight="Bold" Width="20"/>
+                                    <TextBlock Text="Порт 25 (SMTP) — открыт наружу" FontSize="12" Foreground="{DynamicResource Fg2Brush}"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                    <TextBlock Text="⚠" Foreground="#f59e0b" FontSize="14" FontWeight="Bold" Width="20"/>
+                                    <TextBlock Text="DNS: A-запись домена → 185.44.22.9 (не проверено — DNS может кэшироваться)" FontSize="12" Foreground="{DynamicResource Fg2Brush}" TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                    <TextBlock Text="✓" Foreground="#22c55e" FontSize="14" FontWeight="Bold" Width="20"/>
+                                    <TextBlock Text="Все ссылки на пакеты — доступны (HTTP 200 OK)" FontSize="12" Foreground="{DynamicResource Fg2Brush}"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <Border Background="{DynamicResource Bg2Brush}" CornerRadius="6" Padding="14,12" Margin="0,20,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Оценка времени установки" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg3Brush}" Margin="0,0,0,8"/>
+                                    <TextBlock FontSize="22" FontWeight="Bold" Foreground="{DynamicResource Fg1Brush}">
+                                        <Run Text="~ 12"/>
+                                        <Run Text=" минут" FontSize="14" Foreground="{DynamicResource Fg3Brush}"/>
+                                    </TextBlock>
+                                    <TextBlock Text="Загрузка пакетов + apt install + certbot + импорт схем + конфигурация" FontSize="10.5" Foreground="{DynamicResource Fg4Brush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- ══════════ STEP 5: Установка (LIVE LOG) ══════════ -->
+                    <Grid x:Name="Step5" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Header with progress -->
+                        <StackPanel Grid.Row="0" Margin="32,24,32,12">
+                            <TextBlock Text="Установка идёт"
+                                       FontSize="20" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Fg1Brush}"/>
+                            <TextBlock x:Name="TxtInstallCurrent"
+                                       Text="Шаг 3 из 12: устанавливаю Dovecot"
+                                       FontSize="12" Margin="0,3,0,0"
+                                       Foreground="{DynamicResource Accent2Brush}"/>
+                        </StackPanel>
+
+                        <!-- Big progress -->
+                        <StackPanel Grid.Row="1" Margin="32,4,32,12">
+                            <Grid Margin="0,0,0,6">
+                                <TextBlock HorizontalAlignment="Left" x:Name="TxtProgressLabel"
+                                           Text="Прогресс" FontSize="11" Foreground="{DynamicResource Fg4Brush}"/>
+                                <TextBlock HorizontalAlignment="Right" x:Name="TxtProgressPct"
+                                           Text="34% · ~7 мин осталось" FontSize="11" Foreground="{DynamicResource Fg4Brush}"/>
+                            </Grid>
+                            <ProgressBar x:Name="InstallProgress" Value="34" Maximum="100" Height="8"
+                                         Background="{DynamicResource Bg3Brush}"
+                                         Foreground="#22c55e" BorderThickness="0"/>
+
+                            <!-- Sub-progress: per-step chips -->
+                            <WrapPanel Margin="0,14,0,0">
+                                <Border Background="#22c55e" CornerRadius="4" Padding="8,3" Margin="0,0,4,4">
+                                    <TextBlock Text="✓ apt update" FontSize="10.5" Foreground="White"/>
+                                </Border>
+                                <Border Background="#22c55e" CornerRadius="4" Padding="8,3" Margin="0,0,4,4">
+                                    <TextBlock Text="✓ postfix" FontSize="10.5" Foreground="White"/>
+                                </Border>
+                                <Border Background="#3b82f6" CornerRadius="4" Padding="8,3" Margin="0,0,4,4">
+                                    <TextBlock Text="⟳ dovecot" FontSize="10.5" Foreground="White"/>
+                                </Border>
+                                <Border Background="{DynamicResource Bg3Brush}" CornerRadius="4" Padding="8,3" Margin="0,0,4,4">
+                                    <TextBlock Text="mariadb" FontSize="10.5" Foreground="{DynamicResource Fg3Brush}"/>
+                                </Border>
+                                <Border Background="{DynamicResource Bg3Brush}" CornerRadius="4" Padding="8,3" Margin="0,0,4,4">
+                                    <TextBlock Text="opendkim" FontSize="10.5" Foreground="{DynamicResource Fg3Brush}"/>
+                                </Border>
+                                <Border Background="{DynamicResource Bg3Brush}" CornerRadius="4" Padding="8,3" Margin="0,0,4,4">
+                                    <TextBlock Text="bind9" FontSize="10.5" Foreground="{DynamicResource Fg3Brush}"/>
+                                </Border>
+                                <Border Background="{DynamicResource Bg3Brush}" CornerRadius="4" Padding="8,3" Margin="0,0,4,4">
+                                    <TextBlock Text="apache" FontSize="10.5" Foreground="{DynamicResource Fg3Brush}"/>
+                                </Border>
+                                <Border Background="{DynamicResource Bg3Brush}" CornerRadius="4" Padding="8,3" Margin="0,0,4,4">
+                                    <TextBlock Text="certbot" FontSize="10.5" Foreground="{DynamicResource Fg3Brush}"/>
+                                </Border>
+                                <Border Background="{DynamicResource Bg3Brush}" CornerRadius="4" Padding="8,3" Margin="0,0,4,4">
+                                    <TextBlock Text="roundcube" FontSize="10.5" Foreground="{DynamicResource Fg3Brush}"/>
+                                </Border>
+                                <Border Background="{DynamicResource Bg3Brush}" CornerRadius="4" Padding="8,3" Margin="0,0,4,4">
+                                    <TextBlock Text="pmta" FontSize="10.5" Foreground="{DynamicResource Fg3Brush}"/>
+                                </Border>
+                                <Border Background="{DynamicResource Bg3Brush}" CornerRadius="4" Padding="8,3" Margin="0,0,4,4">
+                                    <TextBlock Text="tds" FontSize="10.5" Foreground="{DynamicResource Fg3Brush}"/>
+                                </Border>
+                                <Border Background="{DynamicResource Bg3Brush}" CornerRadius="4" Padding="8,3" Margin="0,0,4,4">
+                                    <TextBlock Text="dns records" FontSize="10.5" Foreground="{DynamicResource Fg3Brush}"/>
+                                </Border>
+                            </WrapPanel>
+                        </StackPanel>
+
+                        <!-- Terminal-style live log -->
+                        <Border Grid.Row="2" Background="#0a0e14" Margin="32,8,32,24" CornerRadius="8" Padding="0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <!-- Terminal header -->
+                                <Border Grid.Row="0" Background="#151b23" CornerRadius="8,8,0,0" Padding="14,8"
+                                        BorderBrush="#1e2530" BorderThickness="0,0,0,1">
+                                    <DockPanel>
+                                        <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                                            <Ellipse Width="10" Height="10" Fill="#ff5f56" Margin="0,0,6,0"/>
+                                            <Ellipse Width="10" Height="10" Fill="#ffbd2e" Margin="0,0,6,0"/>
+                                            <Ellipse Width="10" Height="10" Fill="#27c93f" Margin="0,0,12,0"/>
+                                            <TextBlock Text="root@185.44.22.9 — live install log" Foreground="#8b95a3" FontFamily="Consolas" FontSize="11" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                            <CheckBox Content="Автопрокрутка" Foreground="#8b95a3" FontSize="10.5" IsChecked="True"/>
+                                        </StackPanel>
+                                        <TextBlock/>
+                                    </DockPanel>
+                                </Border>
+
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="14,10">
+                                    <StackPanel x:Name="LogContainer">
+                                        <TextBlock Text="[12:04:15] # apt update"                                    FontFamily="Consolas" FontSize="11" Foreground="#7dcfff"/>
+                                        <TextBlock Text="[12:04:15] Hit:1 http://archive.ubuntu.com/ubuntu jammy InRelease"                    FontFamily="Consolas" FontSize="11" Foreground="#c0caf5"/>
+                                        <TextBlock Text="[12:04:16] Get:2 http://security.ubuntu.com/ubuntu jammy-security InRelease [128 kB]" FontFamily="Consolas" FontSize="11" Foreground="#c0caf5"/>
+                                        <TextBlock Text="[12:04:17] Fetched 342 kB in 1s (312 kB/s)"                                             FontFamily="Consolas" FontSize="11" Foreground="#c0caf5"/>
+                                        <TextBlock Text="[12:04:18] Reading package lists... Done"                                              FontFamily="Consolas" FontSize="11" Foreground="#c0caf5"/>
+                                        <TextBlock Text="[12:04:18] # apt install -y postfix postfix-mysql"                                     FontFamily="Consolas" FontSize="11" Foreground="#7dcfff"/>
+                                        <TextBlock Text="[12:04:19] Reading package lists... Done"                                              FontFamily="Consolas" FontSize="11" Foreground="#c0caf5"/>
+                                        <TextBlock Text="[12:04:20] Building dependency tree... Done"                                           FontFamily="Consolas" FontSize="11" Foreground="#c0caf5"/>
+                                        <TextBlock Text="[12:04:21] The following NEW packages will be installed:"                              FontFamily="Consolas" FontSize="11" Foreground="#c0caf5"/>
+                                        <TextBlock Text="[12:04:21]   postfix postfix-mysql ssl-cert"                                            FontFamily="Consolas" FontSize="11" Foreground="#c0caf5"/>
+                                        <TextBlock Text="[12:04:22] Get:1 http://archive.ubuntu.com/ubuntu jammy/main amd64 postfix amd64 3.6.4-1ubuntu1.6 [1,239 kB]" FontFamily="Consolas" FontSize="11" Foreground="#c0caf5"/>
+                                        <TextBlock Text="[12:04:23] Fetched 1,412 kB in 0s (7,842 kB/s)"                                        FontFamily="Consolas" FontSize="11" Foreground="#c0caf5"/>
+                                        <TextBlock Text="[12:04:25] Selecting previously unselected package postfix."                           FontFamily="Consolas" FontSize="11" Foreground="#c0caf5"/>
+                                        <TextBlock Text="[12:04:26] Setting up postfix (3.6.4-1ubuntu1.6) ..."                                  FontFamily="Consolas" FontSize="11" Foreground="#c0caf5"/>
+                                        <TextBlock Text="[12:04:28] ✓ postfix установлен"                                                        FontFamily="Consolas" FontSize="11" Foreground="#9ece6a" FontWeight="SemiBold"/>
+                                        <TextBlock Text="[12:04:28] # cp /etc/postfix/main.cf → template with mydomain.xyz"                     FontFamily="Consolas" FontSize="11" Foreground="#7dcfff"/>
+                                        <TextBlock Text="[12:04:29] ✓ postfix конфиг применён"                                                   FontFamily="Consolas" FontSize="11" Foreground="#9ece6a" FontWeight="SemiBold"/>
+                                        <TextBlock Text="[12:04:30] # apt install -y dovecot-core dovecot-imapd dovecot-lmtpd dovecot-pop3d dovecot-mysql" FontFamily="Consolas" FontSize="11" Foreground="#7dcfff"/>
+                                        <TextBlock Text="[12:04:31] Reading package lists... Done"                                              FontFamily="Consolas" FontSize="11" Foreground="#c0caf5"/>
+                                        <TextBlock Text="[12:04:32] Building dependency tree... Done"                                           FontFamily="Consolas" FontSize="11" Foreground="#c0caf5"/>
+                                        <TextBlock Text="[12:04:33] The following NEW packages will be installed:"                              FontFamily="Consolas" FontSize="11" Foreground="#c0caf5"/>
+                                        <TextBlock Text="[12:04:33]   dovecot-core dovecot-imapd dovecot-lmtpd dovecot-pop3d dovecot-mysql ..." FontFamily="Consolas" FontSize="11" Foreground="#c0caf5"/>
+                                        <TextBlock Text="[12:04:34] Get:1 http://archive.ubuntu.com/ubuntu jammy/main amd64 dovecot-core amd64..." FontFamily="Consolas" FontSize="11" Foreground="#c0caf5"/>
+                                        <TextBlock Text="[12:04:35] Fetched 6,412 kB in 1s"                                                     FontFamily="Consolas" FontSize="11" Foreground="#c0caf5"/>
+                                        <TextBlock Text="[12:04:36] Selecting previously unselected package dovecot-core..."                    FontFamily="Consolas" FontSize="11" Foreground="#c0caf5"/>
+                                        <TextBlock Text="[12:04:38] Setting up dovecot-core (1:2.3.16+dfsg1-3ubuntu2.4) ..."                    FontFamily="Consolas" FontSize="11" Foreground="#c0caf5"/>
+                                        <TextBlock Text="[12:04:40] Setting up dovecot-imapd (1:2.3.16+dfsg1-3ubuntu2.4) ..."                   FontFamily="Consolas" FontSize="11" Foreground="#c0caf5"/>
+                                        <TextBlock Text="[12:04:41] █"                                                                          FontFamily="Consolas" FontSize="11" Foreground="#9ece6a" FontWeight="Bold"/>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <!-- ══════════ STEP 6: Готово ══════════ -->
+                    <ScrollViewer x:Name="Step6" VerticalScrollBarVisibility="Auto" Padding="32,24" Visibility="Collapsed">
+                        <StackPanel MaxWidth="620" HorizontalAlignment="Left">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                <TextBlock Text="🎉" FontSize="26" Margin="0,0,10,0"/>
+                                <TextBlock Text="mydomain.xyz успешно настроен!"
+                                           FontSize="20" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource Fg1Brush}"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Text="Все компоненты установлены за 11 мин 42 сек. Ниже — реквизиты доступов."
+                                       FontSize="12" Margin="0,0,0,20"
+                                       Foreground="{DynamicResource Fg4Brush}"/>
+
+                            <Border Background="{DynamicResource Bg2Brush}" CornerRadius="8" Padding="16,14" Margin="0,0,0,12"
+                                    BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="🖥  PMTA Monitor" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
+                                    <TextBlock Text="https://185.44.22.9:1111" FontFamily="Consolas" FontSize="12" Foreground="{DynamicResource Accent2Brush}" Margin="0,4,0,0"/>
+                                    <TextBlock Text="Login: admin  ·  Password: p8Kx9jQmNv7t" FontSize="11" Foreground="{DynamicResource Fg3Brush}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="{DynamicResource Bg2Brush}" CornerRadius="8" Padding="16,14" Margin="0,0,0,12"
+                                    BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="✉  Webmail (Roundcube)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
+                                    <TextBlock Text="https://mail.mydomain.xyz" FontFamily="Consolas" FontSize="12" Foreground="{DynamicResource Accent2Brush}" Margin="0,4,0,0"/>
+                                    <TextBlock Text="Login: admin@mydomain.xyz  ·  Password: 4xL9mQpNvA2s" FontSize="11" Foreground="{DynamicResource Fg3Brush}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="{DynamicResource Bg2Brush}" CornerRadius="8" Padding="16,14" Margin="0,0,0,12"
+                                    BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="🗄  phpMyAdmin" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
+                                    <TextBlock Text="https://mydomain.xyz/phpMyAdmin" FontFamily="Consolas" FontSize="12" Foreground="{DynamicResource Accent2Brush}" Margin="0,4,0,0"/>
+                                    <TextBlock Text="Login: pma_admin  ·  Password: mQ2xkLpN7vA9" FontSize="11" Foreground="{DynamicResource Fg3Brush}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="{DynamicResource Bg2Brush}" CornerRadius="8" Padding="16,14" Margin="0,0,0,12"
+                                    BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="🔀  zTDS Admin" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
+                                    <TextBlock Text="https://kfzqrv3.mydomain.xyz/TDS/admin.php" FontFamily="Consolas" FontSize="12" Foreground="{DynamicResource Accent2Brush}" Margin="0,4,0,0"/>
+                                    <TextBlock Text="Login: admin  ·  Password: 8fLpN3xKmQv2" FontSize="11" Foreground="{DynamicResource Fg3Brush}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="{DynamicResource Bg2Brush}" CornerRadius="8" Padding="16,14" Margin="0,0,0,12"
+                                    BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="📋  DNS-записи (пропиши у регистратора)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}" Margin="0,0,0,6"/>
+                                    <TextBlock FontFamily="Consolas" FontSize="10.5" Foreground="{DynamicResource Fg3Brush}" LineHeight="16">
+                                        <Run Text="A     @              185.44.22.9"/><LineBreak/>
+                                        <Run Text="A     mail           185.44.22.9"/><LineBreak/>
+                                        <Run Text="MX    @              mail.mydomain.xyz (priority 10)"/><LineBreak/>
+                                        <Run Text="TXT   @              v=spf1 ip4:185.44.22.9 ~all"/><LineBreak/>
+                                        <Run Text="TXT   default._domainkey  v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBA..."/><LineBreak/>
+                                        <Run Text="TXT   _dmarc         v=DMARC1; p=quarantine; rua=mailto:info@mydomain.xyz"/>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="{DynamicResource AccentSoftBrush}" CornerRadius="6" Padding="12,10" Margin="0,4,0,0">
+                                <TextBlock FontSize="11" Foreground="{DynamicResource Accent2Brush}" TextWrapping="Wrap"
+                                           Text="💡  Все реквизиты сохранены. Fakunator будет держать мониторинг этого сервера — увидишь его в списке серверов."/>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                </Grid>
+            </Grid>
+
+            <!-- Footer: navigation buttons -->
+            <Border Grid.Row="2" Background="{DynamicResource Bg2Brush}"
+                    BorderBrush="{DynamicResource Border1Brush}" BorderThickness="0,1,0,0"
+                    Padding="20,14">
+                <DockPanel>
+                    <Button x:Name="BtnCancel" DockPanel.Dock="Left" Content="Отмена"
+                            Style="{DynamicResource GhostBtn}" Padding="18,7"
+                            FontSize="12" Cursor="Hand" Click="OnCloseClick"/>
+
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                        <Button x:Name="BtnBack" Content="← Назад"
+                                Style="{DynamicResource GhostBtn}" Padding="16,7" FontSize="12"
+                                Margin="0,0,8,0" Cursor="Hand"
+                                IsEnabled="False" Click="OnBackClick"/>
+                        <Button x:Name="BtnNext" Content="Далее →"
+                                Style="{DynamicResource AccentBtn}" Padding="20,7" FontSize="12"
+                                FontWeight="SemiBold" Cursor="Hand" Click="OnNextClick"/>
+                    </StackPanel>
+
+                    <TextBlock/>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

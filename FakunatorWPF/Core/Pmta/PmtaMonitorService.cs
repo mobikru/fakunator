@@ -9,8 +9,10 @@ namespace Fakunator.Core.Pmta;
 
 /// <summary>
 /// Фоновый поллер PMTA-панелей. Каждые ~7 секунд делает snapshot по
-/// enabled-панелям (status/queues/domains/vmtas/jobs), пишет в rolling
-/// history и уведомляет подписчиков (VM) через <see cref="SnapshotUpdated"/>.
+/// enabled-панелям (status/queues/domains/vmtas/jobs) и уведомляет
+/// подписчиков (VM) через <see cref="SnapshotUpdated"/>. Rolling-историю
+/// для графиков ведёт сам VM (PmtaPanelVm.OutSeries/QueueSeries) —
+/// PMTA API историю не отдаёт, только текущие счётчики.
 /// </summary>
 public class PmtaMonitorService
 {
@@ -21,9 +23,6 @@ public class PmtaMonitorService
     private CancellationTokenSource? _cts;
     private Task? _loop;
     public TimeSpan PollInterval { get; set; } = TimeSpan.FromSeconds(7);
-
-    /// <summary>Максимум точек истории (~7s × 300 = ~35 минут).</summary>
-    public int HistoryCapacity { get; set; } = 300;
 
     public event EventHandler<PmtaPanelRuntime>? SnapshotUpdated;
     /// <summary>Срабатывает один раз после завершения tick'а — когда все панели опрошены.
@@ -138,22 +137,18 @@ public class PmtaMonitorService
             // но она "залипает" 60 секунд.
             if (rt.DerivedOutRatePerMin > 0) rt.LastActivityAt = now;
 
-            // История для графика
-            var stat = rt.LastStatus?.Data?.Status?.Traffic;
-            var conns = rt.LastStatus?.Data?.Status?.Conn;
-            var point = new PmtaTimePoint
-            {
-                Ts = DateTime.Now,
-                OutRcpLastMin = stat?.LastMin?.Out?.Rcp ?? 0,
-                InRcpLastMin = stat?.LastMin?.In?.Rcp ?? 0,
-                OutRcpLastHr = stat?.LastHr?.Out?.Rcp ?? 0,
-                SmtpOutCur = conns?.SmtpOut?.Cur ?? 0,
-                SmtpInCur = conns?.SmtpIn?.Cur ?? 0,
-                TotalQueueRcp = rt.LastQueues?.Data?.Queues?.Sum(q => q.Rcp) ?? 0,
-                KbLastMin = stat?.LastMin?.Out?.Kb ?? 0,
-            };
-            rt.History.Add(point);
-            while (rt.History.Count > HistoryCapacity) rt.History.RemoveAt(0);
+            // Когда ЛОКАЛЬНО впервые увидели текущий текст ошибки — не полагаемся на
+            // строку времени от самого PMTA (часы/часовой пояс VPS могут не совпадать
+            // с локальными, из-за чего абсолютное сравнение дат ошибочно "состарит"
+            // реально свежие ошибки). Ключ — точный текст ошибки.
+            var currentErrorTexts = new HashSet<string>(
+                (rt.LastQueues?.Data?.Queues?.SelectMany(q => q.Errors) ?? Enumerable.Empty<PmtaError>())
+                .Concat(rt.LastDomains?.Data?.Domains?.SelectMany(d => d.Errors) ?? Enumerable.Empty<PmtaError>())
+                .Select(e => e.Text));
+            foreach (var text in currentErrorTexts)
+                if (!rt.ErrorFirstSeenUtc.ContainsKey(text)) rt.ErrorFirstSeenUtc[text] = now;
+            foreach (var key in rt.ErrorFirstSeenUtc.Keys.Where(k => !currentErrorTexts.Contains(k)).ToList())
+                rt.ErrorFirstSeenUtc.Remove(key);
         }
         catch (Exception ex)
         {
@@ -165,7 +160,7 @@ public class PmtaMonitorService
     }
 }
 
-/// <summary>Runtime-состояние одной панели: последние снапшоты + история для графиков.</summary>
+/// <summary>Runtime-состояние одной панели: последние снапшоты опроса.</summary>
 public class PmtaPanelRuntime
 {
     public PmtaPanel Panel { get; set; } = new();
@@ -179,8 +174,9 @@ public class PmtaPanelRuntime
     public DateTime LastUpdated { get; set; }
     /// <summary>Момент когда был замечен ненулевой out-трафик (rcp/мин &gt; 0). Nullable, если ни разу.</summary>
     public DateTime? LastActivityAt { get; set; }
-    /// <summary>Rolling история для timeseries-графика (append-only, старое чистится).</summary>
-    public List<PmtaTimePoint> History { get; } = new();
+    /// <summary>Когда локально (UTC этого процесса) впервые увидели точный текст ошибки —
+    /// ключ для фильтра «свежести» в PmtaViewModel, не зависит от часов/пояса VPS.</summary>
+    public Dictionary<string, DateTime> ErrorFirstSeenUtc { get; } = new();
 
     // ── Для вычисления РЕАЛЬНОЙ скорости через delta ──
     // PMTA lastMin.out.rcp = скользящая сумма за 60с и почти не меняется.
@@ -190,17 +186,4 @@ public class PmtaPanelRuntime
     /// <summary>Вычисленная реальная скорость rcp/мин на основе дельты total.out.rcp
     /// между текущим и прошлым снапшотом. Обновляется в PollOneAsync.</summary>
     public double DerivedOutRatePerMin { get; set; }
-}
-
-/// <summary>Одна временная точка для графиков.</summary>
-public class PmtaTimePoint
-{
-    public DateTime Ts { get; set; }
-    public long OutRcpLastMin { get; set; }
-    public long InRcpLastMin { get; set; }
-    public long OutRcpLastHr { get; set; }
-    public int SmtpOutCur { get; set; }
-    public int SmtpInCur { get; set; }
-    public long TotalQueueRcp { get; set; }
-    public double KbLastMin { get; set; }
 }

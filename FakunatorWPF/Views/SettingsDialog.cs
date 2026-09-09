@@ -31,8 +31,6 @@ public class SettingsDialog : Window
     private TextBlock? _amsTestResult;
 
     // App tab controls
-    private RadioButton? _rbDark;
-    private RadioButton? _rbLight;
     private TextBox? _outputDirBox;
     private CheckBox? _autoUpdateCb;
 
@@ -410,52 +408,6 @@ public class SettingsDialog : Window
         panel.Children.Add(MakeText("Приложение", 15, FontWeights.SemiBold));
         panel.Children.Add(MakeSpacer(12));
 
-        // Theme
-        panel.Children.Add(MakeLabel("Тема оформления"));
-        var themePanel = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Margin = new Thickness(0, 4, 0, 0),
-        };
-
-        _rbLight = new RadioButton
-        {
-            Content = "Светлая",
-            GroupName = "SettingsTheme",
-            IsChecked = _cfg.Theme == "light",
-            Margin = new Thickness(0, 0, 16, 0),
-            FontSize = 13,
-        };
-        _rbLight.SetResourceReference(ForegroundProperty, "Fg1Brush");
-        _rbLight.Checked += (_, _) =>
-        {
-            _cfg.Theme = "light";
-            App.SwitchTheme("light");
-            _cfg.Save();
-            RefreshDialogBackground();
-        };
-
-        _rbDark = new RadioButton
-        {
-            Content = "Тёмная",
-            GroupName = "SettingsTheme",
-            IsChecked = _cfg.Theme == "dark",
-            FontSize = 13,
-        };
-        _rbDark.SetResourceReference(ForegroundProperty, "Fg1Brush");
-        _rbDark.Checked += (_, _) =>
-        {
-            _cfg.Theme = "dark";
-            App.SwitchTheme("dark");
-            _cfg.Save();
-            RefreshDialogBackground();
-        };
-
-        themePanel.Children.Add(_rbLight);
-        themePanel.Children.Add(_rbDark);
-        panel.Children.Add(themePanel);
-        panel.Children.Add(MakeSpacer(16));
-
         // Output directory
         panel.Children.Add(MakeLabel("Папка результатов"));
         var dirRow = new DockPanel { Margin = new Thickness(0, 4, 0, 0) };
@@ -575,8 +527,6 @@ public class SettingsDialog : Window
             if (result == MessageBoxResult.Yes)
             {
                 _cfg.ResetToDefaults();
-                App.SwitchTheme(_cfg.Theme);
-                RefreshDialogBackground();
                 // Refresh current tab
                 var currentTab = _activeTab;
                 _activeTab = -1;
@@ -759,14 +709,6 @@ public class SettingsDialog : Window
             MessageBox.Show($"Ошибка подключения:\n{ex.GetType().Name}: {ex.Message}",
                 "Anthropic", MessageBoxButton.OK, MessageBoxImage.Error);
         }
-    }
-
-    // ── Helper: refresh dialog background after theme switch ─────────
-
-    private void RefreshDialogBackground()
-    {
-        Background = (Brush)FindRes("Bg1Brush");
-        Foreground = (Brush)FindRes("Fg1Brush");
     }
 
     // ── UI builder helpers ──────────────────────────────────────────

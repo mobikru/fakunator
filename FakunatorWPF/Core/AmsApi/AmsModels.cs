@@ -48,6 +48,9 @@ public class AmsMailingListNode
     /// <summary>Уровень вложенности (0 = корень) — для indent'а в шаблоне.</summary>
     public int Depth { get; init; }
     public double IndentPx => Depth * 12;
+    /// <summary>true, если у узла есть дочерние списки/папки в дереве AMS.</summary>
+    public bool IsFolder { get; init; }
+    public string SizeText => $"{Size:N0} адр.";
 }
 
 /// <summary>Прогресс/статистика рассылки. Поля для validation отличаются от mailing

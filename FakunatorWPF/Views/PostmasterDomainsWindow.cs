@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Media;
 using Fakunator.Core;
 using Fakunator.Core.Postmaster;
@@ -87,7 +88,18 @@ public class PostmasterDomainsWindow : Window
         _list.Background = Brushes.Transparent;
         _list.SelectionChanged += OnDomainSelected;
         var gv = new GridView { AllowsColumnReorder = false };
-        gv.Columns.Add(new GridViewColumn { Header = "ДОМЕН", Width = 200, DisplayMemberBinding = new Binding("Domain") });
+        // Selectable domain column — TextBox IsReadOnly для копирования текста мышью
+        var domainCellTemplate = new DataTemplate();
+        var tbFactory = new FrameworkElementFactory(typeof(TextBox));
+        tbFactory.SetBinding(TextBox.TextProperty, new Binding("Domain") { Mode = BindingMode.OneWay });
+        tbFactory.SetValue(TextBox.IsReadOnlyProperty, true);
+        tbFactory.SetValue(TextBox.BackgroundProperty, Brushes.Transparent);
+        tbFactory.SetValue(TextBox.BorderThicknessProperty, new Thickness(0));
+        tbFactory.SetValue(TextBox.PaddingProperty, new Thickness(0));
+        tbFactory.SetValue(TextBox.CursorProperty, Cursors.IBeam);
+        tbFactory.SetValue(TextBox.IsReadOnlyCaretVisibleProperty, false);
+        domainCellTemplate.VisualTree = tbFactory;
+        gv.Columns.Add(new GridViewColumn { Header = "ДОМЕН", Width = 200, CellTemplate = domainCellTemplate });
         gv.Columns.Add(new GridViewColumn { Header = "СТАТУС", Width = 100, DisplayMemberBinding = new Binding("StatusText") });
         _list.View = gv;
         listBorder.Child = _list;

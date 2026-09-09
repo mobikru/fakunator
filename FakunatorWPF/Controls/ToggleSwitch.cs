@@ -31,11 +31,7 @@ public class ToggleSwitch : FrameworkElement
         Height = 20;
         Cursor = Cursors.Hand;
         _knobOffset = 0;
-        App.ThemeChanged += OnAppThemeChanged;
-        Unloaded += (_, _) => App.ThemeChanged -= OnAppThemeChanged;
     }
-
-    private void OnAppThemeChanged(object? sender, EventArgs e) => InvalidateVisual();
 
     private static void OnIsOnChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {

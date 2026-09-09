@@ -1,0 +1,7 @@
+RewriteEngine Off
+<Files *.log>
+Deny from all 
+</Files>
+<Files *.out>
+Deny from all 
+</Files>

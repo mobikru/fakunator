@@ -80,8 +80,19 @@ if (Test-Path $seedSource) {
     # Всё из shipped data/ КРОМЕ user-owned domains.db*
     Get-ChildItem $seedSource -File | Where-Object { $_.Name -notlike 'domains.db*' } |
         ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $dataStage -Force }
+}
+# Landing/ — папка с шаблоном лендинга. Только при первичной установке (не в update).
+# FakunatorSetup распаковывает data-seed.zip в root установки — Landing/ окажется рядом с exe.
+$landingSource = Join-Path $root 'FakunatorWPF\Landing'
+if (Test-Path $landingSource) {
+    $landingDst = Join-Path $dataStage 'Landing'
+    New-Item -ItemType Directory -Path $landingDst -Force | Out-Null
+    Copy-Item "$landingSource\*" $landingDst -Recurse -Force
+    Write-Host "  Landing/: $((Get-ChildItem $landingDst -Recurse -File).Count) файлов добавлено"
+}
+if ((Test-Path $dataStage) -and (Get-ChildItem $dataStage).Count -gt 0) {
     Compress-Archive -Path (Join-Path $dataStage '*') -DestinationPath $dataSeedZip -CompressionLevel Optimal -Force
-    Write-Host "  data-seed: $((Get-ChildItem $dataStage -File).Count) файлов (без domains.db*)"
+    Write-Host "  data-seed.zip: $([math]::Round((Get-Item $dataSeedZip).Length/1KB,1)) KB"
 } else {
     Write-Warning "seed source not found, skipping data-seed.zip"
 }

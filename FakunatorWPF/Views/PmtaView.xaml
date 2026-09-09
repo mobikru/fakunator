@@ -2,45 +2,106 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+             xmlns:core="clr-namespace:Fakunator.Core"
              Background="{DynamicResource Bg1Brush}">
 
     <UserControl.Resources>
-        <Style x:Key="TileCard" TargetType="Border">
-            <Setter Property="Background" Value="{DynamicResource Bg2Brush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource Border1Brush}"/>
+
+        <!-- ═══ Стиль раздела «Серверы»: белые карточки, скруглённые углы, мягкая тень,
+             цветная левая полоска на метрик-тайлах, единый класс кнопок ActionBtn*. ═══ -->
+
+        <!-- Тайл-метрика с цветной левой полоской (как CPU/RAM/DISK/UPTIME в Серверах). -->
+        <Style x:Key="MetricTile" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderThickness" Value="4,0,0,0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#1e293b" Direction="270" ShadowDepth="1.5" BlurRadius="10" Opacity="0.12"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Обычная белая карточка-панель (графики, таблицы, сводка ошибок). -->
+        <Style x:Key="PmtaCard" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E4E7EF"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="10"/>
-            <Setter Property="Padding" Value="14,10"/>
+            <Setter Property="Padding" Value="14,12"/>
         </Style>
-        <Style x:Key="PanelListItem" TargetType="ListBoxItem">
-            <Setter Property="Padding" Value="12,10"/>
-            <Setter Property="Margin" Value="0,0,0,4"/>
+
+        <!-- Строка в списке панелей слева — копия ServerRow из раздела Серверы:
+             скругление только справа, accent-бар выделения — сиблинг, не потомок
+             (Border в WPF Core клипует детей по CornerRadius, иначе полоска "срезается"). -->
+        <Style x:Key="PmtaPanelListItem" TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0,0,0,3"/>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
-                        <Border x:Name="bd" Background="Transparent"
-                                CornerRadius="6" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter/>
-                        </Border>
+                        <Grid>
+                            <Border x:Name="bd" Background="Transparent" BorderBrush="Transparent"
+                                    BorderThickness="1" CornerRadius="0,10,10,0">
+                                <ContentPresenter Margin="12,9"/>
+                            </Border>
+                            <Border x:Name="accent" Width="3" HorizontalAlignment="Left"
+                                    Background="#4b5bff" Visibility="Collapsed"/>
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="bd" Property="Background" Value="{DynamicResource Bg3Brush}"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="{DynamicResource AccentSoftBrush}"/>
+                                <Setter TargetName="bd" Property="Background" Value="#eef1fb"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#d5dcf8"/>
+                                <Setter TargetName="accent" Property="Visibility" Value="Visible"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- DataGrid внутри белых карточек: implicit app-стиль тёмный/динамический,
+             тут явные светлые цвета, чтобы не пропасть на белом фоне в тёмной теме. -->
+        <Style x:Key="PmtaColHeader" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#F7F8FC"/>
+            <Setter Property="Foreground" Value="#7582A3"/>
+            <Setter Property="FontSize" Value="9"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="BorderBrush" Value="#E4E7EF"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        </Style>
+        <Style x:Key="PmtaCellText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#131C3D"/>
+            <Setter Property="FontSize" Value="9.5"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="8,0"/>
+        </Style>
+        <Style x:Key="PmtaRow" TargetType="DataGridRow">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="MinHeight" Value="22"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F6F7FB"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="PmtaCell" TargetType="DataGridCell">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
     </UserControl.Resources>
 
     <Grid Margin="16,16,32,16">
-        <!-- Убрал внешний header — заголовок «📡 PMTA» и всё управление съехало
-             прямо в шапку Overview, чтобы не было пустой строки сверху. -->
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="260"/>
@@ -53,12 +114,11 @@
                     BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1"
                     CornerRadius="12" Padding="12">
                 <DockPanel>
-                    <Button DockPanel.Dock="Top" Content="📊  Общий обзор"
+                    <Button DockPanel.Dock="Top" Content="Общий обзор"
                             Command="{Binding ShowOverviewCommand}"
-                            Padding="12,10" Margin="0,0,0,10"
-                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
-                            FontSize="12" Cursor="Hand"
-                            Style="{DynamicResource GhostBtn}"/>
+                            core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.ChartBar}"
+                            Style="{StaticResource ActionBtnNeutral}"
+                            HorizontalAlignment="Stretch" Margin="0,0,0,10"/>
                     <TextBlock DockPanel.Dock="Top" Text="ВАШИ ПАНЕЛИ"
                                FontSize="10.5" FontWeight="SemiBold" Opacity="0.7"
                                Foreground="{DynamicResource Fg3Brush}" Margin="0,0,0,8"/>
@@ -80,7 +140,7 @@
 
                     <ListBox ItemsSource="{Binding Panels}"
                              SelectedItem="{Binding SelectedPanel, Mode=TwoWay}"
-                             ItemContainerStyle="{StaticResource PanelListItem}"
+                             ItemContainerStyle="{StaticResource PmtaPanelListItem}"
                              Background="Transparent" BorderThickness="0"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.ItemTemplate>
@@ -112,10 +172,13 @@
                 </DockPanel>
             </Border>
 
-            <!-- Right: обзор ИЛИ детали выбранной панели -->
-            <Grid Grid.Column="2">
+            <!-- Right: белая карточка с обзором ИЛИ деталями выбранной панели —
+                 как правая детальная панель в разделе Серверы. -->
+            <Border Grid.Column="2" Background="White" BorderBrush="#E4E7EF" BorderThickness="1"
+                    CornerRadius="12" Padding="18,16">
+                <Grid>
                 <!-- ═══ OVERVIEW: сводка + таблица + большие графики ═══ -->
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,16,0"
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,4,0"
                               Visibility="{Binding IsOverview, Converter={StaticResource BoolToVis}}">
                     <StackPanel>
                         <!-- Одна линия: заголовок раздела + тайлы + кнопка добавить -->
@@ -125,52 +188,58 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock Text="Общий обзор PMTA-панелей" FontSize="18" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource Fg1Brush}"/>
-                                <TextBlock FontSize="11" Foreground="{DynamicResource Fg4Brush}" Margin="0,4,0,0">
-                                    <Run Text="{Binding OnlinePanels}"/><Run Text=" из "/>
-                                    <Run Text="{Binding TotalPanels}"/><Run Text=" панелей онлайн · обновление каждые 7 сек"/>
-                                </TextBlock>
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Width="34" Height="34" CornerRadius="8" Background="#eef1fb" Margin="0,0,10,0">
+                                    <Viewbox Width="16" Height="16">
+                                        <Path Data="{x:Static core:PhosphorIcons.Broadcast}" Fill="#4b5bff"/>
+                                    </Viewbox>
+                                </Border>
+                                <StackPanel>
+                                    <TextBlock Text="Общий обзор PMTA-панелей" FontSize="17" FontWeight="Bold"
+                                               Foreground="#131C3D"/>
+                                    <TextBlock FontSize="11" Foreground="#7582A3" Margin="0,3,0,0">
+                                        <Run Text="{Binding OnlinePanels}"/><Run Text=" из "/>
+                                        <Run Text="{Binding TotalPanels}"/><Run Text=" панелей онлайн · обновление каждые 7 сек"/>
+                                    </TextBlock>
+                                </StackPanel>
                             </StackPanel>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right"
                                         VerticalAlignment="Center">
-                                <Border Style="{StaticResource TileCard}" MinWidth="120" Margin="0,0,8,0">
+                                <Border Style="{StaticResource MetricTile}" BorderBrush="#22c55e" MinWidth="120" Margin="0,0,10,0">
                                     <StackPanel>
                                         <TextBlock Text="{Binding TotalOutRcpLastMin, StringFormat={}{0:N0}}"
-                                                   FontSize="17" FontWeight="SemiBold" Foreground="#22c55e"/>
-                                        <TextBlock Text="ОТПРАВЛЕНО / МИН" FontSize="9" Opacity="0.7"
-                                                   FontWeight="SemiBold" Foreground="{DynamicResource Fg4Brush}"/>
+                                                   FontSize="18" FontWeight="Bold" Foreground="#131C3D"/>
+                                        <TextBlock Text="ОТПРАВЛЕНО / МИН" FontSize="9" Opacity="0.75"
+                                                   FontWeight="SemiBold" Foreground="#22c55e"/>
                                     </StackPanel>
                                 </Border>
-                                <Border Style="{StaticResource TileCard}" MinWidth="120" Margin="0,0,8,0">
+                                <Border Style="{StaticResource MetricTile}" BorderBrush="#f59e0b" MinWidth="120" Margin="0,0,10,0">
                                     <StackPanel>
                                         <TextBlock Text="{Binding TotalQueueRcp, StringFormat={}{0:N0}}"
-                                                   FontSize="17" FontWeight="SemiBold" Foreground="#f59e0b"/>
-                                        <TextBlock Text="В ОЧЕРЕДИ" FontSize="9" Opacity="0.7"
-                                                   FontWeight="SemiBold" Foreground="{DynamicResource Fg4Brush}"/>
+                                                   FontSize="18" FontWeight="Bold" Foreground="#131C3D"/>
+                                        <TextBlock Text="В ОЧЕРЕДИ" FontSize="9" Opacity="0.75"
+                                                   FontWeight="SemiBold" Foreground="#f59e0b"/>
                                     </StackPanel>
                                 </Border>
-                                <Border Style="{StaticResource TileCard}" MinWidth="120">
+                                <Border Style="{StaticResource MetricTile}" BorderBrush="#3b82f6" MinWidth="120">
                                     <StackPanel>
                                         <TextBlock Text="{Binding TotalSmtpOutCur, StringFormat={}{0:N0}}"
-                                                   FontSize="17" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource Fg1Brush}"/>
-                                        <TextBlock Text="СОЕДИНЕНИЙ" FontSize="9" Opacity="0.7"
-                                                   FontWeight="SemiBold" Foreground="{DynamicResource Fg4Brush}"/>
+                                                   FontSize="18" FontWeight="Bold" Foreground="#131C3D"/>
+                                        <TextBlock Text="СОЕДИНЕНИЙ" FontSize="9" Opacity="0.75"
+                                                   FontWeight="SemiBold" Foreground="#3b82f6"/>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
                             <StackPanel Grid.Column="2" Orientation="Horizontal"
                                         VerticalAlignment="Center" Margin="14,0,0,0">
-                                <Button Content="+ Добавить панель"
+                                <Button Content="Добавить панель"
                                         Command="{Binding AddPanelCommand}"
-                                        Padding="14,8" FontSize="12" FontWeight="SemiBold"
-                                        Style="{DynamicResource AccentBtn}" Cursor="Hand"/>
-                                <Button Content="↻ Обновить"
+                                        core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.Plus}"
+                                        Style="{StaticResource ActionBtnGreen}"/>
+                                <Button Content="Обновить"
                                         Command="{Binding RefreshCommand}"
-                                        Padding="14,8" FontSize="12" FontWeight="SemiBold"
-                                        Style="{DynamicResource GhostBtn}" Cursor="Hand"
+                                        core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.ArrowClockwise}"
+                                        Style="{StaticResource ActionBtnPrimary}"
                                         Margin="8,0,0,0"
                                         ToolTip="Форсированный опрос всех панелей сейчас"/>
                             </StackPanel>
@@ -178,11 +247,11 @@
 
                         <!-- Два компактных графика в одну строку -->
                         <UniformGrid Columns="2" Rows="1" Margin="0,0,0,16">
-                            <Border Style="{StaticResource TileCard}" Padding="12" Margin="0,0,6,0" Height="160">
+                            <Border Style="{StaticResource PmtaCard}" Margin="0,0,6,0" Height="160">
                                 <DockPanel>
                                     <TextBlock DockPanel.Dock="Top" Text="ОБЩАЯ РАССЫЛКА · RCP/МИН"
-                                               FontSize="10" FontWeight="SemiBold" Opacity="0.7"
-                                               Foreground="{DynamicResource Fg3Brush}"/>
+                                               FontSize="10" FontWeight="SemiBold" Opacity="0.75"
+                                               Foreground="#7582A3"/>
                                     <lvc:CartesianChart Series="{Binding AggregateSeries}"
                                                         XAxes="{Binding AggregateXAxes}"
                                                         YAxes="{Binding AggregateYAxes}"
@@ -190,11 +259,11 @@
                                                         LegendPosition="Hidden"/>
                                 </DockPanel>
                             </Border>
-                            <Border Style="{StaticResource TileCard}" Padding="12" Margin="6,0,0,0" Height="160">
+                            <Border Style="{StaticResource PmtaCard}" Margin="6,0,0,0" Height="160">
                                 <DockPanel>
                                     <TextBlock DockPanel.Dock="Top" Text="ОБЩАЯ ЗАГРУЗКА ОЧЕРЕДЕЙ · RCP"
-                                               FontSize="10" FontWeight="SemiBold" Opacity="0.7"
-                                               Foreground="{DynamicResource Fg3Brush}"/>
+                                               FontSize="10" FontWeight="SemiBold" Opacity="0.75"
+                                               Foreground="#7582A3"/>
                                     <lvc:CartesianChart Series="{Binding AggregateQueueSeries}"
                                                         XAxes="{Binding AggregateXAxes}"
                                                         YAxes="{Binding AggregateYAxes}"
@@ -205,106 +274,98 @@
                         </UniformGrid>
 
                         <!-- Таблица со всех панелей -->
-                        <TextBlock Text="ПАНЕЛИ" FontSize="10.5" FontWeight="SemiBold" Opacity="0.7"
-                                   Foreground="{DynamicResource Fg3Brush}" Margin="0,0,0,8"/>
-                        <DataGrid ItemsSource="{Binding Panels}"
-                                  AutoGenerateColumns="False" IsReadOnly="True"
-                                  GridLinesVisibility="Horizontal" HeadersVisibility="Column"
-                                  Background="Transparent" BorderThickness="0"
-                                  RowBackground="Transparent"
-                                  CanUserAddRows="False"
-                                  SelectedItem="{Binding SelectedPanel, Mode=TwoWay}">
-                            <!-- ElementStyle для DataGridTextColumn — implicit-стиль
-                                 WPF-квирк, для генерируемых DataGridTextColumn TextBlock'ов
-                                 не работает, поэтому регистрируем явным ключом. -->
-                            <DataGrid.Resources>
-                                <Style x:Key="CellText" TargetType="TextBlock">
-                                    <Setter Property="VerticalAlignment" Value="Center"/>
-                                    <Setter Property="Margin" Value="10,0"/>
-                                </Style>
-                            </DataGrid.Resources>
-                            <!-- Подсветка строки по ActivityBackground. -->
-                            <DataGrid.CellStyle>
-                                <Style TargetType="DataGridCell">
-                                    <Setter Property="Background" Value="{Binding ActivityBackground}"/>
-                                    <Setter Property="BorderThickness" Value="0"/>
-                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
-                                    <Setter Property="Padding" Value="0"/>
-                                </Style>
-                            </DataGrid.CellStyle>
-                            <DataGrid.RowStyle>
-                                <Style TargetType="DataGridRow">
-                                    <Setter Property="MinHeight" Value="40"/>
-                                </Style>
-                            </DataGrid.RowStyle>
-                            <DataGrid.Columns>
-                                <DataGridTemplateColumn Header="" Width="30">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Border Width="10" Height="10" CornerRadius="5"
-                                                    Background="{Binding StatusColor}"
-                                                    VerticalAlignment="Center"
-                                                    HorizontalAlignment="Center"/>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="НАЗВАНИЕ" Width="*">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBlock VerticalAlignment="Center" Margin="10,0">
-                                                <Hyperlink Foreground="{DynamicResource Accent2Brush}"
-                                                           TextDecorations="{x:Null}"
-                                                           Command="{Binding DataContext.OpenPanelDetailCommand,
-                                                               RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                           CommandParameter="{Binding}">
-                                                    <Hyperlink.Style>
-                                                        <Style TargetType="Hyperlink">
-                                                            <Style.Triggers>
-                                                                <Trigger Property="IsMouseOver" Value="True">
-                                                                    <Setter Property="TextDecorations" Value="Underline"/>
-                                                                </Trigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Hyperlink.Style>
-                                                    <Run Text="{Binding Label, Mode=OneWay}"/>
-                                                </Hyperlink>
-                                            </TextBlock>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="ПОЛУЧЕНО" Binding="{Binding InRcpTotal, StringFormat={}{0:N0}}" Width="120"
-                                                    ElementStyle="{StaticResource CellText}"/>
-                                <DataGridTextColumn Header="ОТПРАВЛЕНО" Binding="{Binding OutRcpTotal, StringFormat={}{0:N0}}" Width="140"
-                                                    ElementStyle="{StaticResource CellText}"/>
-                                <DataGridTextColumn Header="ЗА ЧАС" Binding="{Binding OutRcpLastHr, StringFormat={}{0:N0}}" Width="120"
-                                                    ElementStyle="{StaticResource CellText}"/>
-                                <DataGridTextColumn Header="RCP/МИН" Binding="{Binding OutRcpLastMin, StringFormat={}{0:N0}}" Width="100"
-                                                    ElementStyle="{StaticResource CellText}"/>
-                                <DataGridTextColumn Header="ОЧЕРЕДЬ" Binding="{Binding QueueRcp, StringFormat={}{0:N0}}" Width="100"
-                                                    ElementStyle="{StaticResource CellText}"/>
-                            </DataGrid.Columns>
-                        </DataGrid>
+                        <TextBlock Text="ПАНЕЛИ" FontSize="10.5" FontWeight="SemiBold" Opacity="0.75"
+                                   Foreground="#7582A3" Margin="0,0,0,8"/>
+                        <Border Style="{StaticResource PmtaCard}" Padding="0" Margin="0,0,0,4">
+                            <DataGrid ItemsSource="{Binding Panels}"
+                                      AutoGenerateColumns="False" IsReadOnly="True"
+                                      GridLinesVisibility="Horizontal" HeadersVisibility="Column"
+                                      Background="Transparent" BorderThickness="0"
+                                      HorizontalGridLinesBrush="#EEF1F7"
+                                      RowBackground="Transparent"
+                                      CanUserAddRows="False"
+                                      ColumnHeaderStyle="{StaticResource PmtaColHeader}"
+                                      SelectedItem="{Binding SelectedPanel, Mode=TwoWay}">
+                                <!-- Подсветка строки по ActivityBackground (сохраняем логику), но
+                                     на светлой базе PmtaCell вместо тёмного app-default. -->
+                                <DataGrid.CellStyle>
+                                    <Style TargetType="DataGridCell" BasedOn="{StaticResource PmtaCell}">
+                                        <Setter Property="Background" Value="{Binding ActivityBackground}"/>
+                                    </Style>
+                                </DataGrid.CellStyle>
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow" BasedOn="{StaticResource PmtaRow}"/>
+                                </DataGrid.RowStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTemplateColumn Header="" Width="30">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border Width="10" Height="10" CornerRadius="5"
+                                                        Background="{Binding StatusColor}"
+                                                        VerticalAlignment="Center"
+                                                        HorizontalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="НАЗВАНИЕ" Width="*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock VerticalAlignment="Center" Margin="10,0">
+                                                    <Hyperlink Foreground="#4b5bff"
+                                                               TextDecorations="{x:Null}"
+                                                               Command="{Binding DataContext.OpenPanelDetailCommand,
+                                                                   RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                               CommandParameter="{Binding}">
+                                                        <Hyperlink.Style>
+                                                            <Style TargetType="Hyperlink">
+                                                                <Style.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter Property="TextDecorations" Value="Underline"/>
+                                                                    </Trigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Hyperlink.Style>
+                                                        <Run Text="{Binding Label, Mode=OneWay}"/>
+                                                    </Hyperlink>
+                                                </TextBlock>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="ПОЛУЧЕНО" Binding="{Binding InRcpTotal, StringFormat={}{0:N0}}" Width="120"
+                                                        ElementStyle="{StaticResource PmtaCellText}"/>
+                                    <DataGridTextColumn Header="ОТПРАВЛЕНО" Binding="{Binding OutRcpTotal, StringFormat={}{0:N0}}" Width="140"
+                                                        ElementStyle="{StaticResource PmtaCellText}"/>
+                                    <DataGridTextColumn Header="ЗА ЧАС" Binding="{Binding OutRcpLastHr, StringFormat={}{0:N0}}" Width="120"
+                                                        ElementStyle="{StaticResource PmtaCellText}"/>
+                                    <DataGridTextColumn Header="RCP/МИН" Binding="{Binding OutRcpLastMin, StringFormat={}{0:N0}}" Width="100"
+                                                        ElementStyle="{StaticResource PmtaCellText}"/>
+                                    <DataGridTextColumn Header="ОЧЕРЕДЬ" Binding="{Binding QueueRcp, StringFormat={}{0:N0}}" Width="100"
+                                                        ElementStyle="{StaticResource PmtaCellText}"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
                     </StackPanel>
                 </ScrollViewer>
 
                 <!-- Placeholder если нет ни одной панели -->
                 <Border Visibility="{Binding NoPanels, Converter={StaticResource BoolToVis}}"
-                        Background="{DynamicResource Bg2Brush}"
-                        BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1"
-                        CornerRadius="12">
+                        Background="White">
                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="380">
-                        <TextBlock Text="📡" FontSize="46" HorizontalAlignment="Center" Opacity="0.35"/>
+                        <Viewbox Width="46" Height="46" Opacity="0.35">
+                            <Path Data="{x:Static core:PhosphorIcons.Broadcast}" Fill="#4b5bff"/>
+                        </Viewbox>
                         <TextBlock Text="Добавьте первую PMTA-панель"
-                                   FontSize="17" FontWeight="SemiBold" HorizontalAlignment="Center"
-                                   Foreground="{DynamicResource Fg1Brush}" Margin="0,14,0,6"/>
+                                   FontSize="17" FontWeight="Bold" HorizontalAlignment="Center"
+                                   Foreground="#131C3D" Margin="0,14,0,6"/>
                         <TextBlock TextWrapping="Wrap" TextAlignment="Center" FontSize="12.5"
-                                   Foreground="{DynamicResource Fg3Brush}" LineHeight="18"
+                                   Foreground="#7582A3" LineHeight="18"
                                    Text="Укажи хост, порт и HTTPS-настройки — начнётся realtime-мониторинг очередей, скорости отправки и ошибок."/>
-                        <Button Content="+  Добавить панель"
+                        <Button Content="Добавить панель"
                                 Command="{Binding AddPanelCommand}"
-                                Style="{DynamicResource AccentBtn}"
-                                Padding="18,10" FontSize="13" FontWeight="SemiBold"
-                                Cursor="Hand" Margin="0,20,0,0"
+                                core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.Plus}"
+                                Style="{StaticResource ActionBtnGreen}"
+                                Padding="18,10" FontSize="13"
+                                Margin="0,20,0,0"
                                 HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
@@ -312,266 +373,465 @@
                 <!-- Detail view. DataContext вешаем на внутренний StackPanel, а не
                      на ScrollViewer — иначе Visibility="{Binding IsDetail}" ищется на
                      SelectedPanel и молча падает, оставляя Visible. -->
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,16,0"
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,4,0"
                               Visibility="{Binding IsDetail, Converter={StaticResource BoolToVis}}">
                     <StackPanel DataContext="{Binding SelectedPanel}">
-                        <!-- Header выбранной -->
-                        <DockPanel LastChildFill="False" Margin="0,0,0,8">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <Border Width="10" Height="10" CornerRadius="5"
-                                        Background="{Binding StatusColor}" Margin="0,0,10,0"
-                                        VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding Label}" FontSize="19" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource Fg1Brush}"
-                                           VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding StatusText}" FontSize="11"
-                                           Foreground="{DynamicResource Fg4Brush}"
-                                           VerticalAlignment="Center" Margin="12,0,0,0"/>
-                            </StackPanel>
-                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                <Button Content="✎ Редактировать"
-                                        Command="{Binding DataContext.EditPanelCommand,
-                                            RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding}"
-                                        Padding="12,7" FontSize="11.5"
-                                        Style="{DynamicResource GhostBtn}" Cursor="Hand"/>
-                                <Button Content="🗑 Удалить"
-                                        Command="{Binding DataContext.RemovePanelCommand,
-                                            RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding}"
-                                        Padding="12,7" FontSize="11.5" Margin="6,0,0,0"
-                                        Style="{DynamicResource DangerBtn}" Cursor="Hand"/>
-                            </StackPanel>
-                        </DockPanel>
-                        <TextBlock FontSize="11" Foreground="{DynamicResource Fg4Brush}" Margin="0,0,0,14">
-                            <Run Text="{Binding EndpointText, Mode=OneWay}"/>
-                            <Run Text="   ·   PMTA "/>
-                            <Run Text="{Binding Version, Mode=OneWay}"/>
-                            <Run Text="   ·   "/>
-                            <Run Text="{Binding HostName, Mode=OneWay}"/>
-                        </TextBlock>
+                        <!-- Header выбранной: статус + endpoint + пилюля, мета-строка, действия,
+                             декоративная иконка-бейдж справа (bleed через ZIndex, как в Серверах). -->
+                        <Grid Margin="0,0,0,14">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="10" Height="10" CornerRadius="5"
+                                                Background="{Binding StatusColor}" Margin="0,0,10,0"
+                                                VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Label}" FontSize="19" FontWeight="Bold"
+                                                   Foreground="#131C3D" VerticalAlignment="Center"/>
+                                        <Grid Margin="10,0,0,0" VerticalAlignment="Center">
+                                            <Border Background="{Binding StatusColor}" CornerRadius="10" Opacity="0.15"/>
+                                            <TextBlock Text="{Binding StatusText}" Foreground="{Binding StatusColor}"
+                                                       FontSize="10.5" FontWeight="SemiBold" Padding="10,3"/>
+                                        </Grid>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="20,5,0,0">
+                                        <Viewbox Width="11" Height="11" Margin="0,0,6,0" Opacity="0.6">
+                                            <Path Data="{x:Static core:PhosphorIcons.Broadcast}" Fill="#7582A3"/>
+                                        </Viewbox>
+                                        <TextBlock FontSize="11" Foreground="#7582A3">
+                                            <Run Text="MTA "/><Run Text="{Binding Version, Mode=OneWay}"/>
+                                            <Run Text="   ·   "/><Run Text="{Binding HostName, Mode=OneWay}"/>
+                                        </TextBlock>
+                                        <Button Click="OnOpenPanelUrlClick" Background="Transparent" BorderThickness="0"
+                                                Padding="6,0,0,0" Cursor="Hand" ToolTip="Открыть панель в браузере">
+                                            <Viewbox Width="11" Height="11">
+                                                <Path Data="{x:Static core:PhosphorIcons.Globe}" Fill="#7582A3"/>
+                                            </Viewbox>
+                                        </Button>
+                                    </StackPanel>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                                    <Button Content="Редактировать"
+                                            Command="{Binding DataContext.EditPanelCommand,
+                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.PencilSimple}"
+                                            Style="{StaticResource ActionBtnNeutral}"/>
+                                    <Button Content="Удалить"
+                                            Command="{Binding DataContext.RemovePanelCommand,
+                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.Trash}"
+                                            Style="{StaticResource ActionBtnDanger}"
+                                            Margin="8,0,0,0"/>
+                                    <Button Content="Управление PMTA ⌄"
+                                            Command="{Binding DataContext.OpenCommandsCommand,
+                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.Gear}"
+                                            Style="{StaticResource ActionBtnPrimary}"
+                                            Margin="8,0,0,0"/>
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
 
-                        <!-- Управление PMTA — одна кнопка → диалог с чекбоксами команд -->
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
-                            <Button Content="⚙  Управление PMTA"
-                                    Command="{Binding DataContext.OpenCommandsCommand,
-                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                    Padding="16,9" FontSize="12" FontWeight="SemiBold"
-                                    Style="{DynamicResource AccentBtn}" Cursor="Hand"/>
-                            <TextBlock Text="выбери набор команд (пауза / резюм / нормал / сброс / очистка)"
-                                       FontSize="10.5" Foreground="{DynamicResource Fg4Brush}"
-                                       VerticalAlignment="Center" Margin="12,0,0,0"/>
-                        </StackPanel>
-
-                        <!-- Тайлы -->
-                        <UniformGrid Rows="1" Margin="0,0,0,14">
-                            <Border Style="{StaticResource TileCard}" Margin="0,0,6,0">
-                                <StackPanel>
-                                    <TextBlock Text="{Binding OutRcpLastMin, StringFormat={}{0:N0}}"
-                                               FontSize="20" FontWeight="SemiBold" Foreground="#22c55e"/>
-                                    <TextBlock Text="RCP / МИН" FontSize="9.5" Opacity="0.7"
-                                               FontWeight="SemiBold" Foreground="{DynamicResource Fg4Brush}"/>
+                        <!-- Тайлы: компактные icon-chip карточки в один ряд -->
+                        <UniformGrid Rows="1" Margin="0,0,0,12">
+                            <Border Style="{StaticResource PmtaCard}" Padding="10" Margin="0,0,8,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Width="34" Height="34" CornerRadius="9" Background="#E7F9EE">
+                                        <Viewbox Width="16" Height="16">
+                                            <Path Data="{x:Static core:PhosphorIcons.PaperPlane}" Fill="#16A34A"/>
+                                        </Viewbox>
+                                    </Border>
+                                    <StackPanel Margin="9,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding OutRcpLastMin, StringFormat={}{0:N0}}"
+                                                   FontSize="17" FontWeight="Bold" Foreground="#131C3D"/>
+                                        <TextBlock Text="RCP / МИН" FontSize="9" Foreground="#7582A3" FontWeight="SemiBold"/>
+                                    </StackPanel>
                                 </StackPanel>
                             </Border>
-                            <Border Style="{StaticResource TileCard}" Margin="6,0">
-                                <StackPanel>
-                                    <TextBlock Text="{Binding OutRcpLastHr, StringFormat={}{0:N0}}"
-                                               FontSize="20" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource Fg1Brush}"/>
-                                    <TextBlock Text="RCP / ЧАС" FontSize="9.5" Opacity="0.7"
-                                               FontWeight="SemiBold" Foreground="{DynamicResource Fg4Brush}"/>
+                            <Border Style="{StaticResource PmtaCard}" Padding="10" Margin="0,0,8,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Width="34" Height="34" CornerRadius="9" Background="#E8F0FE">
+                                        <Viewbox Width="16" Height="16">
+                                            <Path Data="{x:Static core:PhosphorIcons.Clock}" Fill="#2563EB"/>
+                                        </Viewbox>
+                                    </Border>
+                                    <StackPanel Margin="9,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding OutRcpLastHr, StringFormat={}{0:N0}}"
+                                                   FontSize="17" FontWeight="Bold" Foreground="#131C3D"/>
+                                        <TextBlock Text="RCP / ЧАС" FontSize="9" Foreground="#7582A3" FontWeight="SemiBold"/>
+                                    </StackPanel>
                                 </StackPanel>
                             </Border>
-                            <Border Style="{StaticResource TileCard}" Margin="6,0">
-                                <StackPanel>
-                                    <TextBlock Text="{Binding OutRcpTotal, StringFormat={}{0:N0}}"
-                                               FontSize="20" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource Fg1Brush}"/>
-                                    <TextBlock Text="ВСЕГО" FontSize="9.5" Opacity="0.7"
-                                               FontWeight="SemiBold" Foreground="{DynamicResource Fg4Brush}"/>
+                            <Border Style="{StaticResource PmtaCard}" Padding="10" Margin="0,0,8,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Width="34" Height="34" CornerRadius="9" Background="#F1E9FE">
+                                        <Viewbox Width="16" Height="16">
+                                            <Path Data="{x:Static core:PhosphorIcons.Database}" Fill="#7C3AED"/>
+                                        </Viewbox>
+                                    </Border>
+                                    <StackPanel Margin="9,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding OutRcpTotal, StringFormat={}{0:N0}}"
+                                                   FontSize="17" FontWeight="Bold" Foreground="#131C3D"/>
+                                        <TextBlock Text="ВСЕГО" FontSize="9" Foreground="#7582A3" FontWeight="SemiBold"/>
+                                    </StackPanel>
                                 </StackPanel>
                             </Border>
-                            <Border Style="{StaticResource TileCard}" Margin="6,0">
-                                <StackPanel>
-                                    <TextBlock FontSize="20" FontWeight="SemiBold"
-                                               Foreground="#f59e0b">
-                                        <Run Text="{Binding QueueRcp, Mode=OneWay, StringFormat={}{0:N0}}"/>
-                                    </TextBlock>
-                                    <TextBlock Text="В ОЧЕРЕДИ" FontSize="9.5" Opacity="0.7"
-                                               FontWeight="SemiBold" Foreground="{DynamicResource Fg4Brush}"/>
+                            <Border Style="{StaticResource PmtaCard}" Padding="10" Margin="0,0,8,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Width="34" Height="34" CornerRadius="9" Background="#FEF3E0">
+                                        <Viewbox Width="16" Height="16">
+                                            <Path Data="{x:Static core:PhosphorIcons.ListBullets}" Fill="#D97706"/>
+                                        </Viewbox>
+                                    </Border>
+                                    <StackPanel Margin="9,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding QueueRcp, Mode=OneWay, StringFormat={}{0:N0}}"
+                                                   FontSize="17" FontWeight="Bold" Foreground="#131C3D"/>
+                                        <TextBlock Text="В ОЧЕРЕДИ" FontSize="9" Foreground="#7582A3" FontWeight="SemiBold"/>
+                                    </StackPanel>
                                 </StackPanel>
                             </Border>
-                            <Border Style="{StaticResource TileCard}" Margin="6,0,0,0">
-                                <StackPanel>
-                                    <TextBlock FontSize="20" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource Fg1Brush}">
-                                        <Run Text="{Binding SmtpOutCur, Mode=OneWay}"/>
-                                        <Run Text=" / "/>
-                                        <Run Text="{Binding SmtpOutMax, Mode=OneWay}" FontSize="11"/>
-                                    </TextBlock>
-                                    <TextBlock Text="SMTP OUT" FontSize="9.5" Opacity="0.7"
-                                               FontWeight="SemiBold" Foreground="{DynamicResource Fg4Brush}"/>
+                            <Border Style="{StaticResource PmtaCard}" Padding="10">
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Width="34" Height="34" CornerRadius="9" Background="#E8F0FE">
+                                        <Viewbox Width="16" Height="16">
+                                            <Path Data="{x:Static core:PhosphorIcons.Envelope}" Fill="#2563EB"/>
+                                        </Viewbox>
+                                    </Border>
+                                    <StackPanel Margin="9,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock FontSize="17" FontWeight="Bold" Foreground="#131C3D">
+                                            <Run Text="{Binding SmtpOutCur, Mode=OneWay}"/>
+                                            <Run Text=" / "/>
+                                            <Run Text="{Binding SmtpOutMax, Mode=OneWay}" FontSize="11"/>
+                                        </TextBlock>
+                                        <TextBlock Text="SMTP OUT" FontSize="9" Foreground="#7582A3" FontWeight="SemiBold"/>
+                                    </StackPanel>
                                 </StackPanel>
                             </Border>
                         </UniformGrid>
 
-                        <!-- Графики -->
-                        <UniformGrid Columns="2" Rows="1" Margin="0,0,0,14">
-                            <Border Style="{StaticResource TileCard}" Margin="0,0,6,0" Padding="12">
+                        <!-- Графики + сводка ошибок в один ряд -->
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Style="{StaticResource PmtaCard}" Margin="0,0,6,0">
                                 <DockPanel>
-                                    <TextBlock DockPanel.Dock="Top" Text="ОТПРАВКА · RCP / МИН"
-                                               FontSize="10.5" FontWeight="SemiBold" Opacity="0.7"
-                                               Foreground="{DynamicResource Fg3Brush}"/>
+                                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                                        <Viewbox Width="12" Height="12" Margin="0,0,6,0">
+                                            <Path Data="{x:Static core:PhosphorIcons.PaperPlane}" Fill="#16A34A"/>
+                                        </Viewbox>
+                                        <TextBlock Text="Отправка · RCP / мин" FontSize="11" FontWeight="SemiBold" Foreground="#131C3D"/>
+                                    </StackPanel>
                                     <lvc:CartesianChart Series="{Binding SendSeries}"
                                                         XAxes="{Binding EmptyXAxes}"
                                                         YAxes="{Binding YAxes}"
                                                         TooltipPosition="Hidden"
                                                         LegendPosition="Hidden"
-                                                        Height="200"/>
+                                                        Height="150"/>
                                 </DockPanel>
                             </Border>
-                            <Border Style="{StaticResource TileCard}" Margin="6,0,0,0" Padding="12">
+                            <Border Grid.Column="1" Style="{StaticResource PmtaCard}" Margin="6,0">
                                 <DockPanel>
-                                    <TextBlock DockPanel.Dock="Top" Text="ОЧЕРЕДЬ"
-                                               FontSize="10.5" FontWeight="SemiBold" Opacity="0.7"
-                                               Foreground="{DynamicResource Fg3Brush}"/>
+                                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                                        <Viewbox Width="12" Height="12" Margin="0,0,6,0">
+                                            <Path Data="{x:Static core:PhosphorIcons.Database}" Fill="#D97706"/>
+                                        </Viewbox>
+                                        <TextBlock Text="Очередь" FontSize="11" FontWeight="SemiBold" Foreground="#131C3D"/>
+                                    </StackPanel>
                                     <lvc:CartesianChart Series="{Binding QueueSeriesChart}"
                                                         XAxes="{Binding EmptyXAxes}"
                                                         YAxes="{Binding YAxes}"
                                                         TooltipPosition="Hidden"
                                                         LegendPosition="Hidden"
-                                                        Height="200"/>
+                                                        Height="150"/>
                                 </DockPanel>
                             </Border>
-                        </UniformGrid>
+                            <Border Grid.Column="2" Style="{StaticResource PmtaCard}" Margin="6,0,0,0">
+                                <DockPanel>
+                                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                                        <Viewbox Width="12" Height="12" Margin="0,0,6,0">
+                                            <Path Data="{x:Static core:PhosphorIcons.Warning}" Fill="#ef4444"/>
+                                        </Viewbox>
+                                        <TextBlock Text="Сводка ошибок" FontSize="11" FontWeight="SemiBold" Foreground="#131C3D"/>
+                                    </StackPanel>
+                                        <ItemsControl ItemsSource="{Binding ErrorSummary}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid Margin="0,0,0,8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Viewbox Grid.Column="0" Width="14" Height="14"
+                                                                 Margin="0,1,8,0" VerticalAlignment="Top">
+                                                            <Path Data="{Binding Icon}" Fill="{Binding Color}"/>
+                                                        </Viewbox>
+                                                        <StackPanel Grid.Column="1">
+                                                            <TextBlock Text="{Binding Category}" FontSize="11"
+                                                                       FontWeight="SemiBold" Foreground="#131C3D"
+                                                                       TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock Text="{Binding LatestExample}" FontSize="9.5"
+                                                                       Foreground="#7582A3" Margin="0,1,0,0"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       ToolTip="{Binding LatestExample}"/>
+                                                        </StackPanel>
+                                                        <Border Grid.Column="2" Background="#ef4444" CornerRadius="9"
+                                                                Padding="8,2" VerticalAlignment="Top">
+                                                            <TextBlock Text="{Binding Count}" Foreground="White"
+                                                                       FontWeight="SemiBold" FontSize="10"/>
+                                                        </Border>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                </DockPanel>
+                            </Border>
+                        </Grid>
 
-                        <!-- Сводка ошибок — сразу видно почему панель тормозит -->
-                        <TextBlock Text="СВОДКА ОШИБОК" FontSize="10.5" FontWeight="SemiBold" Opacity="0.7"
-                                   Foreground="{DynamicResource Fg3Brush}" Margin="0,0,0,6"/>
-                        <ItemsControl ItemsSource="{Binding ErrorSummary}" Margin="0,0,0,14">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Background="{DynamicResource Bg2Brush}"
-                                            BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1"
-                                            CornerRadius="8" Padding="12,8" Margin="0,0,0,6">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" Text="{Binding Category}"
-                                                       FontSize="12" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource Fg1Brush}"
-                                                       VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="1" Text="{Binding LatestExample}"
-                                                       FontSize="10.5" Foreground="{DynamicResource Fg4Brush}"
-                                                       Margin="14,0,10,0"
-                                                       TextTrimming="CharacterEllipsis"
-                                                       VerticalAlignment="Center"
-                                                       ToolTip="{Binding LatestExample}"/>
-                                            <Border Grid.Column="2" Background="#ef4444"
-                                                    CornerRadius="10" Padding="10,3"
-                                                    VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Count}"
-                                                           Foreground="White" FontWeight="SemiBold"
-                                                           FontSize="11"/>
-                                            </Border>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                        <!-- Топ очередей / Virtual MTA — в один ряд, с поиском в шапке -->
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Style="{StaticResource PmtaCard}" Padding="0" Margin="0,0,6,0">
+                                <DockPanel>
+                                    <Grid DockPanel.Dock="Top" Margin="14,12,14,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="160"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Viewbox Width="13" Height="13" Margin="0,0,7,0">
+                                                <Path Data="{x:Static core:PhosphorIcons.ListBullets}" Fill="#D97706"/>
+                                            </Viewbox>
+                                            <TextBlock Text="Топ очередей" FontSize="12.5" FontWeight="SemiBold" Foreground="#131C3D"/>
+                                        </StackPanel>
+                                        <Border Grid.Column="1" Background="#F7F8FC" BorderBrush="#E4E7EF"
+                                                BorderThickness="1" CornerRadius="7" Padding="9,5">
+                                            <DockPanel>
+                                                <Viewbox DockPanel.Dock="Left" Width="11" Height="11" Margin="0,0,6,0" Opacity="0.6">
+                                                    <Path Data="{x:Static core:PhosphorIcons.Globe}" Fill="#7582A3"/>
+                                                </Viewbox>
+                                                <TextBox Background="Transparent" BorderThickness="0" FontSize="11"
+                                                         Foreground="#131C3D" VerticalAlignment="Center"
+                                                         Text="{Binding QueueSearch, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </DockPanel>
+                                        </Border>
+                                    </Grid>
+                                    <DataGrid ItemsSource="{Binding FilteredQueues}"
+                                              AutoGenerateColumns="False" IsReadOnly="True"
+                                              GridLinesVisibility="Horizontal" HeadersVisibility="Column"
+                                              Background="Transparent" BorderThickness="0"
+                                              HorizontalGridLinesBrush="#EEF1F7"
+                                              RowBackground="Transparent"
+                                              CanUserAddRows="False"
+                                              ColumnHeaderStyle="{StaticResource PmtaColHeader}"
+                                              MaxHeight="150">
+                                        <DataGrid.CellStyle>
+                                            <Style TargetType="DataGridCell" BasedOn="{StaticResource PmtaCell}"/>
+                                        </DataGrid.CellStyle>
+                                        <DataGrid.RowStyle>
+                                            <Style TargetType="DataGridRow" BasedOn="{StaticResource PmtaRow}"/>
+                                        </DataGrid.RowStyle>
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="ОЧЕРЕДЬ" Binding="{Binding Name}" Width="*"
+                                                                ElementStyle="{StaticResource PmtaCellText}"/>
+                                            <DataGridTextColumn Header="RCP" Binding="{Binding Rcp, StringFormat={}{0:N0}}" Width="80"
+                                                                ElementStyle="{StaticResource PmtaCellText}"/>
+                                            <DataGridTextColumn Header="KB" Binding="{Binding Kb, StringFormat={}{0:N1}}" Width="80"
+                                                                ElementStyle="{StaticResource PmtaCellText}"/>
+                                            <DataGridTextColumn Header="CONN" Binding="{Binding Conn}" Width="60"
+                                                                ElementStyle="{StaticResource PmtaCellText}"/>
+                                            <DataGridTemplateColumn Header="ОШИБКИ" Width="70">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock VerticalAlignment="Center" Margin="8,0" FontSize="9.5">
+                                                            <Run Text="{Binding Errors.Count, Mode=OneWay}"
+                                                                 Foreground="#ef4444" FontWeight="SemiBold"/>
+                                                            <TextBlock.ToolTip>
+                                                                <ToolTip MaxWidth="600">
+                                                                    <ItemsControl ItemsSource="{Binding Errors}">
+                                                                        <ItemsControl.ItemTemplate>
+                                                                            <DataTemplate>
+                                                                                <TextBlock Margin="0,0,0,4" TextWrapping="Wrap">
+                                                                                    <Run Text="{Binding Time, Mode=OneWay}"
+                                                                                         Foreground="Gray" FontSize="10"/>
+                                                                                    <LineBreak/>
+                                                                                    <Run Text="{Binding Text, Mode=OneWay}"
+                                                                                         FontSize="11"/>
+                                                                                </TextBlock>
+                                                                            </DataTemplate>
+                                                                        </ItemsControl.ItemTemplate>
+                                                                    </ItemsControl>
+                                                                </ToolTip>
+                                                            </TextBlock.ToolTip>
+                                                        </TextBlock>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </DockPanel>
+                            </Border>
+                            <Border Grid.Column="1" Style="{StaticResource PmtaCard}" Padding="0" Margin="6,0,0,0">
+                                <DockPanel>
+                                    <Grid DockPanel.Dock="Top" Margin="14,12,14,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="160"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Viewbox Width="13" Height="13" Margin="0,0,7,0">
+                                                <Path Data="{x:Static core:PhosphorIcons.Database}" Fill="#7C3AED"/>
+                                            </Viewbox>
+                                            <TextBlock Text="Virtual MTA" FontSize="12.5" FontWeight="SemiBold" Foreground="#131C3D"/>
+                                        </StackPanel>
+                                        <Border Grid.Column="1" Background="#F7F8FC" BorderBrush="#E4E7EF"
+                                                BorderThickness="1" CornerRadius="7" Padding="9,5">
+                                            <DockPanel>
+                                                <Viewbox DockPanel.Dock="Left" Width="11" Height="11" Margin="0,0,6,0" Opacity="0.6">
+                                                    <Path Data="{x:Static core:PhosphorIcons.Globe}" Fill="#7582A3"/>
+                                                </Viewbox>
+                                                <TextBox Background="Transparent" BorderThickness="0" FontSize="11"
+                                                         Foreground="#131C3D" VerticalAlignment="Center"
+                                                         Text="{Binding VmtaSearch, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </DockPanel>
+                                        </Border>
+                                    </Grid>
+                                    <DataGrid ItemsSource="{Binding FilteredVmtas}"
+                                              AutoGenerateColumns="False" IsReadOnly="True"
+                                              GridLinesVisibility="Horizontal" HeadersVisibility="Column"
+                                              Background="Transparent" BorderThickness="0"
+                                              HorizontalGridLinesBrush="#EEF1F7"
+                                              RowBackground="Transparent"
+                                              CanUserAddRows="False"
+                                              ColumnHeaderStyle="{StaticResource PmtaColHeader}"
+                                              MaxHeight="150">
+                                        <DataGrid.CellStyle>
+                                            <Style TargetType="DataGridCell" BasedOn="{StaticResource PmtaCell}"/>
+                                        </DataGrid.CellStyle>
+                                        <DataGrid.RowStyle>
+                                            <Style TargetType="DataGridRow" BasedOn="{StaticResource PmtaRow}"/>
+                                        </DataGrid.RowStyle>
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="VMTA" Binding="{Binding Name}" Width="*"
+                                                                ElementStyle="{StaticResource PmtaCellText}"/>
+                                            <DataGridTextColumn Header="RCP" Binding="{Binding Rcp, StringFormat={}{0:N0}}" Width="80"
+                                                                ElementStyle="{StaticResource PmtaCellText}"/>
+                                            <DataGridTextColumn Header="%" Binding="{Binding PctOfTotal}" Width="55"
+                                                                ElementStyle="{StaticResource PmtaCellText}"/>
+                                            <DataGridTextColumn Header="CONN" Binding="{Binding Conn}" Width="55"
+                                                                ElementStyle="{StaticResource PmtaCellText}"/>
+                                            <DataGridTextColumn Header="DOM" Binding="{Binding Dom}" Width="55"
+                                                                ElementStyle="{StaticResource PmtaCellText}"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </DockPanel>
+                            </Border>
+                        </Grid>
 
-                        <!-- Табличка Очередей -->
-                        <TextBlock Text="ТОП ОЧЕРЕДЕЙ" FontSize="10.5" FontWeight="SemiBold" Opacity="0.7"
-                                   Foreground="{DynamicResource Fg3Brush}" Margin="0,0,0,6"/>
-                        <DataGrid ItemsSource="{Binding Queues}"
-                                  AutoGenerateColumns="False" IsReadOnly="True"
-                                  GridLinesVisibility="Horizontal" HeadersVisibility="Column"
-                                  Background="Transparent" BorderThickness="0"
-                                  RowBackground="Transparent"
-                                  AlternatingRowBackground="{DynamicResource Bg2Brush}"
-                                  AlternationCount="2" CanUserAddRows="False"
-                                  MaxHeight="240" Margin="0,0,0,14">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="ОЧЕРЕДЬ" Binding="{Binding Name}" Width="*"/>
-                                <DataGridTextColumn Header="RCP" Binding="{Binding Rcp, StringFormat={}{0:N0}}" Width="90"/>
-                                <DataGridTextColumn Header="KB" Binding="{Binding Kb, StringFormat={}{0:N1}}" Width="90"/>
-                                <DataGridTextColumn Header="CONN" Binding="{Binding Conn}" Width="60"/>
-                                <DataGridTemplateColumn Header="ОШИБОК" Width="90">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBlock VerticalAlignment="Center" Margin="8,0" FontSize="11">
-                                                <Run Text="{Binding Errors.Count, Mode=OneWay}"
-                                                     Foreground="#ef4444" FontWeight="SemiBold"/>
-                                                <Run Text=" · ⓘ" Foreground="{DynamicResource Fg4Brush}"/>
-                                                <TextBlock.ToolTip>
-                                                    <ToolTip MaxWidth="600">
-                                                        <ItemsControl ItemsSource="{Binding Errors}">
-                                                            <ItemsControl.ItemTemplate>
-                                                                <DataTemplate>
-                                                                    <TextBlock Margin="0,0,0,4" TextWrapping="Wrap">
-                                                                        <Run Text="{Binding Time, Mode=OneWay}"
-                                                                             Foreground="Gray" FontSize="10"/>
-                                                                        <LineBreak/>
-                                                                        <Run Text="{Binding Text, Mode=OneWay}"
-                                                                             FontSize="11"/>
-                                                                    </TextBlock>
-                                                                </DataTemplate>
-                                                            </ItemsControl.ItemTemplate>
-                                                        </ItemsControl>
-                                                    </ToolTip>
-                                                </TextBlock.ToolTip>
-                                            </TextBlock>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                            </DataGrid.Columns>
-                        </DataGrid>
-
-                        <!-- VMTAs -->
-                        <TextBlock Text="VIRTUAL MTA" FontSize="10.5" FontWeight="SemiBold" Opacity="0.7"
-                                   Foreground="{DynamicResource Fg3Brush}" Margin="0,0,0,6"/>
-                        <DataGrid ItemsSource="{Binding Vmtas}"
-                                  AutoGenerateColumns="False" IsReadOnly="True"
-                                  GridLinesVisibility="Horizontal" HeadersVisibility="Column"
-                                  Background="Transparent" BorderThickness="0"
-                                  RowBackground="Transparent"
-                                  AlternatingRowBackground="{DynamicResource Bg2Brush}"
-                                  AlternationCount="2" CanUserAddRows="False"
-                                  MaxHeight="200" Margin="0,0,0,14">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="VMTA" Binding="{Binding Name}" Width="*"/>
-                                <DataGridTextColumn Header="RCP" Binding="{Binding Rcp, StringFormat={}{0:N0}}" Width="90"/>
-                                <DataGridTextColumn Header="%" Binding="{Binding PctOfTotal}" Width="60"/>
-                                <DataGridTextColumn Header="CONN" Binding="{Binding Conn}" Width="60"/>
-                                <DataGridTextColumn Header="DOM" Binding="{Binding Dom}" Width="60"/>
-                            </DataGrid.Columns>
-                        </DataGrid>
-
-                        <!-- Errors -->
-                        <TextBlock Text="ПОСЛЕДНИЕ ОШИБКИ" FontSize="10.5" FontWeight="SemiBold" Opacity="0.7"
-                                   Foreground="{DynamicResource Fg3Brush}" Margin="0,0,0,6"/>
-                        <ItemsControl ItemsSource="{Binding RecentErrors}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Background="{DynamicResource Bg2Brush}" CornerRadius="6"
-                                            Padding="10,6" Margin="0,0,0,4">
-                                        <StackPanel>
-                                            <TextBlock Text="{Binding Time}" FontSize="10"
-                                                       Foreground="{DynamicResource Fg4Brush}"/>
-                                            <TextBlock Text="{Binding Text}" FontSize="11"
-                                                       TextWrapping="Wrap"
-                                                       Foreground="{DynamicResource Fg2Brush}"/>
+                        <!-- Последние ошибки: полная таблица с типом, фильтром и повторами -->
+                        <Border Style="{StaticResource PmtaCard}" Padding="0">
+                            <DockPanel>
+                                <Grid DockPanel.Dock="Top" Margin="14,12,14,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Viewbox Width="13" Height="13" Margin="0,0,7,0">
+                                            <Path Data="{x:Static core:PhosphorIcons.FileText}" Fill="#3b82f6"/>
+                                        </Viewbox>
+                                        <TextBlock Text="Последние ошибки" FontSize="12.5" FontWeight="SemiBold" Foreground="#131C3D"/>
+                                    </StackPanel>
+                                    <ComboBox Grid.Column="1" Width="150" Margin="0,0,8,0"
+                                              ItemsSource="{Binding ErrorTypeFilterOptions}"
+                                              SelectedItem="{Binding ErrorTypeFilter, Mode=TwoWay}"
+                                              FontSize="11"/>
+                                    <Border Grid.Column="2" Background="#EEF9F1" CornerRadius="7" Padding="9,5">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Viewbox Width="11" Height="11" Margin="0,0,6,0">
+                                                <Path Data="{x:Static core:PhosphorIcons.ArrowClockwise}" Fill="#16A34A"/>
+                                            </Viewbox>
+                                            <TextBlock Text="{Binding LastPolledText}" FontSize="10.5"
+                                                       FontWeight="SemiBold" Foreground="#16A34A"/>
                                         </StackPanel>
                                     </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                                </Grid>
+                                <Grid DockPanel.Dock="Top" Margin="14,0,14,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="130"/>
+                                        <ColumnDefinition Width="160"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="20"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="ВРЕМЯ" FontSize="10" FontWeight="SemiBold" Foreground="#7582A3"/>
+                                    <TextBlock Grid.Column="1" Text="ТИП" FontSize="10" FontWeight="SemiBold" Foreground="#7582A3"/>
+                                    <TextBlock Grid.Column="2" Text="СООБЩЕНИЕ" FontSize="10" FontWeight="SemiBold" Foreground="#7582A3"/>
+                                    <TextBlock Grid.Column="3" Text="ПОВТОРЫ" FontSize="10" FontWeight="SemiBold" Foreground="#7582A3" HorizontalAlignment="Right"/>
+                                </Grid>
+                                <Border DockPanel.Dock="Top" BorderBrush="#E4E7EF" BorderThickness="0,1,0,0"/>
+                                <TextBlock DockPanel.Dock="Top" Text="Ошибок за последние 3 часа нет" FontSize="11" Foreground="#7582A3"
+                                           HorizontalAlignment="Center" Margin="0,24"
+                                           Visibility="{Binding NoRecentErrors, Converter={StaticResource BoolToVis}}"/>
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" Height="160"
+                                              Visibility="{Binding HasRecentErrors, Converter={StaticResource BoolToVis}}">
+                                <ItemsControl ItemsSource="{Binding FilteredRecentErrorRows}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BorderBrush="#EEF1F7" BorderThickness="0,0,0,1" Padding="14,6">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="130"/>
+                                                        <ColumnDefinition Width="160"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="80"/>
+                                                        <ColumnDefinition Width="20"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" Text="{Binding Time}" FontSize="9.5"
+                                                               Foreground="#7582A3" VerticalAlignment="Center"/>
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                        <Viewbox Width="11" Height="11" Margin="0,0,6,0">
+                                                            <Path Data="{Binding Icon}" Fill="{Binding Color}"/>
+                                                        </Viewbox>
+                                                        <TextBlock Text="{Binding Category}" FontSize="10"
+                                                                   Foreground="#131C3D" VerticalAlignment="Center"
+                                                                   TextTrimming="CharacterEllipsis"/>
+                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="2" Text="{Binding Text}" FontSize="9.5"
+                                                               Foreground="#7582A3" VerticalAlignment="Center"
+                                                               Margin="10,0" TextTrimming="CharacterEllipsis"
+                                                               ToolTip="{Binding Text}"/>
+                                                    <TextBlock Grid.Column="3" Text="{Binding RepeatCount}" FontSize="10"
+                                                               FontWeight="SemiBold" Foreground="#131C3D"
+                                                               HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                                    <Viewbox Grid.Column="4" Width="8" Height="8" Opacity="0.4"
+                                                             Margin="6,0,0,0" VerticalAlignment="Center">
+                                                        <Path Data="{x:Static core:PhosphorIcons.ArrowRight}" Fill="#7582A3"/>
+                                                    </Viewbox>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                </ScrollViewer>
+                            </DockPanel>
+                        </Border>
                     </StackPanel>
                 </ScrollViewer>
-            </Grid>
+                </Grid>
+            </Border>
         </Grid>
     </Grid>
 </UserControl>

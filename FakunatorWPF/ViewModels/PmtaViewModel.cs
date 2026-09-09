@@ -214,10 +214,13 @@ public class PmtaViewModel : INotifyPropertyChanged
         TotalSmtpOutCur = all.Sum(x => x.LastStatus?.Data?.Status?.Conn?.SmtpOut?.Cur ?? 0);
 
         // Одна точка на цикл (событие BatchCompleted вызвано после завершения всех panels-пollов).
+        // Ёмкость на ~1 час при опросе раз в 7с (PmtaMonitorService.PollInterval) — PMTA сам
+        // историю не хранит (даже его штатный веб-монитор рисует график с нуля от открытия
+        // страницы), так что это единственный источник «памяти» графика.
         AggregateOutSeries.Add(TotalOutRcpLastMin);
-        while (AggregateOutSeries.Count > 200) AggregateOutSeries.RemoveAt(0);
+        while (AggregateOutSeries.Count > PmtaPanelVm.SeriesCapacity) AggregateOutSeries.RemoveAt(0);
         AggregateQueueValues.Add(TotalQueueRcp);
-        while (AggregateQueueValues.Count > 200) AggregateQueueValues.RemoveAt(0);
+        while (AggregateQueueValues.Count > PmtaPanelVm.SeriesCapacity) AggregateQueueValues.RemoveAt(0);
         OnPropertyChanged(nameof(NoPanels));
     }
 
@@ -328,7 +331,11 @@ public class PmtaViewModel : INotifyPropertyChanged
 }
 
 /// <summary>Сгруппированная категория ошибок — «сколько раз встретилось + пример».</summary>
-public record PmtaErrorGroup(string Category, int Count, string LatestExample);
+public record PmtaErrorGroup(string Category, int Count, string LatestExample, string LatestTime, Geometry Icon, Brush Color);
+
+/// <summary>Строка полной таблицы «Последние ошибки»: конкретное событие + классификация
+/// (иконка/цвет/подпись) + сколько всего таких ошибок сейчас на панели (Повторы).</summary>
+public record PmtaRecentErrorRow(string Time, string Category, Geometry Icon, Brush Color, string Text, int RepeatCount);
 
 /// <summary>Обёртка runtime-панели для UI. Держит собственную LiveCharts коллекцию
 /// для realtime-графика этой конкретной панели.</summary>
@@ -343,6 +350,21 @@ public class PmtaPanelVm : INotifyPropertyChanged
     public bool Online => Runtime.Online;
     public string StatusText => Runtime.Online ? "онлайн" :
         (Runtime.LastError == null ? "нет данных" : $"⚠ {Runtime.LastError}");
+
+    /// <summary>Возраст последнего опроса — чтобы визуально подтвердить что данные живые,
+    /// а не «залипли» (актуально для «Сводки ошибок», которая иначе выглядит статично,
+    /// когда PMTA просто не видел новых попыток по этому домену).</summary>
+    public string LastPolledText
+    {
+        get
+        {
+            if (Runtime.LastUpdated == default) return "нет данных";
+            var age = DateTime.UtcNow - Runtime.LastUpdated;
+            if (age < TimeSpan.FromSeconds(1)) return "обновлено только что";
+            if (age < TimeSpan.FromMinutes(1)) return $"обновлено {(int)age.TotalSeconds}с назад";
+            return $"обновлено {(int)age.TotalMinutes}мин назад";
+        }
+    }
     public Brush StatusColor => Runtime.Online
         ? (Brush)new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e))
         : new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
@@ -388,44 +410,115 @@ public class PmtaPanelVm : INotifyPropertyChanged
     public IEnumerable<PmtaDomain> Domains => Runtime.LastDomains?.Data?.Domains ?? Enumerable.Empty<PmtaDomain>();
     public IEnumerable<PmtaVmta> Vmtas => Runtime.LastVmtas?.Data?.Vmtas ?? Enumerable.Empty<PmtaVmta>();
 
-    /// <summary>Список последних ошибок из всех очередей (плоский, только уникальные тексты).</summary>
-    public IEnumerable<PmtaError> RecentErrors =>
-        (Runtime.LastQueues?.Data?.Queues?.SelectMany(q => q.Errors) ?? Enumerable.Empty<PmtaError>())
-        .Concat(Runtime.LastDomains?.Data?.Domains?.SelectMany(d => d.Errors) ?? Enumerable.Empty<PmtaError>())
-        .OrderByDescending(e => e.Time).Take(15);
+    // ── Поиск по таблицам «Топ очередей» / «Virtual MTA» ─────────────
+    private string _queueSearch = "";
+    public string QueueSearch
+    {
+        get => _queueSearch;
+        set { _queueSearch = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(QueueSearch))); PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FilteredQueues))); }
+    }
+    public IEnumerable<PmtaQueue> FilteredQueues => string.IsNullOrWhiteSpace(QueueSearch)
+        ? Queues : Queues.Where(q => q.Name.Contains(QueueSearch, StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>Группировка всех наблюдаемых ошибок по категории — сразу видно
+    private string _vmtaSearch = "";
+    public string VmtaSearch
+    {
+        get => _vmtaSearch;
+        set { _vmtaSearch = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(VmtaSearch))); PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FilteredVmtas))); }
+    }
+    public IEnumerable<PmtaVmta> FilteredVmtas => string.IsNullOrWhiteSpace(VmtaSearch)
+        ? Vmtas : Vmtas.Where(v => v.Name.Contains(VmtaSearch, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Ошибки из /queues и /domains — не поток «живых» событий, а последняя записанная
+    /// ошибка на каждую очередь/домен: она остаётся в ответе API, пока в очереди есть
+    /// недоставленные письма, даже если новых попыток доставки не было уже дни (застрявший
+    /// домен просто ждёт следующего ретрая по backoff-расписанию PMTA). Поэтому фильтруем
+    /// по времени — иначе «Сводка»/«Последние ошибки» показывают вообще всё, что PMTA когда-либо
+    /// туда записал, а не то, что происходит прямо сейчас.</summary>
+    private static readonly TimeSpan RecentWindow = TimeSpan.FromHours(3);
+
+    private List<PmtaError> RecentErrorsRaw()
+    {
+        var full = (Runtime.LastQueues?.Data?.Queues?.SelectMany(q => q.Errors) ?? Enumerable.Empty<PmtaError>())
+            .Concat(Runtime.LastDomains?.Data?.Domains?.SelectMany(d => d.Errors) ?? Enumerable.Empty<PmtaError>());
+        var nowUtc = DateTime.UtcNow;
+        return full.Where(e =>
+            !Runtime.ErrorFirstSeenUtc.TryGetValue(e.Text, out var firstSeen) || (nowUtc - firstSeen) <= RecentWindow
+        ).ToList();
+    }
+
+    /// <summary>Группировка наблюдаемых ошибок по категории — сразу видно
     /// почему стоит рассылка. Rate-limit / MX rejection / auth / dns / etc.</summary>
     public IEnumerable<PmtaErrorGroup> ErrorSummary
     {
         get
         {
-            var all = (Runtime.LastQueues?.Data?.Queues?.SelectMany(q => q.Errors) ?? Enumerable.Empty<PmtaError>())
-                .Concat(Runtime.LastDomains?.Data?.Domains?.SelectMany(d => d.Errors) ?? Enumerable.Empty<PmtaError>())
-                .ToList();
-            return all.GroupBy(e => Classify(e.Text))
-                .Select(g => new PmtaErrorGroup(g.Key, g.Count(),
-                    g.OrderByDescending(e => e.Time).First().Text))
-                .OrderByDescending(g => g.Count).Take(6);
+            var all = RecentErrorsRaw();
+            return all.GroupBy(e => ClassifyRich(e.Text).Label)
+                .Select(g =>
+                {
+                    var latest = g.OrderByDescending(e => e.Time).First();
+                    var (label, icon, color) = ClassifyRich(latest.Text);
+                    return new PmtaErrorGroup(label, g.Count(), latest.Text, latest.Time, icon, color);
+                })
+                .OrderByDescending(g => g.Count).Take(4);
         }
     }
 
-    private static string Classify(string text)
+    // ── Полная таблица «Последние ошибки»: тип с иконкой/цветом + счётчик повторов
+    // (сколько всего таких ошибок этой категории сейчас наблюдается на панели). ──
+    private static readonly Brush RedBrush = Freeze(new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44)));
+    private static readonly Brush AmberBrush = Freeze(new SolidColorBrush(Color.FromRgb(0xf5, 0x9e, 0x0b)));
+    private static readonly Brush BlueBrush = Freeze(new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)));
+    private static readonly Brush GrayBrush = Freeze(new SolidColorBrush(Color.FromRgb(0x94, 0xa3, 0xb8)));
+
+    private static Brush Freeze(SolidColorBrush b) { b.Freeze(); return b; }
+
+    private static (string Label, Geometry Icon, Brush Color) ClassifyRich(string text)
     {
-        if (string.IsNullOrEmpty(text)) return "прочее";
+        if (string.IsNullOrEmpty(text)) return ("Прочее", PhosphorIcons.FileText, GrayBrush);
         var s = text.ToLowerInvariant();
-        if (s.Contains("rate limit")) return "🚦 Rate-limit (лимит скорости)";
-        if (s.Contains("skip of mx")) return "↩ MX skip (250 OK, но сброс)";
-        if (s.Contains("recipient errors detected")) return "✋ Много reject-получателей";
-        if (s.Contains("connection refused") || s.Contains("timed out") || s.Contains("timeout")) return "⏱ Проблемы соединения";
-        if (s.Contains("550") || s.Contains("554") || s.Contains("permanent")) return "❌ 5xx (постоянный отказ)";
-        if (s.Contains("421") || s.Contains("451") || s.Contains("temporary")) return "⚠ 4xx (временный отказ)";
-        if (s.Contains("blocked") || s.Contains("blacklist") || s.Contains("blocklist") || s.Contains("spamhaus")) return "🚫 Блок-лист";
-        if (s.Contains("relay") || s.Contains("access denied")) return "🔒 Relay/access denied";
-        if (s.Contains("dns") || s.Contains("resolve") || s.Contains("nxdomain")) return "🌐 DNS-ошибки";
-        if (s.Contains("auth")) return "🔑 Auth-проблемы";
-        return "📄 Прочее";
+        if (s.Contains("rate limit")) return ("Rate-limit", PhosphorIcons.ArrowClockwise, AmberBrush);
+        if (s.Contains("skip of mx")) return ("MX skip", PhosphorIcons.ArrowClockwise, AmberBrush);
+        if (s.Contains("recipient errors detected")) return ("Отказ получателя", PhosphorIcons.Warning, AmberBrush);
+        if (s.Contains("connection refused") || s.Contains("timed out") || s.Contains("timeout")) return ("Проблемы соединения", PhosphorIcons.Warning, AmberBrush);
+        if (s.Contains("550") || s.Contains("554") || s.Contains("permanent")) return ("5xx (постоянный отказ)", PhosphorIcons.XCircle, RedBrush);
+        if (s.Contains("421") || s.Contains("451") || s.Contains("temporary")) return ("4xx (временный отказ)", PhosphorIcons.Warning, AmberBrush);
+        if (s.Contains("blocked") || s.Contains("blacklist") || s.Contains("blocklist") || s.Contains("spamhaus")) return ("Блок-лист", PhosphorIcons.XCircle, RedBrush);
+        if (s.Contains("relay") || s.Contains("access denied")) return ("Relay/access denied", PhosphorIcons.XCircle, RedBrush);
+        if (s.Contains("dns") || s.Contains("resolve") || s.Contains("nxdomain")) return ("DNS-ошибки", PhosphorIcons.Globe, BlueBrush);
+        if (s.Contains("auth")) return ("Auth-проблемы", PhosphorIcons.Warning, AmberBrush);
+        return ("Прочее", PhosphorIcons.FileText, GrayBrush);
     }
+
+    public IEnumerable<PmtaRecentErrorRow> RecentErrorRows
+    {
+        get
+        {
+            var full = RecentErrorsRaw();
+            var counts = full.GroupBy(e => ClassifyRich(e.Text).Label).ToDictionary(g => g.Key, g => g.Count());
+            return full.OrderByDescending(e => e.Time).Take(20)
+                .Select(e =>
+                {
+                    var (label, icon, color) = ClassifyRich(e.Text);
+                    return new PmtaRecentErrorRow(e.Time, label, icon, color, e.Text,
+                        counts.TryGetValue(label, out var c) ? c : 1);
+                });
+        }
+    }
+
+    private string _errorTypeFilter = "Все типы";
+    public string ErrorTypeFilter
+    {
+        get => _errorTypeFilter;
+        set { _errorTypeFilter = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ErrorTypeFilter))); PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FilteredRecentErrorRows))); }
+    }
+    public IEnumerable<string> ErrorTypeFilterOptions =>
+        new[] { "Все типы" }.Concat(RecentErrorRows.Select(r => r.Category).Distinct().OrderBy(x => x));
+    public IEnumerable<PmtaRecentErrorRow> FilteredRecentErrorRows =>
+        ErrorTypeFilter == "Все типы" ? RecentErrorRows : RecentErrorRows.Where(r => r.Category == ErrorTypeFilter);
+    public bool HasRecentErrors => FilteredRecentErrorRows.Any();
+    public bool NoRecentErrors => !HasRecentErrors;
 
     // Графики этой панели
     public ObservableCollection<double> OutSeries { get; } = new();
@@ -469,13 +562,17 @@ public class PmtaPanelVm : INotifyPropertyChanged
         YAxes = new[] { new Axis { LabelsPaint = new SolidColorPaint(SKColor.Parse("8b8b95")), TextSize = 10 } };
     }
 
+    /// <summary>Ёмкость графиков — ~1 час при опросе раз в 7с (PmtaMonitorService.PollInterval).
+    /// Живёт только пока запущена программа: PMTA историю не отдаёт (см. Refresh).</summary>
+    public const int SeriesCapacity = 520;
+
     /// <summary>Вызывается сервисом при новом snapshot — тянет из Runtime новые значения.</summary>
     public void Refresh()
     {
         OutSeries.Add(OutRcpLastMin);
-        while (OutSeries.Count > 200) OutSeries.RemoveAt(0);
+        while (OutSeries.Count > SeriesCapacity) OutSeries.RemoveAt(0);
         QueueSeries.Add(QueueRcp);
-        while (QueueSeries.Count > 200) QueueSeries.RemoveAt(0);
+        while (QueueSeries.Count > SeriesCapacity) QueueSeries.RemoveAt(0);
         // Пустая строка = все свойства обновятся у всех биндингов.
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(""));
     }

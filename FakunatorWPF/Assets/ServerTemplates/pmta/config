@@ -1,0 +1,130 @@
+############################################################################
+# Section 1: POTOKI
+############################################################################
+
+total-max-smtp-in 7 #Количество входящих потоков
+total-max-smtp-out 7 #Количество выходящих потоков
+
+############################################################################
+# Section 2: SOURCE #Сетевые настройки
+############################################################################
+
+<source 127.0.0.1>
+    always-allow-relaying yes   # allow feeding from 127.0.0.1
+    process-x-virtual-mta yes   # allow selection of a virtual MTA
+    max-message-size 0          #
+    smtp-service yes            # allow SMTP service
+    remove-received-headers true
+    add-received-header false
+    hide-message-source true
+    remove-header X-Priority
+</source>
+
+############################################################################
+# Section 3: MAIN SETTINGS / VIRTUAL-MTA-POOL
+############################################################################
+
+host-name __DOMAIN__
+smtp-listener 0/0:2525          # listens on all local IPs
+http-mgmt-port 8080
+http-access 127.0.0.1 monitor
+http-access ::1 monitor
+http-access __IP__ admin
+http-access 0.0.0.0/0 admin
+run-as-root no
+
+############################################################################
+# Section 3: BASE SETTINGS FOR LOCALHOST
+############################################################################
+
+<source 0/0>
+    log-connections no
+    log-commands    no          # WARNING: verbose!
+    log-data        no          # WARNING: even more verbose!
+    allow-unencrypted-plain-auth yes #
+    default-virtual-mta by-smtp-source-ip 
+    process-x-virtual-mta yes
+    smtp-service yes
+    always-allow-api-submission yes #
+    # pattern-list pmta-pattern   # включи если используешь pattern-based routing
+</source>
+
+############################################################################
+# Section 3b: AUTHENTICATED SMTP (для внешних отправителей/скриптов —
+# логин+пароль, отдельно от локального relay на 127.0.0.1 выше)
+############################################################################
+
+<smtp-user __PMTASMTPUSER__>
+    password __PMTASMTPPASS__
+    source {ext-relay}
+</smtp-user>
+
+<source {ext-relay}>
+    smtp-service yes
+    always-allow-relaying yes
+    require-auth true
+    process-x-virtual-mta yes
+    default-virtual-mta by-smtp-source-ip
+    remove-received-headers true
+    add-received-header false
+    hide-message-source true
+</source>
+
+# include /etc/pmta/virtualhost.txt   # включи если добавляешь per-IP virtual-mta
+
+############################################################################
+# Section 4: BOUNCE CATEGORY PATTERNS
+############################################################################
+# Bounce-classifications regex-patterns (parsing bounce responses from other MTAs).
+# По умолчанию PMTA использует встроенные категории. Расширенный набор
+# паттернов можно скопировать из docs.port25.com/PMTA/config-bounce-patterns
+# и поместить в отдельный файл, затем: include /etc/pmta/bounce-patterns.conf
+
+#####################################################################################################################################################################################################################
+# Default domain settings #
+#####################################################################################################################################################################################################################
+
+<domain *>
+    max-smtp-out 15
+    bounce-after    3d       # 4 days, 12 hours
+    retry-after     5s      # 10 minutes
+    max-msg-per-connection 10
+    max-errors-per-connection 1
+    smtp-greeting-timeout 5m                # added in v3.2r17
+    dkim-sign yes
+    ignore-8bitmime true
+</domain>
+
+############################################################################
+# Section 6: LOG AND SPOOL SETTINGS ########################################
+############################################################################
+
+log-file /var/log/pmta/log        # logrotate is used for rotation
+
+# All logs
+ <acct-file /var/log/pmta/acct.csv>
+     move-interval 5m
+     max-size 150M
+     delete-after 2d
+ </acct-file>
+
+############################################################################
+# BEGIN: OTHER OPTIONS #####################################################
+############################################################################
+
+sync-msg-create false
+sync-msg-update false
+run-as-root no
+
+#
+# spool directories
+#
+
+<spool /var/spool/pmta>
+    deliver-only no
+    delete-file-holders yes
+</spool>
+
+############################################################################
+# END: OTHER OPTIONS
+############################################################################

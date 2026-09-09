@@ -8,7 +8,7 @@
     <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
     <AssemblyName>Fakunator</AssemblyName>
     <RootNamespace>Fakunator</RootNamespace>
-    <Version>2.5.5</Version>
+    <Version>2.6.0</Version>
     <!-- По умолчанию: framework-dependent multi-file publish
          (для split-release: code.zip + deps.zip раздельно).
          Single-file self-contained можно получить через CLI:
@@ -24,11 +24,29 @@
     <PackageReference Include="DnsClient" Version="1.7.0" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2792.45" />
     <PackageReference Include="Telegram.Bot" Version="22.10.3" />
+    <PackageReference Include="SSH.NET" Version="2024.1.0" />
   </ItemGroup>
 
   <ItemGroup>
     <Resource Include="Assets\icon.ico" />
     <Resource Include="Assets\Flags\*.png" />
+    <Resource Include="Assets\CardBg\*.png" />
+    <Resource Include="Assets\ServerInstall\*.png" />
+    <Resource Include="Assets\AmsIcons\*.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Шаблоны конфигов mail-сервера копируются в bin/ рядом с exe.
+         TemplateEngine ищет их относительно расположения сборки. -->
+    <Content Include="Assets\ServerTemplates\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <!-- Landing-страница — отдельная папка Landing/ рядом с exe.
+         Юзер может править index.html/style.css/добавлять подпапки — installer
+         рекурсивно зальёт всё содержимое на сервер в /var/www/html/{domain}/. -->
+    <Content Include="Landing\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>
