@@ -6,6 +6,22 @@
                   Background="Transparent">
     <StackPanel Margin="20,12" x:Name="RootPanel">
 
+        <!-- ── Network issue banner: все источники (прокси/DIRECT) не могут достучаться ── -->
+        <Border x:Name="NetworkIssueBanner" Visibility="Collapsed"
+                Background="#FFF8E8" BorderBrush="#F5D48A" BorderThickness="1"
+                CornerRadius="8" Padding="14,12" Margin="0,0,0,10">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Left" Text="&#x26A0;" FontSize="18"
+                           Foreground="#B4790A" VerticalAlignment="Top" Margin="0,0,10,0"/>
+                <StackPanel>
+                    <TextBlock Text="Похоже на сетевую проблему, а не на плохие адреса"
+                               FontSize="12.5" FontWeight="SemiBold" Foreground="#92600A"/>
+                    <TextBlock x:Name="TxtNetworkIssueMsg" FontSize="11.5" Foreground="#8A6A2E"
+                               TextWrapping="Wrap" Margin="0,4,0,0"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
         <!-- ── Progress card ──────────────────────────────────────── -->
         <Border Style="{StaticResource Card}" Margin="0,0,0,10">
             <StackPanel>

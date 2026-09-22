@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Fakunator.Core;
 
@@ -13,6 +14,13 @@ public record SmtpSnapshotBatch
     public List<SmtpVerdict> FreshFeed { get; init; } = new();
     public List<SmtpVerdict> RecentErrors { get; init; } = new();
     public List<ProxyStatsEntry> ProxyStats { get; init; } = new();
+
+    /// <summary>true, если вообще ни один источник (прокси/DIRECT) не может достучаться —
+    /// у всех статус Failed/Disabled. Признак сетевой проблемы (порт 25 закрыт, прокси мертвы),
+    /// а не просто "плохие" адреса — те дают SMTP-код, а не connection-level ошибку.</summary>
+    public bool AllSourcesFailing =>
+        Processed >= 5 && ProxyStats.Count > 0 &&
+        ProxyStats.All(p => p.Status is "Failed" or "Disabled");
 }
 
 public record ProxyStatsEntry

@@ -55,12 +55,24 @@ $codeFiles | ForEach-Object {
     if (Test-Path $src) { Copy-Item -LiteralPath $src -Destination $codeDir -Force }
     else { Write-Warning "code file missing: $_" }
 }
-# Всё остальное — в deps
-Get-ChildItem $publish -File | Where-Object { $codeFiles -notcontains $_.Name } |
-    ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $depsDir -Force }
+# Всё остальное — в deps. ВАЖНО: -Recurse + сохранение относительной структуры подпапок —
+# без этого Assets/ServerTemplates/..., Assets/AmsIcons/... и т.п. вложенные файлы молча
+# теряются (баг был с самого первого split-release, v2.5.2, просто не давал о себе знать
+# пока в Assets/ не появилось ничего load-bearing глубже одного уровня).
+Get-ChildItem $publish -File -Recurse | Where-Object { $codeFiles -notcontains $_.Name } |
+    ForEach-Object {
+        # [IO.Path]::GetRelativePath, а не ручной .Substring($publish.Length) — ручная версия
+        # съезжает на кириллических путях (комбинирующие юникод-символы в имени пользователя
+        # дают разную .Length у визуально одинаковых строк).
+        $rel = [System.IO.Path]::GetRelativePath($publish, $_.FullName)
+        $dest = Join-Path $depsDir $rel
+        $destDir = Split-Path $dest -Parent
+        if (-not (Test-Path $destDir)) { New-Item -ItemType Directory -Path $destDir -Force | Out-Null }
+        Copy-Item -LiteralPath $_.FullName -Destination $dest -Force
+    }
 
 Write-Host "  code: $((Get-ChildItem $codeDir -File).Count) файлов, $([math]::Round((Get-ChildItem $codeDir -File | Measure-Object -Sum Length).Sum/1MB,2)) MB"
-Write-Host "  deps: $((Get-ChildItem $depsDir -File).Count) файлов, $([math]::Round((Get-ChildItem $depsDir -File | Measure-Object -Sum Length).Sum/1MB,2)) MB"
+Write-Host "  deps: $((Get-ChildItem $depsDir -File -Recurse).Count) файлов, $([math]::Round((Get-ChildItem $depsDir -File -Recurse | Measure-Object -Sum Length).Sum/1MB,2)) MB"
 
 # ── Zip'ы ──────────────────────────────────────────────────────
 Write-Host "`n[3/5] Zipping..." -ForegroundColor Cyan

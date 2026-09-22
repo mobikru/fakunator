@@ -57,6 +57,7 @@ public partial class SmtpRunningView : UserControl
             ProgressFill.Width = 0;
             FeedPanel.Children.Clear();
             _feedRows.Clear();
+            NetworkIssueBanner.Visibility = Visibility.Collapsed;
             return;
         }
 
@@ -86,6 +87,25 @@ public partial class SmtpRunningView : UserControl
 
         // Proxy monitor
         UpdateProxyStats(snap.ProxyStats);
+
+        // Network issue banner — все источники (прокси/DIRECT) не отвечают
+        if (snap.AllSourcesFailing)
+        {
+            var lastErr = snap.RecentErrors.Count > 0 ? snap.RecentErrors[^1].Error : "";
+            var sourcesWord = snap.ProxyStats.Count == 1 && snap.ProxyStats[0].Address == "DIRECT:0"
+                ? "проверка идёт напрямую без прокси"
+                : $"не отвечает ни один из {snap.ProxyStats.Count} источников";
+            TxtNetworkIssueMsg.Text =
+                $"{sourcesWord}. Вероятная причина — заблокирован исходящий SMTP-порт 25 " +
+                "(у хостера/провайдера) или прокси не поддерживают этот порт. " +
+                "Открой порт 25 у провайдера или укажи рабочие прокси в настройках." +
+                (string.IsNullOrEmpty(lastErr) ? "" : $"\nПоследняя ошибка: {lastErr}");
+            NetworkIssueBanner.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            NetworkIssueBanner.Visibility = Visibility.Collapsed;
+        }
     }
 
     private void UpdateProxyStats(List<Fakunator.Core.ProxyStatsEntry>? stats)
