@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using Fakunator.Core;
 using Fakunator.Core.AmsApi;
 
 namespace Fakunator.Views;
@@ -30,7 +31,7 @@ public class LaunchAmsCampaignDialog : Window
     private readonly ComboBox _cbMessage = new();
     private readonly ComboBox _cbPreset = new();
     private readonly CheckBox _cbAutostart = new()
-    { Content = "Сразу запустить рассылку после создания", IsChecked = true };
+    { Content = Loc.T("ams.launchDialog.cbAutostart"), IsChecked = true };
     private readonly TextBlock _status = new()
     { FontSize = 11, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 10, 0, 0) };
     private readonly Button _btnGo;
@@ -48,7 +49,7 @@ public class LaunchAmsCampaignDialog : Window
         _messages = messages;
         _presets = presets;
 
-        Title = "Запуск рассылки";
+        Title = Loc.T("ams.launchDialog.title");
         Width = 720; Height = 620;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         ResizeMode = ResizeMode.NoResize;
@@ -61,7 +62,7 @@ public class LaunchAmsCampaignDialog : Window
         // Header
         var title = new TextBlock
         {
-            Text = "Менеджер запуска компании",
+            Text = Loc.T("ams.launchDialog.heading"),
             FontSize = 17, FontWeight = FontWeights.SemiBold,
         };
         title.SetResourceReference(TextBlock.ForegroundProperty, "Fg1Brush");
@@ -69,8 +70,7 @@ public class LaunchAmsCampaignDialog : Window
 
         var hint = new TextBlock
         {
-            Text = "Соберите рассылку из четырёх компонентов. Учётка — от кого. Список — кому. " +
-                   "Письмо — что. Профиль отправки — как. После создания рассылку можно запустить сразу.",
+            Text = Loc.T("ams.launchDialog.hint"),
             FontSize = 11, TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, 4, 0, 20),
         };
@@ -78,17 +78,17 @@ public class LaunchAmsCampaignDialog : Window
         panel.Children.Add(hint);
 
         // Name
-        panel.Children.Add(Lbl("Название рассылки"));
+        panel.Children.Add(Lbl(Loc.T("ams.launchDialog.lblName")));
         StyleInput(_tbName);
-        _tbName.Text = $"Рассылка {DateTime.Now:dd.MM HH:mm}";
+        _tbName.Text = string.Format(Loc.T("ams.launchDialog.defaultNameFormat"), DateTime.Now);
         panel.Children.Add(_tbName);
 
         // Type
-        panel.Children.Add(Lbl("Тип"));
+        panel.Children.Add(Lbl(Loc.T("ams.launchDialog.lblType")));
         foreach (var t in new[] {
-            new { V = "mailing", L = "Обычная рассылка" },
-            new { V = "transactional", L = "Транзакционная" },
-            new { V = "validation", L = "Валидация" } })
+            new { V = "mailing", L = Loc.T("ams.launchDialog.typeMailing") },
+            new { V = "transactional", L = Loc.T("ams.launchDialog.typeTransactional") },
+            new { V = "validation", L = Loc.T("ams.launchDialog.typeValidation") } })
         {
             _cbType.Items.Add(new ComboBoxItem { Content = t.L, Tag = t.V });
         }
@@ -97,7 +97,7 @@ public class LaunchAmsCampaignDialog : Window
         panel.Children.Add(_cbType);
 
         // Sender
-        panel.Children.Add(Lbl("Учётная запись отправителя"));
+        panel.Children.Add(Lbl(Loc.T("ams.launchDialog.lblSender")));
         foreach (var s in _senders)
             _cbSender.Items.Add(new ComboBoxItem
             {
@@ -108,18 +108,18 @@ public class LaunchAmsCampaignDialog : Window
         panel.Children.Add(_cbSender);
 
         // List
-        panel.Children.Add(Lbl("Список рассылки"));
+        panel.Children.Add(Lbl(Loc.T("ams.launchDialog.lblList")));
         foreach (var l in _lists.OrderBy(x => x.ListName))
             _cbList.Items.Add(new ComboBoxItem
             {
-                Content = $"#{l.Id}  {Truncate(l.ListName, 60)}  ·  {l.Size:N0} адр.",
+                Content = string.Format(Loc.T("ams.launchDialog.listItemFormat"), l.Id, Truncate(l.ListName, 60), l.Size),
                 Tag = l.Id
             });
         StyleCombo(_cbList);
         panel.Children.Add(_cbList);
 
         // Message
-        panel.Children.Add(Lbl("Письмо"));
+        panel.Children.Add(Lbl(Loc.T("ams.launchDialog.lblMessage")));
         foreach (var m in _messages.OrderBy(x => x.MessageName))
             _cbMessage.Items.Add(new ComboBoxItem
             {
@@ -130,11 +130,11 @@ public class LaunchAmsCampaignDialog : Window
         panel.Children.Add(_cbMessage);
 
         // Delivery preset
-        panel.Children.Add(Lbl("Профиль отправки"));
+        panel.Children.Add(Lbl(Loc.T("ams.launchDialog.lblPreset")));
         foreach (var p in _presets)
             _cbPreset.Items.Add(new ComboBoxItem
             {
-                Content = $"#{p.Id}  {p.Name}  ·  {p.DeliveryMode} / {p.SendingThreads} потоков",
+                Content = string.Format(Loc.T("ams.launchDialog.presetItemFormat"), p.Id, p.Name, p.DeliveryMode, p.SendingThreads),
                 Tag = p.Id
             });
         if (_cbPreset.Items.Count > 0) _cbPreset.SelectedIndex = 0;
@@ -152,13 +152,13 @@ public class LaunchAmsCampaignDialog : Window
 
         // Buttons row
         var row = new DockPanel { LastChildFill = false, Margin = new Thickness(0, 20, 0, 0) };
-        var btnCancel = new Button { Content = "Отмена", Padding = new Thickness(16, 8, 16, 8), MinWidth = 100, Cursor = Cursors.Hand };
+        var btnCancel = new Button { Content = Loc.T("ams.launchDialog.btnCancel"), Padding = new Thickness(16, 8, 16, 8), MinWidth = 100, Cursor = Cursors.Hand };
         btnCancel.SetResourceReference(StyleProperty, "GhostBtn");
         btnCancel.Click += (_, _) => Close();
         DockPanel.SetDock(btnCancel, Dock.Right);
         _btnGo = new Button
         {
-            Content = "▶  Создать и запустить",
+            Content = Loc.T("ams.launchDialog.btnGo"),
             Padding = new Thickness(22, 8, 22, 8), MinWidth = 200,
             Margin = new Thickness(0, 0, 8, 0), FontWeight = FontWeights.SemiBold,
             Cursor = Cursors.Hand,
@@ -175,20 +175,20 @@ public class LaunchAmsCampaignDialog : Window
 
     private async Task CreateAsync()
     {
-        if (string.IsNullOrWhiteSpace(_tbName.Text)) { Fail("Введи название рассылки."); return; }
+        if (string.IsNullOrWhiteSpace(_tbName.Text)) { Fail(Loc.T("ams.launchDialog.errNoName")); return; }
         var senderId = TagInt(_cbSender.SelectedItem);
         var listId = TagInt(_cbList.SelectedItem);
         var messageId = TagInt(_cbMessage.SelectedItem);
         var presetId = TagInt(_cbPreset.SelectedItem);
         var typeStr = (_cbType.SelectedItem as ComboBoxItem)?.Tag as string ?? "mailing";
 
-        if (senderId <= 0) { Fail("Выбери учётку отправителя."); return; }
-        if (listId <= 0) { Fail("Выбери список рассылки."); return; }
-        if (messageId <= 0) { Fail("Выбери письмо."); return; }
-        if (presetId <= 0) { Fail("Выбери профиль отправки."); return; }
+        if (senderId <= 0) { Fail(Loc.T("ams.launchDialog.errNoSender")); return; }
+        if (listId <= 0) { Fail(Loc.T("ams.launchDialog.errNoList")); return; }
+        if (messageId <= 0) { Fail(Loc.T("ams.launchDialog.errNoMessage")); return; }
+        if (presetId <= 0) { Fail(Loc.T("ams.launchDialog.errNoPreset")); return; }
 
         _btnGo.IsEnabled = false;
-        _status.Text = "Создаю рассылку…";
+        _status.Text = Loc.T("ams.launchDialog.statusCreating");
         _status.SetResourceReference(TextBlock.ForegroundProperty, "Fg4Brush");
         try
         {
@@ -203,27 +203,28 @@ public class LaunchAmsCampaignDialog : Window
             });
             if (newId <= 0)
             {
-                Fail("AMS не вернул id новой рассылки. Проверь права API и корректность полей.");
+                Fail(Loc.T("ams.launchDialog.errNoId"));
                 _btnGo.IsEnabled = true;
                 return;
             }
 
             if (_cbAutostart.IsChecked == true)
             {
-                _status.Text = $"Рассылка создана (id {newId}). Запускаю…";
+                _status.Text = string.Format(Loc.T("ams.launchDialog.statusStartingFormat"), newId);
                 var ok = await _api.StartMailingAsync(newId);
-                if (!ok) { Fail($"Рассылка создана (id {newId}), но запуск не удался."); DialogResult = true; return; }
+                if (!ok) { Fail(string.Format(Loc.T("ams.launchDialog.errStartFailedFormat"), newId)); DialogResult = true; return; }
             }
 
-            _status.Text = $"OK — рассылка #{newId} " +
-                            (_cbAutostart.IsChecked == true ? "запущена." : "создана.");
+            _status.Text = string.Format(
+                Loc.T(_cbAutostart.IsChecked == true ? "ams.launchDialog.statusOkStartedFormat" : "ams.launchDialog.statusOkCreatedFormat"),
+                newId);
             _status.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
             DialogResult = true;
             Close();
         }
         catch (Exception ex)
         {
-            Fail("Ошибка: " + ex.Message);
+            Fail(string.Format(Loc.T("ams.launchDialog.errGenericFormat"), ex.Message));
             _btnGo.IsEnabled = true;
         }
     }

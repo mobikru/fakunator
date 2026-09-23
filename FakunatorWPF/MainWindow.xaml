@@ -5,7 +5,8 @@
         xmlns:controls="clr-namespace:Fakunator.Controls"
         xmlns:vm="clr-namespace:Fakunator.ViewModels"
         xmlns:conv="clr-namespace:Fakunator.Converters"
-        Title="Факунатор" Width="1200" Height="900"
+        xmlns:core="clr-namespace:Fakunator.Core"
+        Title="{core:Tr app.title}" Width="1200" Height="900"
         MinWidth="1100" MinHeight="820"
         Background="{DynamicResource WindowBgBrush}"
         WindowStartupLocation="CenterScreen"
@@ -40,7 +41,7 @@
                     <TextBlock Text="e" Foreground="White" FontWeight="Bold" FontSize="13"
                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
-                <TextBlock DockPanel.Dock="Left" Text="Факунатор" FontWeight="SemiBold"
+                <TextBlock DockPanel.Dock="Left" Text="{core:Tr app.title}" FontWeight="SemiBold"
                            FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
                 <TextBlock x:Name="TxtVersion" DockPanel.Dock="Left" Text="2.5.0" FontSize="11"
                            Foreground="{DynamicResource Fg4Brush}"
@@ -66,6 +67,68 @@
                         ToolTip="Настройки" Margin="4,0,0,0"
                         Click="OnSettingsClick"/>
 
+                <!-- Language switch — current flag + dropdown -->
+                <Button x:Name="BtnLangCurrent" DockPanel.Dock="Right" Click="OnLangButtonClick"
+                        Style="{StaticResource GhostBtn}" Padding="7,5" Margin="2,0,0,0"
+                        ToolTip="Язык интерфейса">
+                    <StackPanel Orientation="Horizontal">
+                        <Border Width="17" Height="17" CornerRadius="8.5"
+                                BorderBrush="{DynamicResource Border2Brush}" BorderThickness="0.7">
+                            <controls:FlagIcon x:Name="IconLangCurrent" Width="15.5" Height="15.5"/>
+                        </Border>
+                        <Path Data="M0,0 L4,4.5 L8,0" Stroke="{DynamicResource Fg3Brush}"
+                              StrokeThickness="1.4" StrokeLineJoin="Round"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                              Width="8" Height="5" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <Popup x:Name="LangPopup" DockPanel.Dock="Right" StaysOpen="False" AllowsTransparency="True"
+                       Placement="Bottom" PlacementTarget="{Binding ElementName=BtnLangCurrent}"
+                       HorizontalOffset="-70" VerticalOffset="4" PopupAnimation="Fade">
+                    <Border Background="{DynamicResource Bg2Brush}"
+                            BorderBrush="{DynamicResource Border2Brush}"
+                            BorderThickness="1" CornerRadius="8" Padding="4" MinWidth="150">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="16" Opacity="0.3" ShadowDepth="4"/>
+                        </Border.Effect>
+                        <StackPanel>
+                            <Button x:Name="BtnLangOptRu" Click="OnLangRuClick"
+                                    Style="{StaticResource GhostBtn}"
+                                    HorizontalContentAlignment="Stretch" Padding="8,7" Margin="0,0,0,2">
+                                <DockPanel>
+                                    <TextBlock x:Name="TxtLangRuCheck" DockPanel.Dock="Right" Text="✓"
+                                               FontWeight="Bold" Margin="10,0,0,0"
+                                               Foreground="{DynamicResource AccentBrush}"
+                                               VerticalAlignment="Center"/>
+                                    <Border Width="18" Height="18" CornerRadius="9"
+                                            BorderBrush="{DynamicResource Border2Brush}" BorderThickness="0.7"
+                                            Margin="0,0,8,0">
+                                        <controls:FlagIcon Country="ru" Width="16.5" Height="16.5"/>
+                                    </Border>
+                                    <TextBlock Text="Русский" FontSize="12.5" VerticalAlignment="Center"/>
+                                </DockPanel>
+                            </Button>
+                            <Button x:Name="BtnLangOptEn" Click="OnLangEnClick"
+                                    Style="{StaticResource GhostBtn}"
+                                    HorizontalContentAlignment="Stretch" Padding="8,7">
+                                <DockPanel>
+                                    <TextBlock x:Name="TxtLangEnCheck" DockPanel.Dock="Right" Text="✓"
+                                               FontWeight="Bold" Margin="10,0,0,0"
+                                               Foreground="{DynamicResource AccentBrush}"
+                                               VerticalAlignment="Center"/>
+                                    <Border Width="18" Height="18" CornerRadius="9"
+                                            BorderBrush="{DynamicResource Border2Brush}" BorderThickness="0.7"
+                                            Margin="0,0,8,0">
+                                        <controls:FlagIcon Country="gb" Width="16.5" Height="16.5"/>
+                                    </Border>
+                                    <TextBlock Text="English" FontSize="12.5" VerticalAlignment="Center"/>
+                                </DockPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </Popup>
+
 
                 <!-- Spacer before context buttons -->
                 <Border DockPanel.Dock="Right" Width="8"/>
@@ -80,22 +143,22 @@
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,0">
                     <!-- «База» объединяет Очистку / SMTP-проверку / Анализ — они появляются
                          как sub-tab bar в отдельной строке ниже. -->
-                    <RadioButton x:Name="TabDatabase" Content="🗄  База" IsChecked="True"
+                    <RadioButton x:Name="TabDatabase" Content="{core:Tr nav.tabDatabase}" IsChecked="True"
                                  GroupName="Tabs" Style="{DynamicResource TabBtnStyle}"
                                  Checked="OnTabChanged"/>
-                    <RadioButton x:Name="TabDomains" Content="🌐  Сканер доменов"
+                    <RadioButton x:Name="TabDomains" Content="{core:Tr nav.tabDomainScanner}"
                                  GroupName="Tabs" Style="{DynamicResource TabBtnStyle}"
                                  Checked="OnTabChanged"/>
-                    <RadioButton x:Name="TabDomainsMgr" Content="🌍  Домены"
+                    <RadioButton x:Name="TabDomainsMgr" Content="{core:Tr nav.tabDomains}"
                                  GroupName="Tabs" Style="{DynamicResource TabBtnStyle}"
                                  Checked="OnTabChanged"/>
-                    <RadioButton x:Name="TabAms" Content="📮  AMS"
+                    <RadioButton x:Name="TabAms" Content="{core:Tr nav.tabAms}"
                                  GroupName="Tabs" Style="{DynamicResource TabBtnStyle}"
                                  Checked="OnTabChanged"/>
-                    <RadioButton x:Name="TabPmta" Content="📡  PMTA"
+                    <RadioButton x:Name="TabPmta" Content="{core:Tr nav.tabPmta}"
                                  GroupName="Tabs" Style="{DynamicResource TabBtnStyle}"
                                  Checked="OnTabChanged"/>
-                    <RadioButton x:Name="TabServerInstall" Content="🖥  Сервера"
+                    <RadioButton x:Name="TabServerInstall" Content="{core:Tr nav.tabServers}"
                                  GroupName="Tabs" Style="{DynamicResource TabBtnStyle}"
                                  Checked="OnTabChanged"/>
                 </StackPanel>
@@ -107,13 +170,13 @@
                 Background="{DynamicResource HeaderBgBrush}"
                 BorderBrush="{DynamicResource Border1Brush}" BorderThickness="0,0,0,1">
             <StackPanel Orientation="Horizontal" Margin="16,4,16,4" VerticalAlignment="Center">
-                <RadioButton x:Name="SubCleanup" Content="📧  Очистка" IsChecked="True"
+                <RadioButton x:Name="SubCleanup" Content="{core:Tr nav.tabCleanup}" IsChecked="True"
                              GroupName="DbSubTabs" Style="{DynamicResource TabBtnStyle}"
                              Checked="OnDbSubTabChanged"/>
-                <RadioButton x:Name="SubSmtp" Content="✉  SMTP-проверка"
+                <RadioButton x:Name="SubSmtp" Content="{core:Tr nav.tabSmtp}"
                              GroupName="DbSubTabs" Style="{DynamicResource TabBtnStyle}"
                              Checked="OnDbSubTabChanged"/>
-                <RadioButton x:Name="SubAnalyze" Content="🔬  Анализ"
+                <RadioButton x:Name="SubAnalyze" Content="{core:Tr nav.tabAnalyze}"
                              GroupName="DbSubTabs" Style="{DynamicResource TabBtnStyle}"
                              Checked="OnDbSubTabChanged"/>
             </StackPanel>

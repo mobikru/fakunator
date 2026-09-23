@@ -114,12 +114,12 @@
                     BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1"
                     CornerRadius="12" Padding="12">
                 <DockPanel>
-                    <Button DockPanel.Dock="Top" Content="Общий обзор"
+                    <Button DockPanel.Dock="Top" Content="{core:Tr pmta.left.btnOverview}"
                             Command="{Binding ShowOverviewCommand}"
                             core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.ChartBar}"
                             Style="{StaticResource ActionBtnNeutral}"
                             HorizontalAlignment="Stretch" Margin="0,0,0,10"/>
-                    <TextBlock DockPanel.Dock="Top" Text="ВАШИ ПАНЕЛИ"
+                    <TextBlock DockPanel.Dock="Top" Text="{core:Tr pmta.left.yourPanels}"
                                FontSize="10.5" FontWeight="SemiBold" Opacity="0.7"
                                Foreground="{DynamicResource Fg3Brush}" Margin="0,0,0,8"/>
 
@@ -127,7 +127,7 @@
                     <Border DockPanel.Dock="Bottom" Background="{DynamicResource Bg3Brush}"
                             CornerRadius="8" Padding="8" Margin="0,10,0,0" Height="120">
                         <DockPanel>
-                            <TextBlock DockPanel.Dock="Top" Text="ОБЩИЙ TRAFFIC · rcp/мин"
+                            <TextBlock DockPanel.Dock="Top" Text="{core:Tr pmta.left.aggregateChartTitle}"
                                        FontSize="9.5" Opacity="0.7" FontWeight="SemiBold"
                                        Foreground="{DynamicResource Fg3Brush}"/>
                             <lvc:CartesianChart Series="{Binding AggregateSeries}"
@@ -161,7 +161,7 @@
                                         <TextBlock FontSize="10" Foreground="{DynamicResource Fg4Brush}"
                                                    Margin="0,2,0,0">
                                             <Run Text="{Binding OutRcpLastMin, Mode=OneWay}"/>
-                                            <Run Text=" rcp/мин · очередь "/>
+                                            <Run Text="{core:Tr pmta.left.rowRcpMin}"/>
                                             <Run Text="{Binding QueueRcp, Mode=OneWay}"/>
                                         </TextBlock>
                                     </StackPanel>
@@ -195,12 +195,9 @@
                                     </Viewbox>
                                 </Border>
                                 <StackPanel>
-                                    <TextBlock Text="Общий обзор PMTA-панелей" FontSize="17" FontWeight="Bold"
+                                    <TextBlock Text="{core:Tr pmta.overview.title}" FontSize="17" FontWeight="Bold"
                                                Foreground="#131C3D"/>
-                                    <TextBlock FontSize="11" Foreground="#7582A3" Margin="0,3,0,0">
-                                        <Run Text="{Binding OnlinePanels}"/><Run Text=" из "/>
-                                        <Run Text="{Binding TotalPanels}"/><Run Text=" панелей онлайн · обновление каждые 7 сек"/>
-                                    </TextBlock>
+                                    <TextBlock Text="{Binding OverviewSubtitleText}" FontSize="11" Foreground="#7582A3" Margin="0,3,0,0"/>
                                 </StackPanel>
                             </StackPanel>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right"
@@ -209,7 +206,7 @@
                                     <StackPanel>
                                         <TextBlock Text="{Binding TotalOutRcpLastMin, StringFormat={}{0:N0}}"
                                                    FontSize="18" FontWeight="Bold" Foreground="#131C3D"/>
-                                        <TextBlock Text="ОТПРАВЛЕНО / МИН" FontSize="9" Opacity="0.75"
+                                        <TextBlock Text="{core:Tr pmta.overview.kpiSentPerMin}" FontSize="9" Opacity="0.75"
                                                    FontWeight="SemiBold" Foreground="#22c55e"/>
                                     </StackPanel>
                                 </Border>
@@ -217,7 +214,7 @@
                                     <StackPanel>
                                         <TextBlock Text="{Binding TotalQueueRcp, StringFormat={}{0:N0}}"
                                                    FontSize="18" FontWeight="Bold" Foreground="#131C3D"/>
-                                        <TextBlock Text="В ОЧЕРЕДИ" FontSize="9" Opacity="0.75"
+                                        <TextBlock Text="{core:Tr pmta.overview.kpiQueued}" FontSize="9" Opacity="0.75"
                                                    FontWeight="SemiBold" Foreground="#f59e0b"/>
                                     </StackPanel>
                                 </Border>
@@ -225,23 +222,23 @@
                                     <StackPanel>
                                         <TextBlock Text="{Binding TotalSmtpOutCur, StringFormat={}{0:N0}}"
                                                    FontSize="18" FontWeight="Bold" Foreground="#131C3D"/>
-                                        <TextBlock Text="СОЕДИНЕНИЙ" FontSize="9" Opacity="0.75"
+                                        <TextBlock Text="{core:Tr pmta.overview.kpiConnections}" FontSize="9" Opacity="0.75"
                                                    FontWeight="SemiBold" Foreground="#3b82f6"/>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
                             <StackPanel Grid.Column="2" Orientation="Horizontal"
                                         VerticalAlignment="Center" Margin="14,0,0,0">
-                                <Button Content="Добавить панель"
+                                <Button Content="{core:Tr pmta.overview.btnAddPanel}"
                                         Command="{Binding AddPanelCommand}"
                                         core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.Plus}"
                                         Style="{StaticResource ActionBtnGreen}"/>
-                                <Button Content="Обновить"
+                                <Button Content="{core:Tr pmta.overview.btnRefresh}"
                                         Command="{Binding RefreshCommand}"
                                         core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.ArrowClockwise}"
                                         Style="{StaticResource ActionBtnPrimary}"
                                         Margin="8,0,0,0"
-                                        ToolTip="Форсированный опрос всех панелей сейчас"/>
+                                        ToolTip="{core:Tr pmta.overview.btnRefreshTooltip}"/>
                             </StackPanel>
                         </Grid>
 
@@ -249,7 +246,7 @@
                         <UniformGrid Columns="2" Rows="1" Margin="0,0,0,16">
                             <Border Style="{StaticResource PmtaCard}" Margin="0,0,6,0" Height="160">
                                 <DockPanel>
-                                    <TextBlock DockPanel.Dock="Top" Text="ОБЩАЯ РАССЫЛКА · RCP/МИН"
+                                    <TextBlock DockPanel.Dock="Top" Text="{core:Tr pmta.overview.chartSendTitle}"
                                                FontSize="10" FontWeight="SemiBold" Opacity="0.75"
                                                Foreground="#7582A3"/>
                                     <lvc:CartesianChart Series="{Binding AggregateSeries}"
@@ -261,7 +258,7 @@
                             </Border>
                             <Border Style="{StaticResource PmtaCard}" Margin="6,0,0,0" Height="160">
                                 <DockPanel>
-                                    <TextBlock DockPanel.Dock="Top" Text="ОБЩАЯ ЗАГРУЗКА ОЧЕРЕДЕЙ · RCP"
+                                    <TextBlock DockPanel.Dock="Top" Text="{core:Tr pmta.overview.chartQueueTitle}"
                                                FontSize="10" FontWeight="SemiBold" Opacity="0.75"
                                                Foreground="#7582A3"/>
                                     <lvc:CartesianChart Series="{Binding AggregateQueueSeries}"
@@ -274,7 +271,7 @@
                         </UniformGrid>
 
                         <!-- Таблица со всех панелей -->
-                        <TextBlock Text="ПАНЕЛИ" FontSize="10.5" FontWeight="SemiBold" Opacity="0.75"
+                        <TextBlock Text="{core:Tr pmta.overview.tableHeader}" FontSize="10.5" FontWeight="SemiBold" Opacity="0.75"
                                    Foreground="#7582A3" Margin="0,0,0,8"/>
                         <Border Style="{StaticResource PmtaCard}" Padding="0" Margin="0,0,0,4">
                             <DataGrid ItemsSource="{Binding Panels}"
@@ -307,7 +304,7 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Header="НАЗВАНИЕ" Width="*">
+                                    <DataGridTemplateColumn Header="{core:Tr pmta.overview.colName}" Width="*">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <TextBlock VerticalAlignment="Center" Margin="10,0">
@@ -331,15 +328,15 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <DataGridTextColumn Header="ПОЛУЧЕНО" Binding="{Binding InRcpTotal, StringFormat={}{0:N0}}" Width="120"
+                                    <DataGridTextColumn Header="{core:Tr pmta.overview.colReceived}" Binding="{Binding InRcpTotal, StringFormat={}{0:N0}}" Width="120"
                                                         ElementStyle="{StaticResource PmtaCellText}"/>
-                                    <DataGridTextColumn Header="ОТПРАВЛЕНО" Binding="{Binding OutRcpTotal, StringFormat={}{0:N0}}" Width="140"
+                                    <DataGridTextColumn Header="{core:Tr pmta.overview.colSent}" Binding="{Binding OutRcpTotal, StringFormat={}{0:N0}}" Width="140"
                                                         ElementStyle="{StaticResource PmtaCellText}"/>
-                                    <DataGridTextColumn Header="ЗА ЧАС" Binding="{Binding OutRcpLastHr, StringFormat={}{0:N0}}" Width="120"
+                                    <DataGridTextColumn Header="{core:Tr pmta.overview.colLastHour}" Binding="{Binding OutRcpLastHr, StringFormat={}{0:N0}}" Width="120"
                                                         ElementStyle="{StaticResource PmtaCellText}"/>
-                                    <DataGridTextColumn Header="RCP/МИН" Binding="{Binding OutRcpLastMin, StringFormat={}{0:N0}}" Width="100"
+                                    <DataGridTextColumn Header="{core:Tr pmta.overview.colRcpMin}" Binding="{Binding OutRcpLastMin, StringFormat={}{0:N0}}" Width="100"
                                                         ElementStyle="{StaticResource PmtaCellText}"/>
-                                    <DataGridTextColumn Header="ОЧЕРЕДЬ" Binding="{Binding QueueRcp, StringFormat={}{0:N0}}" Width="100"
+                                    <DataGridTextColumn Header="{core:Tr pmta.overview.colQueue}" Binding="{Binding QueueRcp, StringFormat={}{0:N0}}" Width="100"
                                                         ElementStyle="{StaticResource PmtaCellText}"/>
                                 </DataGrid.Columns>
                             </DataGrid>
@@ -354,13 +351,13 @@
                         <Viewbox Width="46" Height="46" Opacity="0.35">
                             <Path Data="{x:Static core:PhosphorIcons.Broadcast}" Fill="#4b5bff"/>
                         </Viewbox>
-                        <TextBlock Text="Добавьте первую PMTA-панель"
+                        <TextBlock Text="{core:Tr pmta.empty.title}"
                                    FontSize="17" FontWeight="Bold" HorizontalAlignment="Center"
                                    Foreground="#131C3D" Margin="0,14,0,6"/>
                         <TextBlock TextWrapping="Wrap" TextAlignment="Center" FontSize="12.5"
                                    Foreground="#7582A3" LineHeight="18"
-                                   Text="Укажи хост, порт и HTTPS-настройки — начнётся realtime-мониторинг очередей, скорости отправки и ошибок."/>
-                        <Button Content="Добавить панель"
+                                   Text="{core:Tr pmta.empty.desc}"/>
+                        <Button Content="{core:Tr pmta.overview.btnAddPanel}"
                                 Command="{Binding AddPanelCommand}"
                                 core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.Plus}"
                                 Style="{StaticResource ActionBtnGreen}"
@@ -391,10 +388,12 @@
                                                 VerticalAlignment="Center"/>
                                         <TextBlock Text="{Binding Label}" FontSize="19" FontWeight="Bold"
                                                    Foreground="#131C3D" VerticalAlignment="Center"/>
-                                        <Grid Margin="10,0,0,0" VerticalAlignment="Center">
+                                        <Grid Margin="10,0,0,0" VerticalAlignment="Center" MaxWidth="260"
+                                              ToolTip="{Binding StatusTextFull}">
                                             <Border Background="{Binding StatusColor}" CornerRadius="10" Opacity="0.15"/>
                                             <TextBlock Text="{Binding StatusText}" Foreground="{Binding StatusColor}"
-                                                       FontSize="10.5" FontWeight="SemiBold" Padding="10,3"/>
+                                                       FontSize="10.5" FontWeight="SemiBold" Padding="10,3"
+                                                       TextTrimming="CharacterEllipsis"/>
                                         </Grid>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal" Margin="20,5,0,0">
@@ -402,11 +401,11 @@
                                             <Path Data="{x:Static core:PhosphorIcons.Broadcast}" Fill="#7582A3"/>
                                         </Viewbox>
                                         <TextBlock FontSize="11" Foreground="#7582A3">
-                                            <Run Text="MTA "/><Run Text="{Binding Version, Mode=OneWay}"/>
+                                            <Run Text="{core:Tr pmta.detail.mtaLabel}"/><Run Text="{Binding Version, Mode=OneWay}"/>
                                             <Run Text="   ·   "/><Run Text="{Binding HostName, Mode=OneWay}"/>
                                         </TextBlock>
                                         <Button Click="OnOpenPanelUrlClick" Background="Transparent" BorderThickness="0"
-                                                Padding="6,0,0,0" Cursor="Hand" ToolTip="Открыть панель в браузере">
+                                                Padding="6,0,0,0" Cursor="Hand" ToolTip="{core:Tr pmta.detail.openInBrowserTooltip}">
                                             <Viewbox Width="11" Height="11">
                                                 <Path Data="{x:Static core:PhosphorIcons.Globe}" Fill="#7582A3"/>
                                             </Viewbox>
@@ -414,20 +413,20 @@
                                     </StackPanel>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
-                                    <Button Content="Редактировать"
+                                    <Button Content="{core:Tr pmta.detail.btnEdit}"
                                             Command="{Binding DataContext.EditPanelCommand,
                                                 RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}"
                                             core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.PencilSimple}"
                                             Style="{StaticResource ActionBtnNeutral}"/>
-                                    <Button Content="Удалить"
+                                    <Button Content="{core:Tr pmta.detail.btnRemove}"
                                             Command="{Binding DataContext.RemovePanelCommand,
                                                 RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}"
                                             core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.Trash}"
                                             Style="{StaticResource ActionBtnDanger}"
                                             Margin="8,0,0,0"/>
-                                    <Button Content="Управление PMTA ⌄"
+                                    <Button Content="{core:Tr pmta.detail.btnManage}"
                                             Command="{Binding DataContext.OpenCommandsCommand,
                                                 RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.Gear}"
@@ -449,7 +448,7 @@
                                     <StackPanel Margin="9,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding OutRcpLastMin, StringFormat={}{0:N0}}"
                                                    FontSize="17" FontWeight="Bold" Foreground="#131C3D"/>
-                                        <TextBlock Text="RCP / МИН" FontSize="9" Foreground="#7582A3" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{core:Tr pmta.detail.tileRcpMin}" FontSize="9" Foreground="#7582A3" FontWeight="SemiBold"/>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
@@ -463,7 +462,7 @@
                                     <StackPanel Margin="9,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding OutRcpLastHr, StringFormat={}{0:N0}}"
                                                    FontSize="17" FontWeight="Bold" Foreground="#131C3D"/>
-                                        <TextBlock Text="RCP / ЧАС" FontSize="9" Foreground="#7582A3" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{core:Tr pmta.detail.tileRcpHour}" FontSize="9" Foreground="#7582A3" FontWeight="SemiBold"/>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
@@ -477,7 +476,7 @@
                                     <StackPanel Margin="9,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding OutRcpTotal, StringFormat={}{0:N0}}"
                                                    FontSize="17" FontWeight="Bold" Foreground="#131C3D"/>
-                                        <TextBlock Text="ВСЕГО" FontSize="9" Foreground="#7582A3" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{core:Tr pmta.detail.tileTotal}" FontSize="9" Foreground="#7582A3" FontWeight="SemiBold"/>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
@@ -491,7 +490,7 @@
                                     <StackPanel Margin="9,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding QueueRcp, Mode=OneWay, StringFormat={}{0:N0}}"
                                                    FontSize="17" FontWeight="Bold" Foreground="#131C3D"/>
-                                        <TextBlock Text="В ОЧЕРЕДИ" FontSize="9" Foreground="#7582A3" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{core:Tr pmta.detail.tileQueued}" FontSize="9" Foreground="#7582A3" FontWeight="SemiBold"/>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
@@ -508,7 +507,7 @@
                                             <Run Text=" / "/>
                                             <Run Text="{Binding SmtpOutMax, Mode=OneWay}" FontSize="11"/>
                                         </TextBlock>
-                                        <TextBlock Text="SMTP OUT" FontSize="9" Foreground="#7582A3" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{core:Tr pmta.detail.tileSmtpOut}" FontSize="9" Foreground="#7582A3" FontWeight="SemiBold"/>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
@@ -527,7 +526,7 @@
                                         <Viewbox Width="12" Height="12" Margin="0,0,6,0">
                                             <Path Data="{x:Static core:PhosphorIcons.PaperPlane}" Fill="#16A34A"/>
                                         </Viewbox>
-                                        <TextBlock Text="Отправка · RCP / мин" FontSize="11" FontWeight="SemiBold" Foreground="#131C3D"/>
+                                        <TextBlock Text="{core:Tr pmta.detail.chartSendTitle}" FontSize="11" FontWeight="SemiBold" Foreground="#131C3D"/>
                                     </StackPanel>
                                     <lvc:CartesianChart Series="{Binding SendSeries}"
                                                         XAxes="{Binding EmptyXAxes}"
@@ -543,7 +542,7 @@
                                         <Viewbox Width="12" Height="12" Margin="0,0,6,0">
                                             <Path Data="{x:Static core:PhosphorIcons.Database}" Fill="#D97706"/>
                                         </Viewbox>
-                                        <TextBlock Text="Очередь" FontSize="11" FontWeight="SemiBold" Foreground="#131C3D"/>
+                                        <TextBlock Text="{core:Tr pmta.detail.chartQueueTitle}" FontSize="11" FontWeight="SemiBold" Foreground="#131C3D"/>
                                     </StackPanel>
                                     <lvc:CartesianChart Series="{Binding QueueSeriesChart}"
                                                         XAxes="{Binding EmptyXAxes}"
@@ -559,7 +558,7 @@
                                         <Viewbox Width="12" Height="12" Margin="0,0,6,0">
                                             <Path Data="{x:Static core:PhosphorIcons.Warning}" Fill="#ef4444"/>
                                         </Viewbox>
-                                        <TextBlock Text="Сводка ошибок" FontSize="11" FontWeight="SemiBold" Foreground="#131C3D"/>
+                                        <TextBlock Text="{core:Tr pmta.detail.errorSummaryTitle}" FontSize="11" FontWeight="SemiBold" Foreground="#131C3D"/>
                                     </StackPanel>
                                         <ItemsControl ItemsSource="{Binding ErrorSummary}">
                                             <ItemsControl.ItemTemplate>
@@ -613,7 +612,7 @@
                                             <Viewbox Width="13" Height="13" Margin="0,0,7,0">
                                                 <Path Data="{x:Static core:PhosphorIcons.ListBullets}" Fill="#D97706"/>
                                             </Viewbox>
-                                            <TextBlock Text="Топ очередей" FontSize="12.5" FontWeight="SemiBold" Foreground="#131C3D"/>
+                                            <TextBlock Text="{core:Tr pmta.detail.topQueuesTitle}" FontSize="12.5" FontWeight="SemiBold" Foreground="#131C3D"/>
                                         </StackPanel>
                                         <Border Grid.Column="1" Background="#F7F8FC" BorderBrush="#E4E7EF"
                                                 BorderThickness="1" CornerRadius="7" Padding="9,5">
@@ -643,15 +642,15 @@
                                             <Style TargetType="DataGridRow" BasedOn="{StaticResource PmtaRow}"/>
                                         </DataGrid.RowStyle>
                                         <DataGrid.Columns>
-                                            <DataGridTextColumn Header="ОЧЕРЕДЬ" Binding="{Binding Name}" Width="*"
+                                            <DataGridTextColumn Header="{core:Tr pmta.detail.colQueue}" Binding="{Binding Name}" Width="*"
                                                                 ElementStyle="{StaticResource PmtaCellText}"/>
-                                            <DataGridTextColumn Header="RCP" Binding="{Binding Rcp, StringFormat={}{0:N0}}" Width="80"
+                                            <DataGridTextColumn Header="{core:Tr pmta.detail.colRcp}" Binding="{Binding Rcp, StringFormat={}{0:N0}}" Width="80"
                                                                 ElementStyle="{StaticResource PmtaCellText}"/>
-                                            <DataGridTextColumn Header="KB" Binding="{Binding Kb, StringFormat={}{0:N1}}" Width="80"
+                                            <DataGridTextColumn Header="{core:Tr pmta.detail.colKb}" Binding="{Binding Kb, StringFormat={}{0:N1}}" Width="80"
                                                                 ElementStyle="{StaticResource PmtaCellText}"/>
-                                            <DataGridTextColumn Header="CONN" Binding="{Binding Conn}" Width="60"
+                                            <DataGridTextColumn Header="{core:Tr pmta.detail.colConn}" Binding="{Binding Conn}" Width="60"
                                                                 ElementStyle="{StaticResource PmtaCellText}"/>
-                                            <DataGridTemplateColumn Header="ОШИБКИ" Width="70">
+                                            <DataGridTemplateColumn Header="{core:Tr pmta.detail.colErrors}" Width="70">
                                                 <DataGridTemplateColumn.CellTemplate>
                                                     <DataTemplate>
                                                         <TextBlock VerticalAlignment="Center" Margin="8,0" FontSize="9.5">
@@ -693,7 +692,7 @@
                                             <Viewbox Width="13" Height="13" Margin="0,0,7,0">
                                                 <Path Data="{x:Static core:PhosphorIcons.Database}" Fill="#7C3AED"/>
                                             </Viewbox>
-                                            <TextBlock Text="Virtual MTA" FontSize="12.5" FontWeight="SemiBold" Foreground="#131C3D"/>
+                                            <TextBlock Text="{core:Tr pmta.detail.vmtaTitle}" FontSize="12.5" FontWeight="SemiBold" Foreground="#131C3D"/>
                                         </StackPanel>
                                         <Border Grid.Column="1" Background="#F7F8FC" BorderBrush="#E4E7EF"
                                                 BorderThickness="1" CornerRadius="7" Padding="9,5">
@@ -723,15 +722,15 @@
                                             <Style TargetType="DataGridRow" BasedOn="{StaticResource PmtaRow}"/>
                                         </DataGrid.RowStyle>
                                         <DataGrid.Columns>
-                                            <DataGridTextColumn Header="VMTA" Binding="{Binding Name}" Width="*"
+                                            <DataGridTextColumn Header="{core:Tr pmta.detail.colVmta}" Binding="{Binding Name}" Width="*"
                                                                 ElementStyle="{StaticResource PmtaCellText}"/>
-                                            <DataGridTextColumn Header="RCP" Binding="{Binding Rcp, StringFormat={}{0:N0}}" Width="80"
+                                            <DataGridTextColumn Header="{core:Tr pmta.detail.colRcp}" Binding="{Binding Rcp, StringFormat={}{0:N0}}" Width="80"
                                                                 ElementStyle="{StaticResource PmtaCellText}"/>
-                                            <DataGridTextColumn Header="%" Binding="{Binding PctOfTotal}" Width="55"
+                                            <DataGridTextColumn Header="{core:Tr pmta.detail.colPct}" Binding="{Binding PctOfTotal}" Width="55"
                                                                 ElementStyle="{StaticResource PmtaCellText}"/>
-                                            <DataGridTextColumn Header="CONN" Binding="{Binding Conn}" Width="55"
+                                            <DataGridTextColumn Header="{core:Tr pmta.detail.colConn}" Binding="{Binding Conn}" Width="55"
                                                                 ElementStyle="{StaticResource PmtaCellText}"/>
-                                            <DataGridTextColumn Header="DOM" Binding="{Binding Dom}" Width="55"
+                                            <DataGridTextColumn Header="{core:Tr pmta.detail.colDom}" Binding="{Binding Dom}" Width="55"
                                                                 ElementStyle="{StaticResource PmtaCellText}"/>
                                         </DataGrid.Columns>
                                     </DataGrid>
@@ -752,7 +751,7 @@
                                         <Viewbox Width="13" Height="13" Margin="0,0,7,0">
                                             <Path Data="{x:Static core:PhosphorIcons.FileText}" Fill="#3b82f6"/>
                                         </Viewbox>
-                                        <TextBlock Text="Последние ошибки" FontSize="12.5" FontWeight="SemiBold" Foreground="#131C3D"/>
+                                        <TextBlock Text="{core:Tr pmta.detail.recentErrorsTitle}" FontSize="12.5" FontWeight="SemiBold" Foreground="#131C3D"/>
                                     </StackPanel>
                                     <ComboBox Grid.Column="1" Width="150" Margin="0,0,8,0"
                                               ItemsSource="{Binding ErrorTypeFilterOptions}"
@@ -776,13 +775,13 @@
                                         <ColumnDefinition Width="80"/>
                                         <ColumnDefinition Width="20"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="ВРЕМЯ" FontSize="10" FontWeight="SemiBold" Foreground="#7582A3"/>
-                                    <TextBlock Grid.Column="1" Text="ТИП" FontSize="10" FontWeight="SemiBold" Foreground="#7582A3"/>
-                                    <TextBlock Grid.Column="2" Text="СООБЩЕНИЕ" FontSize="10" FontWeight="SemiBold" Foreground="#7582A3"/>
-                                    <TextBlock Grid.Column="3" Text="ПОВТОРЫ" FontSize="10" FontWeight="SemiBold" Foreground="#7582A3" HorizontalAlignment="Right"/>
+                                    <TextBlock Grid.Column="0" Text="{core:Tr pmta.detail.colTime}" FontSize="10" FontWeight="SemiBold" Foreground="#7582A3"/>
+                                    <TextBlock Grid.Column="1" Text="{core:Tr pmta.detail.colType}" FontSize="10" FontWeight="SemiBold" Foreground="#7582A3"/>
+                                    <TextBlock Grid.Column="2" Text="{core:Tr pmta.detail.colMessage}" FontSize="10" FontWeight="SemiBold" Foreground="#7582A3"/>
+                                    <TextBlock Grid.Column="3" Text="{core:Tr pmta.detail.colRepeats}" FontSize="10" FontWeight="SemiBold" Foreground="#7582A3" HorizontalAlignment="Right"/>
                                 </Grid>
                                 <Border DockPanel.Dock="Top" BorderBrush="#E4E7EF" BorderThickness="0,1,0,0"/>
-                                <TextBlock DockPanel.Dock="Top" Text="Ошибок за последние 3 часа нет" FontSize="11" Foreground="#7582A3"
+                                <TextBlock DockPanel.Dock="Top" Text="{core:Tr pmta.detail.noRecentErrors}" FontSize="11" Foreground="#7582A3"
                                            HorizontalAlignment="Center" Margin="0,24"
                                            Visibility="{Binding NoRecentErrors, Converter={StaticResource BoolToVis}}"/>
                                 <ScrollViewer VerticalScrollBarVisibility="Auto" Height="160"

@@ -9,6 +9,7 @@ namespace Fakunator.Core;
 public class Config
 {
     // ── App ──────────────────────────────────────────────────────────
+    public string Language { get; set; } = "ru";
     public string OutputDir { get; set; } = "";
     public bool GmailStrict { get; set; } = true;
     public List<string> EnabledFilters { get; set; } = new()
@@ -142,48 +143,41 @@ public class Config
 
     private static string? _configPath;
 
+    /// <summary>
+    /// %APPDATA%\Fakunator\config.json — писабельно для любого пользователя Windows без прав
+    /// администратора. До v2.7 конфиг лежал рядом с exe (в Program Files это ломало запись
+    /// у не-админов); существующие config.json переносятся один раз при первом запуске новой
+    /// версии, см. <see cref="DataMigration"/>. <see cref="FindLegacyConfigPath"/> ниже — старый
+    /// алгоритм поиска, используется миграцией, чтобы найти файл, который нужно перенести.
+    /// </summary>
     public static string ConfigPath
     {
         get
         {
-            if (_configPath != null) return _configPath;
-
-            // For frozen exe: next to exe. Environment.ProcessPath — надёжнее
-            // AppContext.BaseDirectory для single-file self-contained (там
-            // BaseDirectory может указывать на temp-папку с распакованным контентом).
-            var exeDir = Path.GetDirectoryName(Environment.ProcessPath) ?? AppContext.BaseDirectory;
-            var candidate = Path.Combine(exeDir, "config.json");
-            if (File.Exists(candidate))
-            {
-                _configPath = candidate;
-                return _configPath;
-            }
-
-            // For dev: walk up to find existing config.json or project root
-            var dir = new DirectoryInfo(exeDir);
-            for (int i = 0; i < 8 && dir != null; i++)
-            {
-                var path = Path.Combine(dir.FullName, "config.json");
-                if (File.Exists(path))
-                {
-                    _configPath = path;
-                    return _configPath;
-                }
-
-                // Check if this is a project directory (has .csproj)
-                if (Directory.GetFiles(dir.FullName, "*.csproj").Length > 0)
-                {
-                    _configPath = path;
-                    return _configPath;
-                }
-
-                dir = dir.Parent;
-            }
-
-            // Fallback: next to exe
-            _configPath = Path.Combine(exeDir, "config.json");
+            _configPath ??= Path.Combine(Paths.AppDataRoot, "config.json");
             return _configPath;
         }
+    }
+
+    /// <summary>
+    /// Старый алгоритм поиска config.json (рядом с exe, либо — в dev-режиме — поднимаясь вверх
+    /// до первой найденной .csproj-папки). Используется только миграцией, чтобы найти
+    /// существующий конфиг предыдущих версий и перенести его в новое расположение.
+    /// </summary>
+    public static string? FindLegacyConfigPath()
+    {
+        var exeDir = Path.GetDirectoryName(Environment.ProcessPath) ?? AppContext.BaseDirectory;
+        var candidate = Path.Combine(exeDir, "config.json");
+        if (File.Exists(candidate)) return candidate;
+
+        var dir = new DirectoryInfo(exeDir);
+        for (int i = 0; i < 8 && dir != null; i++)
+        {
+            var path = Path.Combine(dir.FullName, "config.json");
+            if (File.Exists(path)) return path;
+            dir = dir.Parent;
+        }
+        return null;
     }
 
     // ── Load / Save ──────────────────────────────────────────────────

@@ -1,6 +1,7 @@
 <UserControl x:Class="Fakunator.Views.SidebarAnalyzeView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:core="clr-namespace:Fakunator.Core">
 
     <UserControl.Resources>
         <!-- Compact numeric input style -->
@@ -62,9 +63,9 @@
                                Foreground="{DynamicResource Accent2Brush}"
                                VerticalAlignment="Center" Margin="0,0,10,0"/>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="AI-Анализ" FontSize="13" FontWeight="SemiBold"
+                        <TextBlock Text="{core:Tr analyze.sidebar.headerTitle}" FontSize="13" FontWeight="SemiBold"
                                    Foreground="{DynamicResource Fg1Brush}"/>
-                        <TextBlock Text="Пол + страна по имени"
+                        <TextBlock Text="{core:Tr analyze.sidebar.headerSubtitle}"
                                    FontSize="10.5"
                                    Foreground="{DynamicResource Fg3Brush}"
                                    Margin="0,2,0,0"/>
@@ -73,7 +74,7 @@
             </Border>
 
             <!-- ── Section: Режимы работы ──────────────────────── -->
-            <TextBlock Text="РЕЖИМЫ РАБОТЫ" FontSize="9.5" FontWeight="SemiBold"
+            <TextBlock Text="{core:Tr analyze.sidebar.modesSection}" FontSize="9.5" FontWeight="SemiBold"
                        Foreground="{DynamicResource Fg3Brush}"
                        Margin="2,0,0,8"/>
 
@@ -82,34 +83,34 @@
                     <CheckBox x:Name="ChkUseAi"
                               Foreground="{DynamicResource Fg1Brush}" FontSize="12.5"
                               Checked="OnSettingChanged" Unchecked="OnSettingChanged">
-                        <TextBlock Text="AI-резерв для непокрытых" TextWrapping="Wrap"/>
+                        <TextBlock Text="{core:Tr analyze.sidebar.useAiTitle}" TextWrapping="Wrap"/>
                     </CheckBox>
-                    <TextBlock Text="Отправлять в AI адреса, не найденные в БД"
+                    <TextBlock Text="{core:Tr analyze.sidebar.useAiDesc}"
                                FontSize="10" Foreground="{DynamicResource Fg4Brush}"
                                TextWrapping="Wrap" Margin="22,2,0,10"/>
 
                     <CheckBox x:Name="ChkTwoPass"
                               Foreground="{DynamicResource Fg1Brush}" FontSize="12.5"
                               Checked="OnSettingChanged" Unchecked="OnSettingChanged">
-                        <TextBlock Text="Двух-проход" TextWrapping="Wrap"/>
+                        <TextBlock Text="{core:Tr analyze.sidebar.twoPassTitle}" TextWrapping="Wrap"/>
                     </CheckBox>
-                    <TextBlock Text="Перепроверить сомнительные ответы 2-м запросом"
+                    <TextBlock Text="{core:Tr analyze.sidebar.twoPassDesc}"
                                FontSize="10" Foreground="{DynamicResource Fg4Brush}"
                                TextWrapping="Wrap" Margin="22,2,0,10"/>
 
                     <CheckBox x:Name="ChkSkipJunk"
                               Foreground="{DynamicResource Fg1Brush}" FontSize="12.5"
                               Checked="OnSettingChanged" Unchecked="OnSettingChanged">
-                        <TextBlock Text="Пропускать мусор" TextWrapping="Wrap"/>
+                        <TextBlock Text="{core:Tr analyze.sidebar.skipJunkTitle}" TextWrapping="Wrap"/>
                     </CheckBox>
-                    <TextBlock Text="Не анализировать цифровые и хеш-адреса"
+                    <TextBlock Text="{core:Tr analyze.sidebar.skipJunkDesc}"
                                FontSize="10" Foreground="{DynamicResource Fg4Brush}"
                                TextWrapping="Wrap" Margin="22,2,0,0"/>
                 </StackPanel>
             </Border>
 
             <!-- ── Section: AI-модель ──────────────────────────── -->
-            <TextBlock Text="AI-МОДЕЛЬ" FontSize="9.5" FontWeight="SemiBold"
+            <TextBlock Text="{core:Tr analyze.sidebar.modelSection}" FontSize="9.5" FontWeight="SemiBold"
                        Foreground="{DynamicResource Fg3Brush}"
                        Margin="2,0,0,8"/>
 
@@ -124,9 +125,9 @@
                             <ComboBoxItem Content="anthropic"/>
                         </ComboBox>
                         <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="🛰  Провайдер" FontSize="12.5" FontWeight="Medium"
+                            <TextBlock Text="{core:Tr analyze.sidebar.providerTitle}" FontSize="12.5" FontWeight="Medium"
                                        Foreground="{DynamicResource Fg1Brush}"/>
-                            <TextBlock Text="Куда отправляем pass 1" FontSize="10"
+                            <TextBlock Text="{core:Tr analyze.sidebar.providerDesc}" FontSize="10"
                                        Foreground="{DynamicResource Fg4Brush}"
                                        Margin="0,2,0,0"/>
                         </StackPanel>
@@ -195,7 +196,7 @@
             </Border>
 
             <!-- ── Section: Лимиты ─────────────────────────────── -->
-            <TextBlock Text="ЛИМИТЫ И ПАРАЛЛЕЛИЗМ" FontSize="9.5" FontWeight="SemiBold"
+            <TextBlock Text="{core:Tr analyze.sidebar.limitsSection}" FontSize="9.5" FontWeight="SemiBold"
                        Foreground="{DynamicResource Fg3Brush}"
                        Margin="2,0,0,8"/>
 
@@ -207,9 +208,9 @@
                                  Style="{StaticResource CompactBox}"
                                  Text="105.0" TextChanged="OnSpendCapChanged"/>
                         <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="💰  Лимит, $" FontSize="12.5" FontWeight="Medium"
+                            <TextBlock Text="{core:Tr analyze.sidebar.spendCapTitle}" FontSize="12.5" FontWeight="Medium"
                                        Foreground="{DynamicResource Fg1Brush}"/>
-                            <TextBlock Text="Стоп при превышении" FontSize="10"
+                            <TextBlock Text="{core:Tr analyze.sidebar.spendCapDesc}" FontSize="10"
                                        Foreground="{DynamicResource Fg4Brush}"
                                        Margin="0,2,0,0"/>
                         </StackPanel>
@@ -229,9 +230,9 @@
                             <ComboBoxItem Content="200"/>
                         </ComboBox>
                         <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="📦  Размер батча" FontSize="12.5" FontWeight="Medium"
+                            <TextBlock Text="{core:Tr analyze.sidebar.batchSizeTitle}" FontSize="12.5" FontWeight="Medium"
                                        Foreground="{DynamicResource Fg1Brush}"/>
-                            <TextBlock Text="Email в одном запросе" FontSize="10"
+                            <TextBlock Text="{core:Tr analyze.sidebar.batchSizeDesc}" FontSize="10"
                                        Foreground="{DynamicResource Fg4Brush}"
                                        Margin="0,2,0,0"/>
                         </StackPanel>
@@ -251,9 +252,9 @@
                             <ComboBoxItem Content="8"/>
                         </ComboBox>
                         <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="⚡  Параллельных" FontSize="12.5" FontWeight="Medium"
+                            <TextBlock Text="{core:Tr analyze.sidebar.concurrentTitle}" FontSize="12.5" FontWeight="Medium"
                                        Foreground="{DynamicResource Fg1Brush}"/>
-                            <TextBlock Text="Одновременных к API" FontSize="10"
+                            <TextBlock Text="{core:Tr analyze.sidebar.concurrentDesc}" FontSize="10"
                                        Foreground="{DynamicResource Fg4Brush}"
                                        Margin="0,2,0,0"/>
                         </StackPanel>
@@ -269,7 +270,7 @@
                 <StackPanel>
                     <DockPanel Margin="0,0,0,8">
                         <TextBlock Text="💵" FontSize="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="ОЦЕНКА БЮДЖЕТА" FontSize="10" FontWeight="SemiBold"
+                        <TextBlock Text="{core:Tr analyze.sidebar.budgetHeader}" FontSize="10" FontWeight="SemiBold"
                                    Foreground="{DynamicResource Fg3Brush}"
                                    VerticalAlignment="Center"/>
                     </DockPanel>
@@ -282,7 +283,7 @@
                                Foreground="{DynamicResource Fg4Brush}"
                                Margin="0,4,0,0"
                                TextWrapping="Wrap"
-                               Text="~0 вх. токенов · ~0 вых. токенов"/>
+                               Text=""/>
                 </StackPanel>
             </Border>
 

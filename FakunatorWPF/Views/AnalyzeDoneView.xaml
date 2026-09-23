@@ -1,6 +1,7 @@
 <UserControl x:Class="Fakunator.Views.AnalyzeDoneView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:core="clr-namespace:Fakunator.Core">
 
     <Grid Margin="20,14" x:Name="RootPanel">
         <Grid.RowDefinitions>
@@ -42,7 +43,7 @@
                             <Border Background="{DynamicResource Bg3Brush}" CornerRadius="8"
                                     Padding="12,8" Margin="0,0,8,0">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="СТОИМОСТЬ AI" FontSize="10" FontWeight="SemiBold"
+                                    <TextBlock Text="{core:Tr analyze.done.costLabel}" FontSize="10" FontWeight="SemiBold"
                                                Foreground="{DynamicResource Fg3Brush}"
                                                HorizontalAlignment="Center"/>
                                     <TextBlock x:Name="HeroCost" Text="$ 0.00" FontSize="14"
@@ -56,7 +57,7 @@
                             <Border Background="{DynamicResource Bg3Brush}" CornerRadius="8"
                                     Padding="12,8" Margin="0,0,8,0">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="ТОКЕНОВ" FontSize="10" FontWeight="SemiBold"
+                                    <TextBlock Text="{core:Tr analyze.done.tokensLabel}" FontSize="10" FontWeight="SemiBold"
                                                Foreground="{DynamicResource Fg3Brush}"
                                                HorizontalAlignment="Center"/>
                                     <TextBlock x:Name="HeroTokens" Text="0" FontSize="14"
@@ -70,7 +71,7 @@
                             <Border Background="{DynamicResource Bg3Brush}" CornerRadius="8"
                                     Padding="12,8">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="ВРЕМЯ" FontSize="10" FontWeight="SemiBold"
+                                    <TextBlock Text="{core:Tr analyze.done.timeLabel}" FontSize="10" FontWeight="SemiBold"
                                                Foreground="{DynamicResource Fg3Brush}"
                                                HorizontalAlignment="Center"/>
                                     <TextBlock x:Name="HeroElapsed" Text="00:00" FontSize="14"
@@ -101,7 +102,7 @@
                 <!-- ОБРАБОТАНО -->
                 <Border Style="{StaticResource Card}" Margin="0,0,6,0">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="ОБРАБОТАНО" FontSize="10" FontWeight="SemiBold"
+                        <TextBlock Text="{core:Tr analyze.done.kpiProcessed}" FontSize="10" FontWeight="SemiBold"
                                    Foreground="{DynamicResource Fg3Brush}"
                                    HorizontalAlignment="Center"/>
                         <TextBlock x:Name="KpiProcessed" Text="0" FontSize="18"
@@ -114,7 +115,7 @@
                 <!-- ЧЕРЕЗ БД -->
                 <Border Style="{StaticResource Card}" Margin="3,0,3,0">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="ЧЕРЕЗ БД" FontSize="10" FontWeight="SemiBold"
+                        <TextBlock Text="{core:Tr analyze.done.kpiDb}" FontSize="10" FontWeight="SemiBold"
                                    Foreground="{DynamicResource Fg3Brush}"
                                    HorizontalAlignment="Center"/>
                         <TextBlock x:Name="KpiDb" Text="0" FontSize="18"
@@ -127,7 +128,7 @@
                 <!-- ЧЕРЕЗ AI -->
                 <Border Style="{StaticResource Card}" Margin="3,0,3,0">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="ЧЕРЕЗ AI" FontSize="10" FontWeight="SemiBold"
+                        <TextBlock Text="{core:Tr analyze.done.kpiAi}" FontSize="10" FontWeight="SemiBold"
                                    Foreground="{DynamicResource Fg3Brush}"
                                    HorizontalAlignment="Center"/>
                         <TextBlock x:Name="KpiAi" Text="0" FontSize="18"
@@ -140,7 +141,7 @@
                 <!-- НЕ ОПРЕД. -->
                 <Border Style="{StaticResource Card}" Margin="3,0,3,0">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="НЕ ОПРЕД." FontSize="10" FontWeight="SemiBold"
+                        <TextBlock Text="{core:Tr analyze.done.kpiUnknown}" FontSize="10" FontWeight="SemiBold"
                                    Foreground="{DynamicResource Fg3Brush}"
                                    HorizontalAlignment="Center"/>
                         <TextBlock x:Name="KpiUnknown" Text="0" FontSize="18"
@@ -153,7 +154,7 @@
                 <!-- СКОРОСТЬ -->
                 <Border Style="{StaticResource Card}" Margin="6,0,0,0">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="СКОРОСТЬ" FontSize="10" FontWeight="SemiBold"
+                        <TextBlock Text="{core:Tr analyze.done.kpiSpeed}" FontSize="10" FontWeight="SemiBold"
                                    Foreground="{DynamicResource Fg3Brush}"
                                    HorizontalAlignment="Center"/>
                         <TextBlock x:Name="KpiSpeed" Text="0/с" FontSize="18"
@@ -168,7 +169,7 @@
             <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,0,0,14" x:Name="CountryCard"
                     Visibility="Collapsed">
                 <DockPanel>
-                    <TextBlock DockPanel.Dock="Top" Text="ТОП-10 СТРАН" FontSize="10"
+                    <TextBlock DockPanel.Dock="Top" Text="{core:Tr analyze.done.topCountries}" FontSize="10"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource Fg3Brush}"
                                Margin="0,0,0,10"/>
@@ -204,7 +205,7 @@
                           EnableRowVirtualization="True"
                           EnableColumnVirtualization="True">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="*" MinWidth="200">
+                        <DataGridTextColumn Header="{core:Tr analyze.done.colEmail}" Binding="{Binding Email}" Width="*" MinWidth="200">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
@@ -213,21 +214,21 @@
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="Имя" Binding="{Binding NameToken}" Width="100">
+                        <DataGridTextColumn Header="{core:Tr analyze.done.colName}" Binding="{Binding NameToken}" Width="100">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Foreground" Value="{DynamicResource Fg2Brush}"/>
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="Пол" Binding="{Binding GenderDisplay}" Width="60">
+                        <DataGridTextColumn Header="{core:Tr analyze.done.colGender}" Binding="{Binding GenderDisplay}" Width="60">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="FontWeight" Value="Bold"/>
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTemplateColumn Header="Страна" Width="130">
+                        <DataGridTemplateColumn Header="{core:Tr analyze.done.colCountry}" Width="130">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0">
@@ -240,30 +241,30 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn Header="Источник" Binding="{Binding SourceDisplay}" Width="80">
+                        <DataGridTextColumn Header="{core:Tr analyze.done.colSource}" Binding="{Binding SourceDisplay}" Width="80">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="FontWeight" Value="SemiBold"/>
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="Сигналы" Binding="{Binding Signals}" Width="180"/>
+                        <DataGridTextColumn Header="{core:Tr analyze.done.colSignals}" Binding="{Binding Signals}" Width="180"/>
                     </DataGrid.Columns>
                 </DataGrid>
             </Border>
 
             <!-- Bottom actions -->
             <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Left">
-                <Button Content="CSV" Style="{StaticResource GhostBtn}"
+                <Button Content="{core:Tr analyze.done.btnCsv}" Style="{StaticResource GhostBtn}"
                         Padding="16,8" Margin="0,0,8,0"
                         Click="OnExportCsvClick"/>
-                <Button Content="JSON" Style="{StaticResource GhostBtn}"
+                <Button Content="{core:Tr analyze.done.btnJson}" Style="{StaticResource GhostBtn}"
                         Padding="16,8" Margin="0,0,8,0"
                         Click="OnExportJsonClick"/>
-                <Button Content="Новый файл" Style="{StaticResource GhostBtn}"
+                <Button Content="{core:Tr analyze.done.btnNewFile}" Style="{StaticResource GhostBtn}"
                         Padding="16,8" Margin="0,0,8,0"
                         Click="OnNewFileClick"/>
-                <Button Content="Открыть папку" Style="{StaticResource GhostBtn}"
+                <Button Content="{core:Tr analyze.done.btnOpenFolder}" Style="{StaticResource GhostBtn}"
                         Padding="16,8"
                         Click="OnOpenFolderClick"/>
             </StackPanel>

@@ -31,7 +31,7 @@ public class PostmasterDomainsWindow : Window
     public PostmasterDomainsWindow(PostmasterAccount acc)
     {
         _account = acc;
-        Title = $"Постмастер · {acc.Username}";
+        Title = string.Format(Loc.T("domains.postmasterWindow.title"), acc.Username);
         Width = 1000; Height = 620;
         MinWidth = 800; MinHeight = 460;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -44,7 +44,7 @@ public class PostmasterDomainsWindow : Window
         var header = new DockPanel { LastChildFill = true, Margin = new Thickness(0, 0, 0, 12) };
         var title = new TextBlock
         {
-            Text = $"Postmaster · {acc.Username}",
+            Text = string.Format(Loc.T("domains.postmasterWindow.heading"), acc.Username),
             FontSize = 15, FontWeight = FontWeights.SemiBold,
             VerticalAlignment = VerticalAlignment.Center,
         };
@@ -53,7 +53,7 @@ public class PostmasterDomainsWindow : Window
 
         var btnRefresh = new Button
         {
-            Content = "↻ Обновить",
+            Content = Loc.T("domains.postmasterWindow.btnRefresh"),
             Padding = new Thickness(12, 6, 12, 6),
             FontSize = 11.5,
             Cursor = System.Windows.Input.Cursors.Hand,
@@ -99,8 +99,8 @@ public class PostmasterDomainsWindow : Window
         tbFactory.SetValue(TextBox.CursorProperty, Cursors.IBeam);
         tbFactory.SetValue(TextBox.IsReadOnlyCaretVisibleProperty, false);
         domainCellTemplate.VisualTree = tbFactory;
-        gv.Columns.Add(new GridViewColumn { Header = "ДОМЕН", Width = 200, CellTemplate = domainCellTemplate });
-        gv.Columns.Add(new GridViewColumn { Header = "СТАТУС", Width = 100, DisplayMemberBinding = new Binding("StatusText") });
+        gv.Columns.Add(new GridViewColumn { Header = Loc.T("domains.postmasterWindow.colDomain"), Width = 200, CellTemplate = domainCellTemplate });
+        gv.Columns.Add(new GridViewColumn { Header = Loc.T("domains.postmasterWindow.colStatus"), Width = 100, DisplayMemberBinding = new Binding("StatusText") });
         _list.View = gv;
         listBorder.Child = _list;
         grid.Children.Add(listBorder);
@@ -116,7 +116,7 @@ public class PostmasterDomainsWindow : Window
 
         var hint = new TextBlock
         {
-            Text = "Выбери домен слева — справа появятся метрики за 30 дней и проблемы SPF/DKIM/DMARC.",
+            Text = Loc.T("domains.postmasterWindow.hint"),
             FontSize = 12,
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, 40, 0, 0),
@@ -140,14 +140,14 @@ public class PostmasterDomainsWindow : Window
         }
         catch (Exception ex)
         {
-            _status.Text = $"Ошибка входа в mail.ru: {ex.Message}";
+            _status.Text = string.Format(Loc.T("domains.postmasterWindow.errLogin"), ex.Message);
             return null;
         }
     }
 
     private async Task LoadDomainsAsync()
     {
-        _status.Text = "Загрузка доменов…";
+        _status.Text = Loc.T("domains.postmasterWindow.loadingDomains");
         var token = await EnsureAccessAsync();
         if (token == null) return;
         try
@@ -161,14 +161,16 @@ public class PostmasterDomainsWindow : Window
             foreach (var d in list)
             {
                 var probs = troublesByDomain.TryGetValue(d.Domain, out var t) ? t : new();
-                var status = d.Verified ? (probs.Count == 0 ? "OK" : $"⚠ {probs.Count}") : "не верифиц.";
+                var status = d.Verified
+                    ? (probs.Count == 0 ? Loc.T("domains.postmasterWindow.statusOk") : string.Format(Loc.T("domains.postmasterWindow.statusProblems"), probs.Count))
+                    : Loc.T("domains.postmasterWindow.statusNotVerified");
                 _domains.Add(new DomainRow(d.Domain, d.Verified, status, probs));
             }
-            _status.Text = $"Доменов: {list.Count}, проблемы: {troubles.Count}";
+            _status.Text = string.Format(Loc.T("domains.postmasterWindow.summary"), list.Count, troubles.Count);
         }
         catch (Exception ex)
         {
-            _status.Text = $"Ошибка API: {ex.Message}";
+            _status.Text = string.Format(Loc.T("domains.postmasterWindow.errApi"), ex.Message);
         }
     }
 
@@ -190,11 +192,12 @@ public class PostmasterDomainsWindow : Window
         _selected = row;
         _detailPanel.Children.Clear();
         _detailPanel.Children.Add(SectionTitle(row.Domain));
-        _detailPanel.Children.Add(KeyValue("Статус", row.Verified ? "✓ верифицирован" : "не верифицирован"));
+        _detailPanel.Children.Add(KeyValue(Loc.T("domains.postmasterWindow.lblStatus"),
+            row.Verified ? Loc.T("domains.postmasterWindow.statusVerified") : Loc.T("domains.postmasterWindow.statusNotVerifiedLong")));
 
         if (row.Troubles.Count > 0)
         {
-            _detailPanel.Children.Add(SectionTitle("Проблемы"));
+            _detailPanel.Children.Add(SectionTitle(Loc.T("domains.postmasterWindow.problemsHeader")));
             foreach (var t in row.Troubles)
             {
                 var line = new TextBlock
@@ -209,8 +212,8 @@ public class PostmasterDomainsWindow : Window
             }
         }
 
-        _detailPanel.Children.Add(SectionTitle("Статистика (за всё время)"));
-        var loading = new TextBlock { Text = "Загрузка…", FontSize = 12 };
+        _detailPanel.Children.Add(SectionTitle(Loc.T("domains.postmasterWindow.statsHeader")));
+        var loading = new TextBlock { Text = Loc.T("domains.postmasterWindow.loading"), FontSize = 12 };
         loading.SetResourceReference(TextBlock.ForegroundProperty, "Fg3Brush");
         _detailPanel.Children.Add(loading);
 
@@ -258,8 +261,8 @@ public class PostmasterDomainsWindow : Window
             }
 
             // ── График по дням ───────────────────────────────────
-            _detailPanel.Children.Add(SectionTitle("График (за 30 дней)"));
-            var chartLoading = new TextBlock { Text = "Загрузка графика…", FontSize = 12 };
+            _detailPanel.Children.Add(SectionTitle(Loc.T("domains.postmasterWindow.chartHeader")));
+            var chartLoading = new TextBlock { Text = Loc.T("domains.postmasterWindow.chartLoading"), FontSize = 12 };
             chartLoading.SetResourceReference(TextBlock.ForegroundProperty, "Fg3Brush");
             _detailPanel.Children.Add(chartLoading);
             try
@@ -269,7 +272,7 @@ public class PostmasterDomainsWindow : Window
                 _detailPanel.Children.Remove(chartLoading);
                 if (daily.Count == 0)
                 {
-                    var empty = new TextBlock { Text = "Нет данных для построения графика.", FontSize = 12 };
+                    var empty = new TextBlock { Text = Loc.T("domains.postmasterWindow.chartEmpty"), FontSize = 12 };
                     empty.SetResourceReference(TextBlock.ForegroundProperty, "Fg4Brush");
                     _detailPanel.Children.Add(empty);
                 }
@@ -282,7 +285,7 @@ public class PostmasterDomainsWindow : Window
             catch (Exception ex)
             {
                 _detailPanel.Children.Remove(chartLoading);
-                var err = new TextBlock { Text = $"Ошибка графика: {ex.Message}", FontSize = 12 };
+                var err = new TextBlock { Text = string.Format(Loc.T("domains.postmasterWindow.chartErr"), ex.Message), FontSize = 12 };
                 err.SetResourceReference(TextBlock.ForegroundProperty, "Fg3Brush");
                 _detailPanel.Children.Add(err);
             }
@@ -290,7 +293,7 @@ public class PostmasterDomainsWindow : Window
         catch (Exception ex)
         {
             _detailPanel.Children.Remove(loading);
-            var err = new TextBlock { Text = $"Ошибка: {ex.Message}", FontSize = 12, TextWrapping = TextWrapping.Wrap };
+            var err = new TextBlock { Text = string.Format(Loc.T("domains.postmasterWindow.errGeneric"), ex.Message), FontSize = 12, TextWrapping = TextWrapping.Wrap };
             err.SetResourceReference(TextBlock.ForegroundProperty, "Fg3Brush");
             _detailPanel.Children.Add(err);
         }
@@ -472,24 +475,27 @@ public class PostmasterDomainsWindow : Window
         "trend",
     };
 
-    private static readonly Dictionary<string, string> RuLabels = new(StringComparer.OrdinalIgnoreCase)
+    // Ключи Loc (не готовый текст) — резолвится заново при каждом вызове MetricRu(),
+    // переживает смену языка. Переиспользует то же пространство ключей domains.metric.*,
+    // что и drawer/FormatMetric в DomainsManagerViewModel.
+    private static readonly Dictionary<string, string> MetricLabelKeys = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["messages_sent"]         = "Отправлено писем",
-        ["delivered"]             = "Доставлено",
-        ["read"]                  = "Прочитано",
-        ["deleted_read"]          = "Удалено после прочтения",
-        ["deleted_unread"]        = "Удалено не читая",
-        ["spam"]                  = "Попало в «Спам»",
-        ["spam_percent"]          = "Доля в «Спам»",
-        ["probably_spam"]         = "Возможно спам",
-        ["probably_spam_percent"] = "Доля «возможно спам»",
-        ["complaints"]            = "Жалоб на спам",
-        ["reputation"]            = "Репутация домена",
-        ["trend"]                 = "Тренд",
+        ["messages_sent"]         = "domains.metric.messagesSent",
+        ["delivered"]             = "domains.metric.delivered",
+        ["read"]                  = "domains.metric.read",
+        ["deleted_read"]          = "domains.metric.deletedRead",
+        ["deleted_unread"]        = "domains.metric.deletedUnread",
+        ["spam"]                  = "domains.metric.spam",
+        ["spam_percent"]          = "domains.metric.spamPercent",
+        ["probably_spam"]         = "domains.metric.probablySpam",
+        ["probably_spam_percent"] = "domains.metric.probablySpamPercent",
+        ["complaints"]            = "domains.metric.complaints",
+        ["reputation"]            = "domains.metric.reputation",
+        ["trend"]                 = "domains.metric.trend",
     };
 
     private static string MetricRu(string key) =>
-        RuLabels.TryGetValue(key, out var ru) ? ru : key;
+        MetricLabelKeys.TryGetValue(key, out var locKey) ? Loc.T(locKey) : key;
 
     /// <summary>
     /// Форматирует метрику. Percent-поля → «X.XX %», reputation/trend → 2 знака,

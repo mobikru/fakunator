@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Windows;
+using Fakunator.Core;
 
 namespace Fakunator.Views;
 
@@ -13,21 +14,21 @@ public partial class PmtaCommandDialog : Window
     public PmtaCommandDialog(string panelLabel)
     {
         InitializeComponent();
-        TxtPanel.Text = "Панель: " + panelLabel;
+        TxtPanel.Text = string.Format(Loc.T("pmta.commandDialog.panelPrefixFormat"), panelLabel);
     }
 
     private void OnApply(object sender, RoutedEventArgs e)
     {
-        if (CbPause.IsChecked == true)          Selected.Add(("⏸ Пауза", "pause queue *", false));
-        if (CbResume.IsChecked == true)         Selected.Add(("▶ Убрать паузу", "resume queue *", false));
-        if (CbNormal.IsChecked == true)         Selected.Add(("⚡ Режим нормал", "set queue --mode=normal *", false));
-        if (CbResetCounters.IsChecked == true)  Selected.Add(("🔢 Сброс счётчиков", "reset counters", false));
-        if (CbReload.IsChecked == true)         Selected.Add(("🔄 Reload конфига", "reload", false));
-        if (CbClearQueues.IsChecked == true)    Selected.Add(("🗑 Очистить очереди", "delete --older-than=0s", true));
+        if (CbPause.IsChecked == true)          Selected.Add((Loc.T("pmta.commandDialog.cbPause"), "pause queue *", false));
+        if (CbResume.IsChecked == true)         Selected.Add((Loc.T("pmta.commandDialog.cbResume"), "resume queue *", false));
+        if (CbNormal.IsChecked == true)         Selected.Add((Loc.T("pmta.commandDialog.cbNormal"), "set queue --mode=normal *", false));
+        if (CbResetCounters.IsChecked == true)  Selected.Add((Loc.T("pmta.commandDialog.cbResetCounters"), "reset counters", false));
+        if (CbReload.IsChecked == true)         Selected.Add((Loc.T("pmta.commandDialog.cbReload"), "reload", false));
+        if (CbClearQueues.IsChecked == true)    Selected.Add((Loc.T("pmta.commandDialog.cbClearQueues"), "delete --older-than=0s", true));
 
         if (Selected.Count == 0)
         {
-            MessageBox.Show(this, "Отметь хотя бы одну команду.", "Управление PMTA",
+            MessageBox.Show(this, Loc.T("pmta.commandDialog.err.noneSelectedBody"), Loc.T("pmta.commandDialog.err.noneSelectedTitle"),
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }

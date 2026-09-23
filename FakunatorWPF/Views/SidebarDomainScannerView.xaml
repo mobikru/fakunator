@@ -1,6 +1,7 @@
 <UserControl x:Class="Fakunator.Views.SidebarDomainScannerView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:core="clr-namespace:Fakunator.Core">
 
     <UserControl.Resources>
         <!-- Input с закруглёнными углами (плоский, без карточек как на скриншоте) -->
@@ -83,7 +84,7 @@
         <StackPanel DockPanel.Dock="Top">
 
             <!-- ── Section title ────────────────────────────────────── -->
-            <TextBlock Text="ПАРАМЕТРЫ СКАНИРОВАНИЯ"
+            <TextBlock Text="{core:Tr domainscanner.sidebar.sectionTitle}"
                        FontSize="9.5" FontWeight="SemiBold"
                        Foreground="{DynamicResource Fg3Brush}"
                        Margin="0,0,0,10"
@@ -97,14 +98,14 @@
                     <ColumnDefinition Width="86"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
-                    <TextBlock Text="Зоны" FontSize="10.5"
+                    <TextBlock Text="{core:Tr domainscanner.zones}" FontSize="10.5"
                                Foreground="{DynamicResource Fg2Brush}"
                                Margin="2,0,0,4"/>
                     <TextBox Style="{StaticResource ScanTextBox}"
                              Text="{Binding Zones, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
                 <StackPanel Grid.Column="2">
-                    <TextBlock Text="Потоки" FontSize="10.5"
+                    <TextBlock Text="{core:Tr domainscanner.threads}" FontSize="10.5"
                                Foreground="{DynamicResource Fg2Brush}"
                                Margin="2,0,0,4"/>
                     <TextBox Style="{StaticResource ScanTextBox}"
@@ -116,9 +117,9 @@
             <!-- Target NS -->
             <StackPanel Margin="0,0,0,14">
                 <StackPanel Orientation="Horizontal" Margin="2,0,0,4">
-                    <TextBlock Text="Целевой NS" FontSize="10.5"
+                    <TextBlock Text="{core:Tr domainscanner.targetNs}" FontSize="10.5"
                                Foreground="{DynamicResource Fg2Brush}"/>
-                    <TextBlock Text=" — опционально" FontSize="10.5"
+                    <TextBlock Text="{core:Tr domainscanner.targetNsOptional}" FontSize="10.5"
                                Foreground="{DynamicResource Fg4Brush}"/>
                 </StackPanel>
                 <Grid>
@@ -126,7 +127,7 @@
                              Style="{StaticResource ScanTextBox}"
                              Text="{Binding TargetNs, UpdateSourceTrigger=PropertyChanged}"/>
                     <!-- Placeholder-надпись поверх пустого поля -->
-                    <TextBlock Text="a.ns.selectel.ru или ns1.reg*"
+                    <TextBlock Text="{core:Tr domainscanner.targetNsPlaceholder}"
                                IsHitTestVisible="False"
                                Foreground="{DynamicResource Fg4Brush}"
                                FontFamily="{StaticResource MonoFont}" FontSize="11"
@@ -152,18 +153,18 @@
                     <ColumnDefinition Width="8"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <Button Grid.Column="0" Content="▶  Старт"
+                <Button Grid.Column="0" Content="{core:Tr domainscanner.btnStart}"
                         Command="{Binding StartCommand}"
                         Style="{StaticResource PrimaryBtn}"
                         Padding="0,10"/>
-                <Button Grid.Column="2" Content="■  Стоп"
+                <Button Grid.Column="2" Content="{core:Tr domainscanner.btnStop}"
                         Command="{Binding StopCommand}"
                         Style="{StaticResource DangerBtn}"
                         Padding="0,10"/>
             </Grid>
 
             <!-- Опасная зона: очистка БД -->
-            <Button Content="🗑  Очистить базу"
+            <Button Content="{core:Tr domainscanner.btnClearDb}"
                     Command="{Binding ClearDbCommand}"
                     Style="{StaticResource GhostBtn}"
                     Foreground="#ef4444"
@@ -196,13 +197,13 @@
 
             <!-- ── Top NS providers ────────────────────────────────── -->
             <DockPanel Margin="2,0,0,8">
-                <TextBlock DockPanel.Dock="Left" Text="ТОП NS-ПРОВАЙДЕРОВ"
+                <TextBlock DockPanel.Dock="Left" Text="{core:Tr domainscanner.topProviders.title}"
                            FontSize="10" FontWeight="SemiBold"
                            Foreground="{DynamicResource Fg3Brush}"
                            VerticalAlignment="Center"/>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
                             HorizontalAlignment="Right">
-                    <Button x:Name="PillAll" Content="все" Tag="" Click="OnTopFilterClick"
+                    <Button x:Name="PillAll" Content="{core:Tr domainscanner.topProviders.allZones}" Tag="" Click="OnTopFilterClick"
                             Style="{StaticResource TopPillActive}"/>
                     <Button x:Name="PillRu" Content="ru" Tag="ru" Click="OnTopFilterClick"
                             Style="{StaticResource TopPillIdle}" Margin="6,0,0,0"/>
@@ -217,7 +218,7 @@
                          Style="{StaticResource ScanTextBox}"
                          Height="28"
                          Text="{Binding ProviderSearch, UpdateSourceTrigger=PropertyChanged}"/>
-                <TextBlock Text="🔍  поиск провайдера"
+                <TextBlock Text="{core:Tr domainscanner.topProviders.providerSearchPlaceholder}"
                            IsHitTestVisible="False"
                            Foreground="{DynamicResource Fg4Brush}"
                            FontSize="11"
@@ -249,7 +250,7 @@
                                 HorizontalContentAlignment="Stretch"
                                 Background="Transparent" BorderThickness="0"
                                 Padding="2,7,2,4" Cursor="Hand"
-                                ToolTip="Показать домены этого провайдера в браузере ниже">
+                                ToolTip="{core:Tr domainscanner.topProviders.itemTooltip}">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border x:Name="brd" CornerRadius="4"
@@ -274,7 +275,7 @@
                                             Cursor="Hand"
                                             Width="16" Height="16"
                                             VerticalAlignment="Center"
-                                            ToolTip="Помечать провайдера как избранный — всегда сверху"
+                                            ToolTip="{core:Tr domainscanner.topProviders.favTooltip}"
                                             Command="{Binding DataContext.ToggleFavoriteProviderCommand,
                                                 RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}">

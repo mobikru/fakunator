@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using Fakunator.Core;
 using Fakunator.Core.DomainScanner;
 using Fakunator.ViewModels;
 
@@ -8,10 +9,16 @@ namespace Fakunator.Views;
 
 public partial class DomainScannerView : UserControl
 {
+    private DomainScannerViewModel? _vm;
+
     public DomainScannerView()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        Loc.Instance.LanguageChanged += (_, _) =>
+        {
+            if (_vm != null) UpdateAll(_vm);
+        };
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -20,6 +27,7 @@ public partial class DomainScannerView : UserControl
             oldVm.PropertyChanged -= OnVmPropertyChanged;
         if (e.NewValue is DomainScannerViewModel vm)
         {
+            _vm = vm;
             vm.PropertyChanged += OnVmPropertyChanged;
             FeedList.ItemsSource = vm.FreshFeed;
             UpdateAll(vm);
@@ -75,7 +83,7 @@ public partial class DomainScannerView : UserControl
         }
         KpiTotal.Text = (snap?.TotalInDb ?? 0).ToString("N0");
 
-        TxtBrowserCount.Text = $"{vm.BrowserTotal:N0} записей";
+        TxtBrowserCount.Text = string.Format(Loc.T("domainscanner.browser.countRecords"), vm.BrowserTotal);
         TxtFeedPlaceholder.Visibility = vm.FreshFeed.Count > 0
             ? Visibility.Collapsed : Visibility.Visible;
     }

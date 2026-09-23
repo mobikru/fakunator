@@ -138,8 +138,8 @@ public class CleanupViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             System.Windows.MessageBox.Show(
-                $"Ошибка при загрузке файла:\n{ex.Message}\n\n{ex.StackTrace}",
-                "LoadFile Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                string.Format(Loc.T("cleanup.err.loadFileBody"), ex.Message, ex.StackTrace),
+                Loc.T("cleanup.err.loadFileTitle"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
         }
     }
 
@@ -186,10 +186,12 @@ public class CleanupViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            // Store error info in snapshot note and go to Done state
             FinalSnapshot = CurrentSnapshot;
             State = CleanupState.Done;
             System.Diagnostics.Debug.WriteLine($"Cleanup error: {ex}");
+            System.Windows.MessageBox.Show(
+                string.Format(Loc.T("cleanup.err.runBody"), ex.Message, ex.StackTrace),
+                Loc.T("cleanup.err.runTitle"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
         }
     }
 

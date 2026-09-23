@@ -252,7 +252,7 @@
                                     Background="#f2f4f8" Margin="0,0,10,0">
                                 <TextBlock Text="🗄" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-                            <TextBlock Text="Мои серверы" FontSize="17" FontWeight="Bold"
+                            <TextBlock Text="{core:Tr servers.panel.title}" FontSize="17" FontWeight="Bold"
                                        Foreground="{DynamicResource Fg1Brush}" VerticalAlignment="Center"/>
                         </DockPanel>
                     </Border>
@@ -275,7 +275,7 @@
                                          Padding="0" FontSize="12.5" VerticalAlignment="Center"
                                          Foreground="{DynamicResource Fg1Brush}"
                                          Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"/>
-                                <TextBlock Text="Домен или IP" FontSize="12.5"
+                                <TextBlock Text="{core:Tr servers.panel.searchPlaceholder}" FontSize="12.5"
                                            Foreground="{DynamicResource Fg4Brush}"
                                            IsHitTestVisible="False" VerticalAlignment="Center"
                                            Visibility="{Binding HasSearchQuery, Converter={StaticResource InvBool}, ConverterParameter=vis}"/>
@@ -294,7 +294,7 @@
                                       IsChecked="{Binding IsFilterAll, Mode=OneWay}"
                                       Tag="all" Click="OnFilterClick">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Все" Margin="0,0,6,0"/>
+                                <TextBlock Text="{core:Tr servers.panel.filterAll}" Margin="0,0,6,0"/>
                                 <TextBlock Text="{Binding CountAll}" Opacity="0.7"/>
                             </StackPanel>
                         </ToggleButton>
@@ -303,7 +303,7 @@
                                       Tag="online" Click="OnFilterClick">
                             <StackPanel Orientation="Horizontal">
                                 <Ellipse Width="8" Height="8" Fill="#22c55e" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="Онлайн" Margin="0,0,6,0"/>
+                                <TextBlock Text="{core:Tr servers.panel.filterOnline}" Margin="0,0,6,0"/>
                                 <TextBlock Text="{Binding CountOnline}" Opacity="0.7"/>
                             </StackPanel>
                         </ToggleButton>
@@ -312,7 +312,7 @@
                                       Tag="problems" Click="OnFilterClick">
                             <StackPanel Orientation="Horizontal">
                                 <Ellipse Width="8" Height="8" Fill="#f59e0b" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="Проблемы" Margin="0,0,6,0"/>
+                                <TextBlock Text="{core:Tr servers.panel.filterProblems}" Margin="0,0,6,0"/>
                                 <TextBlock Text="{Binding CountProblems}" Opacity="0.7"/>
                             </StackPanel>
                         </ToggleButton>
@@ -321,7 +321,7 @@
                                       Tag="offline" Click="OnFilterClick">
                             <StackPanel Orientation="Horizontal">
                                 <Ellipse Width="8" Height="8" Fill="#ef4444" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="Офлайн" Margin="0,0,6,0"/>
+                                <TextBlock Text="{core:Tr servers.panel.filterOffline}" Margin="0,0,6,0"/>
                                 <TextBlock Text="{Binding CountOffline}" Opacity="0.7"/>
                             </StackPanel>
                         </ToggleButton>
@@ -333,10 +333,10 @@
                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.55"
                                     Visibility="{Binding EmptyVisibility}">
                             <TextBlock Text="🛰" FontSize="52" HorizontalAlignment="Center" Foreground="{DynamicResource Fg3Brush}"/>
-                            <TextBlock Text="Пока нет серверов"
+                            <TextBlock Text="{core:Tr servers.panel.emptyTitle}"
                                        FontSize="13" FontWeight="SemiBold" Margin="0,10,0,4"
                                        HorizontalAlignment="Center" Foreground="{DynamicResource Fg2Brush}"/>
-                            <TextBlock Text="Жми «＋ Добавить сервер» ниже"
+                            <TextBlock Text="{core:Tr servers.panel.emptyHint}"
                                        FontSize="11" HorizontalAlignment="Center" Foreground="{DynamicResource Fg4Brush}"/>
                         </StackPanel>
 
@@ -405,7 +405,7 @@
                             <TextBlock DockPanel.Dock="Left" Text="{Binding ShownText}"
                                        Foreground="{DynamicResource Fg4Brush}" FontSize="11.5"
                                        VerticalAlignment="Center"/>
-                            <Button DockPanel.Dock="Right" Content="Добавить сервер"
+                            <Button DockPanel.Dock="Right" Content="{core:Tr servers.panel.btnAdd}"
                                     Style="{StaticResource ActionBtnGreen}"
                                     core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.Plus}"
                                     Click="OnNewInstallClick"/>
@@ -439,13 +439,13 @@
                                            FontSize="11.5" Foreground="#7582A3" VerticalAlignment="Center"/>
                             </StackPanel>
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                <Button Content="Обновить" Style="{StaticResource ActionBtnPrimary}"
+                                <Button Content="{core:Tr servers.overview.btnRefresh}" Style="{StaticResource ActionBtnPrimary}"
                                         core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.ArrowClockwise}"
                                         Margin="0,0,6,0" Click="OnRefreshAllClick"/>
                                 <Button Content="SSH" Style="{StaticResource ActionBtnNeutral}"
                                         core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.TerminalWindow}"
                                         Margin="0,0,6,0" Click="OnSshClick"/>
-                                <Button Content="Удалить" Style="{StaticResource ActionBtnDanger}"
+                                <Button Content="{core:Tr servers.overview.btnDelete}" Style="{StaticResource ActionBtnDanger}"
                                         core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.Trash}"
                                         Click="OnDeleteServerClick"/>
                             </StackPanel>
@@ -458,11 +458,11 @@
                             Padding="14,8">
                         <StackPanel Orientation="Horizontal">
                             <RadioButton x:Name="TabOverview" GroupName="ServerTabs" Style="{StaticResource TabHead}"
-                                         IsChecked="True" Checked="OnServerTabChanged" Content="📊  Обзор"/>
+                                         IsChecked="True" Checked="OnServerTabChanged" Content="{core:Tr servers.overview.tabOverview}"/>
                             <RadioButton x:Name="TabInstall"  GroupName="ServerTabs" Style="{StaticResource TabHead}"
-                                         Checked="OnServerTabChanged" Content="🛠  Установка / настройка"/>
+                                         Checked="OnServerTabChanged" Content="{core:Tr servers.overview.tabInstall}"/>
                             <RadioButton x:Name="TabLogs"     GroupName="ServerTabs" Style="{StaticResource TabHead}"
-                                         Checked="OnServerTabChanged" Content="📜  Логи"/>
+                                         Checked="OnServerTabChanged" Content="{core:Tr servers.overview.tabLogs}"/>
                             <RadioButton x:Name="TabDns"      GroupName="ServerTabs" Style="{StaticResource TabHead}"
                                          Checked="OnServerTabChanged" Content="🌐  DNS"/>
                         </StackPanel>
@@ -480,7 +480,7 @@
                                         CornerRadius="6" Padding="12,10" Margin="0,0,0,12"
                                         Visibility="{Binding ErrorVisibility, FallbackValue=Collapsed}">
                                     <StackPanel>
-                                        <TextBlock Text="⚠  SSH-коннект не удался" FontSize="12" FontWeight="SemiBold" Foreground="#fca5a5"/>
+                                        <TextBlock Text="{core:Tr servers.overview.sshErrorTitle}" FontSize="12" FontWeight="SemiBold" Foreground="#fca5a5"/>
                                         <TextBox Text="{Binding ErrorText, Mode=OneWay}" IsReadOnly="True"
                                                  Background="Transparent" BorderThickness="0" Padding="0"
                                                  Foreground="#fecaca" FontSize="11" FontFamily="Consolas"
@@ -589,7 +589,7 @@
                                         <DropShadowEffect Color="#1e293b" Direction="270" ShadowDepth="1.5" BlurRadius="10" Opacity="0.1"/>
                                     </Border.Effect>
                                     <StackPanel>
-                                        <TextBlock Text="⚙  Сервисы" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}" Margin="0,0,0,12"/>
+                                        <TextBlock Text="{core:Tr servers.services.header}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}" Margin="0,0,0,12"/>
                                         <UniformGrid Columns="2">
                                             <!-- postfix -->
                                             <Border Background="{DynamicResource Bg2Brush}" CornerRadius="8" Padding="12,10" Margin="0,0,5,5"
@@ -601,7 +601,7 @@
                                                             <TextBlock Text="{Binding PostfixText}" Foreground="White" FontSize="10" FontWeight="SemiBold"/>
                                                         </Border>
                                                         <Button Content="⟳" Style="{DynamicResource GhostBtn}" Padding="6,2" FontSize="11" Margin="6,0,0,0" Cursor="Hand"
-                                                                ToolTip="Restart postfix" Click="OnRestartServiceClick" Tag="postfix"/>
+                                                                ToolTip="{core:Tr servers.services.restartPostfixTooltip}" Click="OnRestartServiceClick" Tag="postfix"/>
                                                     </StackPanel>
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="postfix" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}"/>
@@ -619,7 +619,7 @@
                                                             <TextBlock Text="{Binding DovecotText}" Foreground="White" FontSize="10" FontWeight="SemiBold"/>
                                                         </Border>
                                                         <Button Content="⟳" Style="{DynamicResource GhostBtn}" Padding="6,2" FontSize="11" Margin="6,0,0,0" Cursor="Hand"
-                                                                ToolTip="Restart dovecot" Click="OnRestartServiceClick" Tag="dovecot"/>
+                                                                ToolTip="{core:Tr servers.services.restartDovecotTooltip}" Click="OnRestartServiceClick" Tag="dovecot"/>
                                                     </StackPanel>
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="dovecot" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}"/>
@@ -637,11 +637,11 @@
                                                             <TextBlock Text="{Binding MariaDbText}" Foreground="White" FontSize="10" FontWeight="SemiBold"/>
                                                         </Border>
                                                         <Button Content="⟳" Style="{DynamicResource GhostBtn}" Padding="6,2" FontSize="11" Margin="6,0,0,0" Cursor="Hand"
-                                                                ToolTip="Restart mariadb" Click="OnRestartServiceClick" Tag="mariadb"/>
+                                                                ToolTip="{core:Tr servers.services.restartMariadbTooltip}" Click="OnRestartServiceClick" Tag="mariadb"/>
                                                     </StackPanel>
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="mariadb" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}"/>
-                                                        <TextBlock Text="MySQL БД" FontSize="10" Foreground="{DynamicResource Fg4Brush}"/>
+                                                        <TextBlock Text="{core:Tr servers.services.mariadbDesc}" FontSize="10" Foreground="{DynamicResource Fg4Brush}"/>
                                                     </StackPanel>
                                                 </DockPanel>
                                             </Border>
@@ -655,11 +655,11 @@
                                                             <TextBlock Text="{Binding Bind9Text}" Foreground="White" FontSize="10" FontWeight="SemiBold"/>
                                                         </Border>
                                                         <Button Content="⟳" Style="{DynamicResource GhostBtn}" Padding="6,2" FontSize="11" Margin="6,0,0,0" Cursor="Hand"
-                                                                ToolTip="Restart bind9" Click="OnRestartServiceClick" Tag="bind9"/>
+                                                                ToolTip="{core:Tr servers.services.restartBind9Tooltip}" Click="OnRestartServiceClick" Tag="bind9"/>
                                                     </StackPanel>
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="bind9" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}"/>
-                                                        <TextBlock Text="DNS сервер" FontSize="10" Foreground="{DynamicResource Fg4Brush}"/>
+                                                        <TextBlock Text="{core:Tr servers.services.bind9Desc}" FontSize="10" Foreground="{DynamicResource Fg4Brush}"/>
                                                     </StackPanel>
                                                 </DockPanel>
                                             </Border>
@@ -673,11 +673,11 @@
                                                             <TextBlock Text="{Binding OpenDkimText}" Foreground="White" FontSize="10" FontWeight="SemiBold"/>
                                                         </Border>
                                                         <Button Content="⟳" Style="{DynamicResource GhostBtn}" Padding="6,2" FontSize="11" Margin="6,0,0,0" Cursor="Hand"
-                                                                ToolTip="Restart opendkim" Click="OnRestartServiceClick" Tag="opendkim"/>
+                                                                ToolTip="{core:Tr servers.services.restartOpendkimTooltip}" Click="OnRestartServiceClick" Tag="opendkim"/>
                                                     </StackPanel>
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="opendkim" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}"/>
-                                                        <TextBlock Text="DKIM-подпись" FontSize="10" Foreground="{DynamicResource Fg4Brush}"/>
+                                                        <TextBlock Text="{core:Tr servers.services.opendkimDesc}" FontSize="10" Foreground="{DynamicResource Fg4Brush}"/>
                                                     </StackPanel>
                                                 </DockPanel>
                                             </Border>
@@ -691,11 +691,11 @@
                                                             <TextBlock Text="{Binding Apache2Text}" Foreground="White" FontSize="10" FontWeight="SemiBold"/>
                                                         </Border>
                                                         <Button Content="⟳" Style="{DynamicResource GhostBtn}" Padding="6,2" FontSize="11" Margin="6,0,0,0" Cursor="Hand"
-                                                                ToolTip="Restart apache2" Click="OnRestartServiceClick" Tag="apache2"/>
+                                                                ToolTip="{core:Tr servers.services.restartApache2Tooltip}" Click="OnRestartServiceClick" Tag="apache2"/>
                                                     </StackPanel>
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="apache2" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}"/>
-                                                        <TextBlock Text="веб-сервер" FontSize="10" Foreground="{DynamicResource Fg4Brush}"/>
+                                                        <TextBlock Text="{core:Tr servers.services.apache2Desc}" FontSize="10" Foreground="{DynamicResource Fg4Brush}"/>
                                                     </StackPanel>
                                                 </DockPanel>
                                             </Border>
@@ -709,7 +709,7 @@
                                                             <TextBlock Text="{Binding PmtaStatusText}" Foreground="White" FontSize="10" FontWeight="SemiBold"/>
                                                         </Border>
                                                         <Button Content="⟳" Style="{DynamicResource GhostBtn}" Padding="6,2" FontSize="11" Margin="6,0,0,0" Cursor="Hand"
-                                                                ToolTip="Restart pmta" Click="OnRestartServiceClick" Tag="pmta"/>
+                                                                ToolTip="{core:Tr servers.services.restartPmtaTooltip}" Click="OnRestartServiceClick" Tag="pmta"/>
                                                     </StackPanel>
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="pmta" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}"/>
@@ -727,7 +727,7 @@
                                                             <TextBlock Text="{Binding Proxy3Text}" Foreground="White" FontSize="10" FontWeight="SemiBold"/>
                                                         </Border>
                                                         <Button Content="⟳" Style="{DynamicResource GhostBtn}" Padding="6,2" FontSize="11" Margin="6,0,0,0" Cursor="Hand"
-                                                                ToolTip="Restart 3proxy" Click="OnRestartServiceClick" Tag="3proxy"/>
+                                                                ToolTip="{core:Tr servers.services.restartProxy3Tooltip}" Click="OnRestartServiceClick" Tag="3proxy"/>
                                                     </StackPanel>
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="3proxy" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}"/>
@@ -744,9 +744,9 @@
                                         BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1"
                                         Visibility="{Binding NoCredentialsVisibility, FallbackValue=Collapsed}">
                                     <StackPanel>
-                                        <TextBlock Text="🔑  Реквизиты доступа" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}" Margin="0,0,0,6"/>
+                                        <TextBlock Text="{core:Tr servers.creds.header}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}" Margin="0,0,0,6"/>
                                         <TextBlock TextWrapping="Wrap" FontSize="11.5" Foreground="{DynamicResource Fg4Brush}"
-                                                   Text="Этот сервер не устанавливался через Fakunator (или установка была прервана до генерации кредов). После полного прогона через «Установка / настройка» здесь появятся все URL/логины/пароли: webmail, phpMyAdmin, PMTA Monitor, zTDS, 3proxy, лендинг."/>
+                                                   Text="{core:Tr servers.creds.noneDesc}"/>
                                     </StackPanel>
                                 </Border>
 
@@ -757,8 +757,8 @@
                                         Visibility="{Binding CredentialsVisibility, FallbackValue=Collapsed}">
                                     <StackPanel>
                                         <DockPanel Margin="0,0,0,10">
-                                            <TextBlock DockPanel.Dock="Left" Text="🔑  Реквизиты доступа" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}"/>
-                                            <TextBlock DockPanel.Dock="Right" FontSize="10.5" Foreground="{DynamicResource Fg4Brush}" Text="сохранены после установки" HorizontalAlignment="Right"/>
+                                            <TextBlock DockPanel.Dock="Left" Text="{core:Tr servers.creds.header}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}"/>
+                                            <TextBlock DockPanel.Dock="Right" FontSize="10.5" Foreground="{DynamicResource Fg4Brush}" Text="{core:Tr servers.creds.savedNote}" HorizontalAlignment="Right"/>
                                         </DockPanel>
 
                                         <ItemsControl>
@@ -846,7 +846,7 @@
                                                         BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1">
                                                     <StackPanel>
                                                         <DockPanel Margin="0,0,0,4">
-                                                            <TextBlock DockPanel.Dock="Left" Text="🌐 Лендинг" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
+                                                            <TextBlock DockPanel.Dock="Left" Text="{core:Tr servers.creds.landingLabel}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
                                                             <Button DockPanel.Dock="Right" Style="{StaticResource CopyBtn}" Content="📋" Click="OnCopyClick"
                                                                     Tag="{Binding Config.Credentials.LandingUrl, StringFormat='{}Лендинг\\n{0}'}"/>
                                                             <TextBlock/>
@@ -859,7 +859,7 @@
                                                         BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1">
                                                     <StackPanel>
                                                         <DockPanel Margin="0,0,0,4">
-                                                            <TextBlock DockPanel.Dock="Left" Text="📈 AMS статистика" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
+                                                            <TextBlock DockPanel.Dock="Left" Text="{core:Tr servers.creds.amsStatsLabel}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
                                                             <Button DockPanel.Dock="Right" Style="{StaticResource CopyBtn}" Content="📋" Click="OnCopyClick"
                                                                     Tag="{Binding Config.Credentials.AmsStatsUrl, StringFormat='{}AMS RealTime статистика\\n{0}'}"/>
                                                             <TextBlock/>
@@ -880,7 +880,7 @@
                                     <StackPanel>
                                         <TextBlock Text="📜  Live tail" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}" Margin="0,0,0,4"/>
                                         <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource Fg4Brush}"
-                                                   Text="Открой вкладку «📜 Логи» сверху — там подключается терминал к /var/log/mail.log, syslog, PMTA-логам и т.п. со стримом в реальном времени."/>
+                                                   Text="{core:Tr servers.creds.liveTailDesc}"/>
                                     </StackPanel>
                                 </Border>
 
@@ -983,13 +983,13 @@
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="38"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" x:Name="StepLabel1" Text="Настройка" FontSize="11" FontWeight="SemiBold"
+                                        <TextBlock Grid.Column="0" x:Name="StepLabel1" Text="{core:Tr servers.wizard.step.setup}" FontSize="11" FontWeight="SemiBold"
                                                    Foreground="#a1a7b8" HorizontalAlignment="Center" Margin="-40,0,-40,0"/>
-                                        <TextBlock Grid.Column="2" x:Name="StepLabel2" Text="Проверка" FontSize="11" FontWeight="Normal"
+                                        <TextBlock Grid.Column="2" x:Name="StepLabel2" Text="{core:Tr servers.wizard.step.verify}" FontSize="11" FontWeight="Normal"
                                                    Foreground="#a1a7b8" HorizontalAlignment="Center" Margin="-40,0,-40,0"/>
-                                        <TextBlock Grid.Column="4" x:Name="StepLabel3" Text="Установка" FontSize="11" FontWeight="Normal"
+                                        <TextBlock Grid.Column="4" x:Name="StepLabel3" Text="{core:Tr servers.wizard.step.install}" FontSize="11" FontWeight="Normal"
                                                    Foreground="#a1a7b8" HorizontalAlignment="Center" Margin="-40,0,-40,0"/>
-                                        <TextBlock Grid.Column="6" x:Name="StepLabel4" Text="Готово" FontSize="11" FontWeight="Normal"
+                                        <TextBlock Grid.Column="6" x:Name="StepLabel4" Text="{core:Tr servers.wizard.step.done}" FontSize="11" FontWeight="Normal"
                                                    Foreground="#a1a7b8" HorizontalAlignment="Center" Margin="-40,0,-40,0"/>
                                     </Grid>
                                 </StackPanel>
@@ -1015,45 +1015,45 @@
                                                         <TextBlock Text="1" Foreground="White" FontSize="11" FontWeight="Bold"
                                                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                     </Border>
-                                                    <TextBlock Text="Сервер и домен"
+                                                    <TextBlock Text="{core:Tr servers.wizard.step1.header}"
                                                                FontSize="15" FontWeight="SemiBold"
                                                                Foreground="{DynamicResource Fg1Brush}" VerticalAlignment="Center"/>
-                                                    <TextBlock Text="  ·  куда ставим"
+                                                    <TextBlock Text="{core:Tr servers.wizard.step1.subtitle}"
                                                                FontSize="11.5" Foreground="{DynamicResource Fg4Brush}" VerticalAlignment="Center"/>
                                                 </StackPanel>
 
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                                                     <StackPanel Margin="0,0,16,0">
-                                                        <TextBlock Text="Домен" Style="{StaticResource FieldLabel}" FontSize="12"/>
+                                                        <TextBlock Text="{core:Tr servers.wizard.field.domain}" Style="{StaticResource FieldLabel}" FontSize="12"/>
                                                         <TextBox x:Name="TxtDomain" Style="{StaticResource FieldInput}" Text="mydomain.xyz" FontSize="12.5" Padding="11,8" Margin="0,0,0,12" Width="280"/>
                                                     </StackPanel>
                                                     <StackPanel>
-                                                        <TextBlock Text="IP сервера" Style="{StaticResource FieldLabel}" FontSize="12"/>
+                                                        <TextBlock Text="{core:Tr servers.wizard.field.serverIp}" Style="{StaticResource FieldLabel}" FontSize="12"/>
                                                         <TextBox x:Name="TxtServerIp" Style="{StaticResource FieldInput}" Text="185.44.22.9" FontSize="12.5" Padding="11,8" Margin="0,0,0,12" Width="280"/>
                                                     </StackPanel>
                                                 </StackPanel>
 
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                                                     <StackPanel Margin="0,0,16,0">
-                                                        <TextBlock Text="SSH пользователь" Style="{StaticResource FieldLabel}" FontSize="12"/>
+                                                        <TextBlock Text="{core:Tr servers.wizard.field.sshUser}" Style="{StaticResource FieldLabel}" FontSize="12"/>
                                                         <TextBox x:Name="TxtSshUser" Style="{StaticResource FieldInput}" Text="root" FontSize="12.5" Padding="11,8" Margin="0,0,0,12" Width="280"/>
                                                     </StackPanel>
                                                     <StackPanel>
-                                                        <TextBlock Text="Порт" Style="{StaticResource FieldLabel}" FontSize="12"/>
+                                                        <TextBlock Text="{core:Tr servers.wizard.field.sshPort}" Style="{StaticResource FieldLabel}" FontSize="12"/>
                                                         <TextBox x:Name="TxtSshPort" Style="{StaticResource FieldInput}" Text="22" FontSize="12.5" Padding="11,8" Margin="0,0,0,12" Width="90"/>
                                                     </StackPanel>
                                                 </StackPanel>
 
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                                                     <StackPanel Margin="0,0,16,0">
-                                                        <TextBlock Text="SSH пароль" Style="{StaticResource FieldLabel}" FontSize="12"/>
+                                                        <TextBlock Text="{core:Tr servers.wizard.field.sshPassword}" Style="{StaticResource FieldLabel}" FontSize="12"/>
                                                         <PasswordBox x:Name="PwdSsh" Background="{DynamicResource Bg2Brush}"
                                                                      Foreground="{DynamicResource Fg1Brush}"
                                                                      BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1"
                                                                      Padding="11,8" FontSize="12.5" Margin="0,0,0,4" Width="280"/>
                                                     </StackPanel>
                                                     <StackPanel>
-                                                        <TextBlock Text="Email для Let's Encrypt" Style="{StaticResource FieldLabel}" FontSize="12"/>
+                                                        <TextBlock Text="{core:Tr servers.wizard.field.leEmail}" Style="{StaticResource FieldLabel}" FontSize="12"/>
                                                         <TextBox x:Name="TxtLeEmail" Style="{StaticResource FieldInput}" Text="info@mydomain.xyz" FontSize="12.5" Padding="11,8" Margin="0,0,0,4" Width="280"/>
                                                     </StackPanel>
                                                 </StackPanel>
@@ -1073,16 +1073,16 @@
                                                         <TextBlock Text="2" Foreground="White" FontSize="11" FontWeight="Bold"
                                                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                     </Border>
-                                                    <TextBlock Text="Компоненты"
+                                                    <TextBlock Text="{core:Tr servers.wizard.step2.header}"
                                                                FontSize="15" FontWeight="SemiBold"
                                                                Foreground="{DynamicResource Fg1Brush}" VerticalAlignment="Center"/>
-                                                    <TextBlock Text="  ·  что установить (базовые обязательны)"
+                                                    <TextBlock Text="{core:Tr servers.wizard.step2.subtitle}"
                                                                FontSize="11.5" Foreground="{DynamicResource Fg4Brush}" VerticalAlignment="Center"/>
                                                 </StackPanel>
 
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                                                     <StackPanel Width="170" Margin="0,0,16,0">
-                                                        <TextBlock Text="БАЗОВЫЕ" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg4Brush}" Margin="0,0,0,8"/>
+                                                        <TextBlock Text="{core:Tr servers.wizard.step2.catBasic}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg4Brush}" Margin="0,0,0,8"/>
                                                         <CheckBox IsChecked="True" IsEnabled="False" Foreground="{DynamicResource Fg2Brush}" Margin="0,4"><TextBlock Text="Postfix" FontSize="12.5"/></CheckBox>
                                                         <CheckBox IsChecked="True" IsEnabled="False" Foreground="{DynamicResource Fg2Brush}" Margin="0,4"><TextBlock Text="Dovecot" FontSize="12.5"/></CheckBox>
                                                         <CheckBox IsChecked="True" IsEnabled="False" Foreground="{DynamicResource Fg2Brush}" Margin="0,4"><TextBlock Text="MariaDB" FontSize="12.5"/></CheckBox>
@@ -1091,23 +1091,23 @@
                                                     </StackPanel>
 
                                                     <StackPanel Width="170" Margin="0,0,16,0">
-                                                        <TextBlock Text="ВЕБ" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg4Brush}" Margin="0,0,0,8"/>
-                                                        <CheckBox IsChecked="True" Foreground="{DynamicResource Fg2Brush}" Margin="0,4"><TextBlock Text="Apache + PHP" FontSize="12.5"/></CheckBox>
-                                                        <CheckBox IsChecked="True" Foreground="{DynamicResource Fg2Brush}" Margin="0,4"><TextBlock Text="Certbot (SSL)" FontSize="12.5"/></CheckBox>
+                                                        <TextBlock Text="{core:Tr servers.wizard.step2.catWeb}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg4Brush}" Margin="0,0,0,8"/>
+                                                        <CheckBox IsChecked="True" Foreground="{DynamicResource Fg2Brush}" Margin="0,4"><TextBlock Text="{core:Tr servers.wizard.step2.applyPhp}" FontSize="12.5"/></CheckBox>
+                                                        <CheckBox IsChecked="True" Foreground="{DynamicResource Fg2Brush}" Margin="0,4"><TextBlock Text="{core:Tr servers.wizard.step2.certbot}" FontSize="12.5"/></CheckBox>
                                                         <CheckBox IsChecked="True" Foreground="{DynamicResource Fg2Brush}" Margin="0,4"><TextBlock Text="Roundcube" FontSize="12.5"/></CheckBox>
                                                         <CheckBox IsChecked="True" Foreground="{DynamicResource Fg2Brush}" Margin="0,4"><TextBlock Text="phpMyAdmin" FontSize="12.5"/></CheckBox>
                                                     </StackPanel>
 
                                                     <StackPanel Width="170">
-                                                        <TextBlock Text="ДОПОЛНИТЕЛЬНО" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg4Brush}" Margin="0,0,0,8"/>
-                                                        <CheckBox IsChecked="True" Foreground="{DynamicResource Fg2Brush}" Margin="0,4"><TextBlock Text="PMTA (BYO)" FontSize="12.5"/></CheckBox>
-                                                        <CheckBox IsChecked="True" Foreground="{DynamicResource Fg2Brush}" Margin="0,4"><TextBlock Text="zTDS (BYO)" FontSize="12.5"/></CheckBox>
-                                                        <CheckBox IsChecked="True" Foreground="{DynamicResource Fg2Brush}" Margin="0,4"><TextBlock Text="Mailer-скрипты" FontSize="12.5"/></CheckBox>
+                                                        <TextBlock Text="{core:Tr servers.wizard.step2.catExtra}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg4Brush}" Margin="0,0,0,8"/>
+                                                        <CheckBox IsChecked="True" Foreground="{DynamicResource Fg2Brush}" Margin="0,4"><TextBlock Text="{core:Tr servers.wizard.step2.pmtaByo}" FontSize="12.5"/></CheckBox>
+                                                        <CheckBox IsChecked="True" Foreground="{DynamicResource Fg2Brush}" Margin="0,4"><TextBlock Text="{core:Tr servers.wizard.step2.ztdsByo}" FontSize="12.5"/></CheckBox>
+                                                        <CheckBox IsChecked="True" Foreground="{DynamicResource Fg2Brush}" Margin="0,4"><TextBlock Text="{core:Tr servers.wizard.step2.mailerScripts}" FontSize="12.5"/></CheckBox>
                                                         <CheckBox IsChecked="True" Foreground="{DynamicResource Fg2Brush}" Margin="0,4"><TextBlock Text="3proxy" FontSize="12.5"/></CheckBox>
-                                                        <CheckBox IsChecked="True" Foreground="{DynamicResource Fg2Brush}" Margin="0,4"><TextBlock Text="Landing" FontSize="12.5"/></CheckBox>
+                                                        <CheckBox IsChecked="True" Foreground="{DynamicResource Fg2Brush}" Margin="0,4"><TextBlock Text="{core:Tr servers.wizard.step2.landing}" FontSize="12.5"/></CheckBox>
                                                         <CheckBox x:Name="ChkAmsStats" IsChecked="True" Foreground="{DynamicResource Fg2Brush}" Margin="0,4"
-                                                                  ToolTip="Заливает amsweb.php + .htaccess в /ams на домене — трекинг открытий/кликов/отписок для AMS Enterprise">
-                                                            <TextBlock Text="AMS RealTime статистика" FontSize="12.5"/>
+                                                                  ToolTip="{core:Tr servers.wizard.step2.amsStatsTooltip}">
+                                                            <TextBlock Text="{core:Tr servers.wizard.step2.amsStats}" FontSize="12.5"/>
                                                         </CheckBox>
                                                     </StackPanel>
                                                 </StackPanel>
@@ -1123,10 +1123,10 @@
                                                         <TextBlock Text="3" Foreground="White" FontSize="11" FontWeight="Bold"
                                                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                     </Border>
-                                                    <TextBlock Text="Ссылки на пакеты"
+                                                    <TextBlock Text="{core:Tr servers.wizard.step3.header}"
                                                                FontSize="15" FontWeight="SemiBold"
                                                                Foreground="{DynamicResource Fg1Brush}" VerticalAlignment="Center"/>
-                                                    <TextBlock Text="  ·  «%default_url%» = встроенная сборка, вставь свою ссылку чтобы скачать из другого источника"
+                                                    <TextBlock Text="{core:Tr servers.wizard.step3.subtitle}"
                                                                FontSize="11.5" Foreground="{DynamicResource Fg4Brush}" VerticalAlignment="Center"/>
                                                 </StackPanel>
 
@@ -1137,21 +1137,21 @@
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <StackPanel Grid.Column="0">
-                                                        <TextBlock Text="PMTA .deb" Style="{StaticResource FieldLabel}" FontSize="12"/>
+                                                        <TextBlock Text="{core:Tr servers.wizard.step3.pmtaDeb}" Style="{StaticResource FieldLabel}" FontSize="12"/>
                                                         <TextBox x:Name="UrlPmtaDeb" Text="%default_url%" GotFocus="OnUrlFieldGotFocus" Foreground="{DynamicResource Fg4Brush}" Style="{StaticResource FieldInput}" FontSize="11.5" Padding="10,7" Margin="0,0,0,10"/>
-                                                        <TextBlock Text="PMTA pmtad" Style="{StaticResource FieldLabel}" FontSize="12"/>
+                                                        <TextBlock Text="{core:Tr servers.wizard.step3.pmtad}" Style="{StaticResource FieldLabel}" FontSize="12"/>
                                                         <TextBox x:Name="UrlPmtad" Text="%default_url%" GotFocus="OnUrlFieldGotFocus" Foreground="{DynamicResource Fg4Brush}" Style="{StaticResource FieldInput}" FontSize="11.5" Padding="10,7" Margin="0,0,0,10"/>
-                                                        <TextBlock Text="PMTA pmtahttpd" Style="{StaticResource FieldLabel}" FontSize="12"/>
+                                                        <TextBlock Text="{core:Tr servers.wizard.step3.pmtaHttpd}" Style="{StaticResource FieldLabel}" FontSize="12"/>
                                                         <TextBox x:Name="UrlPmtaHttpd" Text="%default_url%" GotFocus="OnUrlFieldGotFocus" Foreground="{DynamicResource Fg4Brush}" Style="{StaticResource FieldInput}" FontSize="11.5" Padding="10,7" Margin="0,0,0,10"/>
-                                                        <TextBlock Text="PMTA license" Style="{StaticResource FieldLabel}" FontSize="12"/>
+                                                        <TextBlock Text="{core:Tr servers.wizard.step3.pmtaLicense}" Style="{StaticResource FieldLabel}" FontSize="12"/>
                                                         <TextBox x:Name="UrlPmtaLicense" Text="%default_url%" GotFocus="OnUrlFieldGotFocus" Foreground="{DynamicResource Fg4Brush}" Style="{StaticResource FieldInput}" FontSize="11.5" Padding="10,7" Margin="0,0,0,4"/>
                                                     </StackPanel>
                                                     <StackPanel Grid.Column="2">
-                                                        <TextBlock Text="zTDS.zip" Style="{StaticResource FieldLabel}" FontSize="12"/>
+                                                        <TextBlock Text="{core:Tr servers.wizard.step3.ztdsZip}" Style="{StaticResource FieldLabel}" FontSize="12"/>
                                                         <TextBox x:Name="UrlZtds" Text="%default_url%" GotFocus="OnUrlFieldGotFocus" Foreground="{DynamicResource Fg4Brush}" Style="{StaticResource FieldInput}" FontSize="11.5" Padding="10,7" Margin="0,0,0,10"/>
-                                                        <TextBlock Text="Mailer (phpmailer.zip)" Style="{StaticResource FieldLabel}" FontSize="12"/>
+                                                        <TextBlock Text="{core:Tr servers.wizard.step3.mailerZip}" Style="{StaticResource FieldLabel}" FontSize="12"/>
                                                         <TextBox x:Name="UrlMailer" Text="%default_url%" GotFocus="OnUrlFieldGotFocus" Foreground="{DynamicResource Fg4Brush}" Style="{StaticResource FieldInput}" FontSize="11.5" Padding="10,7" Margin="0,0,0,10"/>
-                                                        <TextBlock Text="Landing" Style="{StaticResource FieldLabel}" FontSize="12"/>
+                                                        <TextBlock Text="{core:Tr servers.wizard.step3.landingField}" Style="{StaticResource FieldLabel}" FontSize="12"/>
                                                         <TextBox x:Name="UrlLanding" Text="%default_url%" GotFocus="OnUrlFieldGotFocus" Foreground="{DynamicResource Fg4Brush}" Style="{StaticResource FieldInput}" FontSize="11.5" Padding="10,7" Margin="0,0,0,4"/>
                                                     </StackPanel>
                                                 </Grid>
@@ -1170,15 +1170,15 @@
                                                    Margin="0,-34,-10,-70" IsHitTestVisible="False"/>
 
                                             <StackPanel Panel.ZIndex="1" HorizontalAlignment="Left" VerticalAlignment="Top" MaxWidth="620">
-                                                <TextBlock Text="Проверка перед установкой" FontSize="33" FontWeight="Bold" Foreground="#131C3D"
+                                                <TextBlock Text="{core:Tr servers.wizard.verify.title}" FontSize="33" FontWeight="Bold" Foreground="#131C3D"
                                                            TextWrapping="Wrap" Margin="0,0,0,7"/>
-                                                <TextBlock Text="Проверяем подключение, ресурсы и готовность сервера." FontSize="17" Foreground="#7582A3" TextWrapping="Wrap" Margin="0,0,0,22"/>
+                                                <TextBlock Text="{core:Tr servers.wizard.verify.subtitle}" FontSize="17" Foreground="#7582A3" TextWrapping="Wrap" Margin="0,0,0,22"/>
 
                                                 <StackPanel x:Name="PreflightSummaryRunning" Orientation="Horizontal" Visibility="Collapsed">
                                                     <Viewbox Width="18" Height="18" Margin="0,0,10,0">
                                                         <Path Data="{x:Static core:PhosphorIcons.SpinnerGap}" Fill="#3261FF"/>
                                                     </Viewbox>
-                                                    <TextBlock Text="Выполняется проверка сервера…" FontSize="17" Foreground="#414C80"/>
+                                                    <TextBlock Text="{core:Tr servers.wizard.verify.running}" FontSize="17" Foreground="#414C80"/>
                                                 </StackPanel>
                                                 <WrapPanel x:Name="PreflightSummaryCounts" Orientation="Horizontal">
                                                     <StackPanel Orientation="Horizontal" Margin="0,0,18,6">
@@ -1187,7 +1187,7 @@
                                                         </Viewbox>
                                                         <TextBlock FontSize="14.5" Foreground="#414C80" VerticalAlignment="Center">
                                                             <Run x:Name="TxtPreflightOk" Text="0" FontWeight="Bold" Foreground="#131C3D"/>
-                                                            <Run Text=" проверок пройдено"/>
+                                                            <Run Text="{core:Tr servers.wizard.verify.okSuffix}"/>
                                                         </TextBlock>
                                                     </StackPanel>
                                                     <Border Width="1" Background="#B6C3ED" Margin="0,2,18,8"/>
@@ -1197,7 +1197,7 @@
                                                         </Viewbox>
                                                         <TextBlock FontSize="14.5" Foreground="#414C80" VerticalAlignment="Center">
                                                             <Run x:Name="TxtPreflightWarn" Text="0" FontWeight="Bold" Foreground="#131C3D"/>
-                                                            <Run Text=" предупреждения"/>
+                                                            <Run Text="{core:Tr servers.wizard.verify.warnSuffix}"/>
                                                         </TextBlock>
                                                     </StackPanel>
                                                     <Border Width="1" Background="#B6C3ED" Margin="0,2,18,8"/>
@@ -1207,7 +1207,7 @@
                                                         </Viewbox>
                                                         <TextBlock FontSize="14.5" Foreground="#414C80" VerticalAlignment="Center">
                                                             <Run x:Name="TxtPreflightFail" Text="0" FontWeight="Bold" Foreground="#131C3D"/>
-                                                            <Run x:Name="TxtPreflightFailLabel" Text=" ошибок"/>
+                                                            <Run x:Name="TxtPreflightFailLabel" Text="{core:Tr servers.wizard.verify.failSuffixMany}"/>
                                                         </TextBlock>
                                                     </StackPanel>
                                                 </WrapPanel>
@@ -1223,9 +1223,9 @@
                                                         <ColumnDefinition Width="52*"/>
                                                         <ColumnDefinition Width="18*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Grid.Column="0" Text="ПРОВЕРКА" FontSize="10.5" FontWeight="Bold" Foreground="#4D5B90" Padding="20,9"/>
-                                                    <TextBlock Grid.Column="1" Text="РЕЗУЛЬТАТ" FontSize="10.5" FontWeight="Bold" Foreground="#4D5B90" Padding="20,9"/>
-                                                    <TextBlock Grid.Column="2" Text="СТАТУС" FontSize="10.5" FontWeight="Bold" Foreground="#4D5B90" Padding="20,9"/>
+                                                    <TextBlock Grid.Column="0" Text="{core:Tr servers.wizard.verify.colCheck}" FontSize="10.5" FontWeight="Bold" Foreground="#4D5B90" Padding="20,9"/>
+                                                    <TextBlock Grid.Column="1" Text="{core:Tr servers.wizard.verify.colResult}" FontSize="10.5" FontWeight="Bold" Foreground="#4D5B90" Padding="20,9"/>
+                                                    <TextBlock Grid.Column="2" Text="{core:Tr servers.wizard.verify.colStatus}" FontSize="10.5" FontWeight="Bold" Foreground="#4D5B90" Padding="20,9"/>
                                                 </Grid>
                                                 <ItemsControl x:Name="PreflightList">
                                                     <ItemsControl.ItemTemplate>
@@ -1314,15 +1314,15 @@
                                                             <TranslateTransform x:Name="ServerArtFloatTransform" Y="0"/>
                                                         </Image.RenderTransform>
                                                     </Image>
-                                                    <TextBlock Text="Веб-интерфейс" FontWeight="SemiBold" FontSize="12.5" Foreground="#131C3D"
+                                                    <TextBlock Text="{core:Tr servers.wizard.install.illustrationWeb}" FontWeight="SemiBold" FontSize="12.5" Foreground="#131C3D"
                                                                HorizontalAlignment="Left" VerticalAlignment="Top" Margin="6,44,0,0"/>
                                                     <TextBlock Text="Roundcube, phpMyAdmin" FontSize="10.5" Foreground="#7582A3" TextWrapping="Wrap" MaxWidth="140"
                                                                HorizontalAlignment="Left" VerticalAlignment="Top" Margin="6,64,0,0"/>
-                                                    <TextBlock Text="Почта" FontWeight="SemiBold" FontSize="12.5" Foreground="#131C3D"
+                                                    <TextBlock Text="{core:Tr servers.wizard.install.illustrationMail}" FontWeight="SemiBold" FontSize="12.5" Foreground="#131C3D"
                                                                HorizontalAlignment="Left" VerticalAlignment="Top" Margin="6,166,0,0"/>
                                                     <TextBlock Text="Postfix, Dovecot, OpenDKIM" FontSize="10.5" Foreground="#7582A3" TextWrapping="Wrap" MaxWidth="140"
                                                                HorizontalAlignment="Left" VerticalAlignment="Top" Margin="6,186,0,0"/>
-                                                    <TextBlock Text="База данных" FontWeight="SemiBold" FontSize="12.5" Foreground="#131C3D"
+                                                    <TextBlock Text="{core:Tr servers.wizard.install.illustrationDb}" FontWeight="SemiBold" FontSize="12.5" Foreground="#131C3D"
                                                                HorizontalAlignment="Left" VerticalAlignment="Top" Margin="6,282,0,0"/>
                                                     <TextBlock Text="MariaDB" FontSize="10.5" Foreground="#7582A3"
                                                                HorizontalAlignment="Left" VerticalAlignment="Top" Margin="6,302,0,0"/>
@@ -1332,13 +1332,13 @@
                                                 <!-- Panel: прогресс / текущий шаг / список компонентов -->
                                                 <StackPanel Grid.Column="1">
                                                     <DockPanel Margin="0,0,0,6">
-                                                        <TextBlock x:Name="TxtPackagesDone" DockPanel.Dock="Right" Text="0 из 0 компонентов"
+                                                        <TextBlock x:Name="TxtPackagesDone" DockPanel.Dock="Right" Text="0 / 0"
                                                                    FontSize="12" Foreground="#7582A3" VerticalAlignment="Bottom" Margin="8,0,0,3"/>
-                                                        <TextBlock x:Name="TxtInstTitle" Text="Собираем ваш сервер" FontSize="25"
+                                                        <TextBlock x:Name="TxtInstTitle" Text="{core:Tr servers.wizard.install.title}" FontSize="25"
                                                                    FontWeight="Bold" Foreground="#131C3D"/>
                                                     </DockPanel>
                                                     <TextBlock x:Name="TxtInstSubtitle"
-                                                               Text="Устанавливаем и настраиваем необходимые компоненты. Это может занять несколько минут."
+                                                               Text="{core:Tr servers.wizard.install.subtitle}"
                                                                FontSize="13" Foreground="#7582A3" TextWrapping="Wrap" Margin="0,0,0,14"/>
 
                                                     <!-- Прогресс -->
@@ -1375,12 +1375,12 @@
                                                             <ColumnDefinition Width="Auto"/>
                                                         </Grid.ColumnDefinitions>
                                                         <StackPanel Grid.Column="0">
-                                                            <TextBlock x:Name="TxtCurrentLabel" Text="Текущий компонент" FontSize="11.5" Foreground="#7582A3"/>
+                                                            <TextBlock x:Name="TxtCurrentLabel" Text="{core:Tr servers.wizard.install.currentLabel}" FontSize="11.5" Foreground="#7582A3"/>
                                                             <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
                                                                 <TextBlock x:Name="TxtCurrentIcon" Text="⚙" FontSize="15" Foreground="#4E68FF" Margin="0,0,8,0"/>
-                                                                <TextBlock x:Name="TxtCurrentName" Text="Подготовка" FontSize="16" FontWeight="SemiBold" Foreground="#131C3D"/>
+                                                                <TextBlock x:Name="TxtCurrentName" Text="{core:Tr servers.wizard.install.currentDefaultName}" FontSize="16" FontWeight="SemiBold" Foreground="#131C3D"/>
                                                             </StackPanel>
-                                                            <TextBlock x:Name="TxtCurrentDesc" Text="Ожидание запуска установки"
+                                                            <TextBlock x:Name="TxtCurrentDesc" Text="{core:Tr servers.wizard.install.currentDefaultDesc}"
                                                                        FontSize="11.5" Foreground="#7582A3" Margin="23,2,0,0"/>
                                                         </StackPanel>
                                                         <Border Grid.Column="1" Background="#F7F8FC" CornerRadius="8" Padding="12,7">
@@ -1388,15 +1388,15 @@
                                                                 <StackPanel Margin="0,0,16,0" Orientation="Horizontal">
                                                                     <TextBlock Text="⏳" FontSize="12" Margin="0,0,5,0" VerticalAlignment="Center"/>
                                                                     <StackPanel>
-                                                                        <TextBlock Text="Прошло" FontSize="10.5" Foreground="#7582A3"/>
+                                                                        <TextBlock Text="{core:Tr servers.wizard.install.elapsedLabel}" FontSize="10.5" Foreground="#7582A3"/>
                                                                         <TextBlock x:Name="TxtElapsed" Text="00:00" FontSize="12.5" FontWeight="SemiBold" Foreground="#131C3D"/>
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                                 <StackPanel Orientation="Horizontal">
                                                                     <TextBlock Text="🕐" FontSize="12" Margin="0,0,5,0" VerticalAlignment="Center"/>
                                                                     <StackPanel>
-                                                                        <TextBlock Text="Осталось" FontSize="10.5" Foreground="#7582A3"/>
-                                                                        <TextBlock x:Name="TxtRemaining" Text="Уточняется" FontSize="12.5" FontWeight="SemiBold" Foreground="#131C3D"/>
+                                                                        <TextBlock Text="{core:Tr servers.wizard.install.remainingLabel}" FontSize="10.5" Foreground="#7582A3"/>
+                                                                        <TextBlock x:Name="TxtRemaining" Text="{core:Tr servers.wizard.install.remainingDefault}" FontSize="12.5" FontWeight="SemiBold" Foreground="#131C3D"/>
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </StackPanel>
@@ -1442,14 +1442,14 @@
                                                     Background="#FCFDFF" Padding="22,11">
                                                 <DockPanel>
                                                     <TextBlock x:Name="TxtFootStatus" DockPanel.Dock="Left"
-                                                               Text="Не закрывайте окно до завершения" FontSize="11.5"
+                                                               Text="{core:Tr servers.wizard.install.footStatusDefault}" FontSize="11.5"
                                                                Foreground="#7582A3" VerticalAlignment="Center"/>
                                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                                        <Button x:Name="BtnToggleLog" Content="Показать журнал"
+                                                        <Button x:Name="BtnToggleLog" Content="{core:Tr servers.wizard.install.btnShowLog}"
                                                                 Style="{StaticResource ActionBtnNeutral}"
                                                                 core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.Desktop}"
                                                                 Click="OnToggleLogClick"/>
-                                                        <Button x:Name="BtnCancelInstall" Content="Отменить установку"
+                                                        <Button x:Name="BtnCancelInstall" Content="{core:Tr servers.wizard.install.btnCancel}"
                                                                 Style="{StaticResource ActionBtnDanger}"
                                                                 core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.XCircle}"
                                                                 Margin="8,0,0,0" Click="OnCancelInstallClick"/>
@@ -1471,7 +1471,7 @@
                                                             <Ellipse Width="9" Height="9" Fill="#ff5f56" Margin="0,0,5,0"/>
                                                             <Ellipse Width="9" Height="9" Fill="#ffbd2e" Margin="0,0,5,0"/>
                                                             <Ellipse Width="9" Height="9" Fill="#27c93f" Margin="0,0,10,0"/>
-                                                            <TextBlock x:Name="TxtLogHeader" Text="root@ — live install log"
+                                                            <TextBlock x:Name="TxtLogHeader" Text="root@…"
                                                                        Foreground="#8b95a3" FontFamily="Consolas" FontSize="10.5" VerticalAlignment="Center"/>
                                                         </StackPanel>
                                                     </Border>
@@ -1501,9 +1501,9 @@
                                     <StackPanel MaxWidth="720" HorizontalAlignment="Left">
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                                             <TextBlock Text="🎉" FontSize="26" Margin="0,0,10,0"/>
-                                            <TextBlock x:Name="TxtDoneTitle" Text="Готово" FontSize="19" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="TxtDoneTitle" Text="{core:Tr servers.wizard.done.titleDefault}" FontSize="19" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}" VerticalAlignment="Center"/>
                                         </StackPanel>
-                                        <TextBlock x:Name="TxtDoneSubtitle" Text="Установка завершена" FontSize="11.5" Margin="0,0,0,16" Foreground="{DynamicResource Fg4Brush}"/>
+                                        <TextBlock x:Name="TxtDoneSubtitle" Text="{core:Tr servers.wizard.done.subtitleDefault}" FontSize="11.5" Margin="0,0,0,16" Foreground="{DynamicResource Fg4Brush}"/>
 
                                         <Grid>
                                             <Grid.ColumnDefinitions>
@@ -1518,8 +1518,8 @@
                                                         BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1">
                                                     <StackPanel>
                                                         <DockPanel Margin="0,0,0,6">
-                                                            <TextBlock DockPanel.Dock="Left" Text="🖥  PMTA Monitor" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
-                                                            <Button x:Name="BtnCopyPmta" DockPanel.Dock="Right" Style="{StaticResource CopyBtn}" Content="📋 копировать"
+                                                            <TextBlock DockPanel.Dock="Left" Text="{core:Tr servers.wizard.done.cardPmta}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
+                                                            <Button x:Name="BtnCopyPmta" DockPanel.Dock="Right" Style="{StaticResource CopyBtn}" Content="{core:Tr servers.wizard.done.btnCopy}"
                                                                     Click="OnCopyClick" Tag="—"/>
                                                             <TextBlock/>
                                                         </DockPanel>
@@ -1533,8 +1533,8 @@
                                                         BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1">
                                                     <StackPanel>
                                                         <DockPanel Margin="0,0,0,6">
-                                                            <TextBlock DockPanel.Dock="Left" Text="✉  Webmail" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
-                                                            <Button x:Name="BtnCopyWebmail" DockPanel.Dock="Right" Style="{StaticResource CopyBtn}" Content="📋 копировать"
+                                                            <TextBlock DockPanel.Dock="Left" Text="{core:Tr servers.wizard.done.cardWebmail}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
+                                                            <Button x:Name="BtnCopyWebmail" DockPanel.Dock="Right" Style="{StaticResource CopyBtn}" Content="{core:Tr servers.wizard.done.btnCopy}"
                                                                     Click="OnCopyClick" Tag="—"/>
                                                             <TextBlock/>
                                                         </DockPanel>
@@ -1547,8 +1547,8 @@
                                                         BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1">
                                                     <StackPanel>
                                                         <DockPanel Margin="0,0,0,6">
-                                                            <TextBlock DockPanel.Dock="Left" Text="🗄  phpMyAdmin" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
-                                                            <Button x:Name="BtnCopyPma" DockPanel.Dock="Right" Style="{StaticResource CopyBtn}" Content="📋 копировать"
+                                                            <TextBlock DockPanel.Dock="Left" Text="{core:Tr servers.wizard.done.cardPma}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
+                                                            <Button x:Name="BtnCopyPma" DockPanel.Dock="Right" Style="{StaticResource CopyBtn}" Content="{core:Tr servers.wizard.done.btnCopy}"
                                                                     Click="OnCopyClick" Tag="—"/>
                                                             <TextBlock/>
                                                         </DockPanel>
@@ -1564,8 +1564,8 @@
                                                         BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1">
                                                     <StackPanel>
                                                         <DockPanel Margin="0,0,0,6">
-                                                            <TextBlock DockPanel.Dock="Left" Text="🔀  zTDS Admin" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
-                                                            <Button x:Name="BtnCopyTds" DockPanel.Dock="Right" Style="{StaticResource CopyBtn}" Content="📋 копировать"
+                                                            <TextBlock DockPanel.Dock="Left" Text="{core:Tr servers.wizard.done.cardTds}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
+                                                            <Button x:Name="BtnCopyTds" DockPanel.Dock="Right" Style="{StaticResource CopyBtn}" Content="{core:Tr servers.wizard.done.btnCopy}"
                                                                     Click="OnCopyClick" Tag="—"/>
                                                             <TextBlock/>
                                                         </DockPanel>
@@ -1578,8 +1578,8 @@
                                                         BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1">
                                                     <StackPanel>
                                                         <DockPanel Margin="0,0,0,6">
-                                                            <TextBlock DockPanel.Dock="Left" Text="🔀  3proxy (SOCKS5)" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
-                                                            <Button x:Name="BtnCopy3proxy" DockPanel.Dock="Right" Style="{StaticResource CopyBtn}" Content="📋 копировать"
+                                                            <TextBlock DockPanel.Dock="Left" Text="{core:Tr servers.wizard.done.card3proxy}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
+                                                            <Button x:Name="BtnCopy3proxy" DockPanel.Dock="Right" Style="{StaticResource CopyBtn}" Content="{core:Tr servers.wizard.done.btnCopy}"
                                                                     Click="OnCopyClick" Tag="—"/>
                                                             <TextBlock/>
                                                         </DockPanel>
@@ -1592,8 +1592,8 @@
                                                         BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1">
                                                     <StackPanel>
                                                         <DockPanel Margin="0,0,0,6">
-                                                            <TextBlock DockPanel.Dock="Left" Text="🌐  Лендинг" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
-                                                            <Button x:Name="BtnCopyLanding" DockPanel.Dock="Right" Style="{StaticResource CopyBtn}" Content="📋 копировать"
+                                                            <TextBlock DockPanel.Dock="Left" Text="{core:Tr servers.wizard.done.cardLanding}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
+                                                            <Button x:Name="BtnCopyLanding" DockPanel.Dock="Right" Style="{StaticResource CopyBtn}" Content="{core:Tr servers.wizard.done.btnCopy}"
                                                                     Click="OnCopyClick" Tag="—"/>
                                                             <TextBlock/>
                                                         </DockPanel>
@@ -1605,8 +1605,8 @@
                                                         BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1">
                                                     <StackPanel>
                                                         <DockPanel Margin="0,0,0,6">
-                                                            <TextBlock DockPanel.Dock="Left" Text="📈  AMS RealTime статистика" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
-                                                            <Button x:Name="BtnCopyAmsStats" DockPanel.Dock="Right" Style="{StaticResource CopyBtn}" Content="📋 копировать"
+                                                            <TextBlock DockPanel.Dock="Left" Text="{core:Tr servers.wizard.done.cardAmsStats}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
+                                                            <Button x:Name="BtnCopyAmsStats" DockPanel.Dock="Right" Style="{StaticResource CopyBtn}" Content="{core:Tr servers.wizard.done.btnCopy}"
                                                                     Click="OnCopyClick" Tag="—"/>
                                                             <TextBlock/>
                                                         </DockPanel>
@@ -1623,8 +1623,8 @@
                                                 BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1">
                                             <StackPanel>
                                                 <DockPanel Margin="0,0,0,6">
-                                                    <TextBlock DockPanel.Dock="Left" Text="📋  DNS-записи для регистратора" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
-                                                    <Button x:Name="BtnCopyDns" DockPanel.Dock="Right" Style="{StaticResource CopyBtn}" Content="📋 копировать все"
+                                                    <TextBlock DockPanel.Dock="Left" Text="{core:Tr servers.wizard.done.cardDns}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Fg2Brush}"/>
+                                                    <Button x:Name="BtnCopyDns" DockPanel.Dock="Right" Style="{StaticResource CopyBtn}" Content="{core:Tr servers.wizard.done.btnCopyAll}"
                                                             Click="OnCopyDnsClick"/>
                                                     <TextBlock/>
                                                 </DockPanel>
@@ -1650,11 +1650,11 @@
                                     Padding="14,10">
                                 <DockPanel>
                                     <Button DockPanel.Dock="Left" x:Name="BtnWizBack"
-                                            Content="Назад" Style="{StaticResource ActionBtnNeutral}"
+                                            Content="{core:Tr servers.wizard.nav.back}" Style="{StaticResource ActionBtnNeutral}"
                                             core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.ArrowLeft}"
                                             IsEnabled="False" Click="OnWizardBackClick"/>
                                     <Button DockPanel.Dock="Right" x:Name="BtnWizNext"
-                                            Content="Далее" Style="{StaticResource ActionBtnNeutral}"
+                                            Content="{core:Tr servers.wizard.nav.next}" Style="{StaticResource ActionBtnNeutral}"
                                             core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.ArrowRight}"
                                             Click="OnWizardNextClick"/>
                                     <Button DockPanel.Dock="Right" x:Name="BtnRerunPreflight"
@@ -1665,15 +1665,15 @@
                                             <Viewbox Width="12" Height="12" Margin="0,0,6,0">
                                                 <Path Data="{x:Static core:PhosphorIcons.ArrowClockwise}" Fill="{DynamicResource Accent2Brush}"/>
                                             </Viewbox>
-                                            <TextBlock Text="Повторить проверку" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{core:Tr servers.wizard.verify.btnRerun}" VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Button>
                                     <Button DockPanel.Dock="Right" x:Name="BtnWizSaveOnly"
-                                            Content="Только сохранить"
+                                            Content="{core:Tr servers.wizard.nav.saveOnly}"
                                             Style="{StaticResource ActionBtnNeutral}"
                                             core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.FloppyDisk}"
                                             Margin="0,0,8,0"
-                                            ToolTip="Сохранить в реестр и мониторить существующий сервер, без установки пакетов"
+                                            ToolTip="{core:Tr servers.wizard.nav.saveOnlyTooltip}"
                                             Click="OnSaveOnlyClick"/>
                                     <TextBlock/>
                                 </DockPanel>
@@ -1692,7 +1692,7 @@
                                     BorderBrush="{DynamicResource Border1Brush}" BorderThickness="0,0,0,1">
                                 <DockPanel>
                                     <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
-                                        <TextBlock Text="📜  Live tail  ·" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{core:Tr servers.logs.header}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}" VerticalAlignment="Center"/>
                                         <ComboBox x:Name="CmbLogSource" Width="220" Margin="10,0,0,0" FontSize="11.5">
                                             <ComboBoxItem Content="/var/log/mail.log (postfix + dovecot)" IsSelected="True" Tag="/var/log/mail.log"/>
                                             <ComboBoxItem Content="/var/log/syslog" Tag="/var/log/syslog"/>
@@ -1703,12 +1703,12 @@
                                         </ComboBox>
                                     </StackPanel>
                                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                        <CheckBox x:Name="ChkAutoScroll" Content="Автопрокрутка" IsChecked="True" Foreground="{DynamicResource Fg3Brush}" FontSize="11" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                        <Button x:Name="BtnClearLog" Content="Очистить"
+                                        <CheckBox x:Name="ChkAutoScroll" Content="{core:Tr servers.logs.autoscroll}" IsChecked="True" Foreground="{DynamicResource Fg3Brush}" FontSize="11" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                        <Button x:Name="BtnClearLog" Content="{core:Tr servers.logs.btnClear}"
                                                 Style="{StaticResource ActionBtnNeutral}"
                                                 core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.XCircle}"
                                                 Margin="0,0,6,0" Click="OnClearTailClick"/>
-                                        <Button x:Name="BtnTailToggle" Content="Запустить"
+                                        <Button x:Name="BtnTailToggle" Content="{core:Tr servers.logs.btnStart}"
                                                 Style="{StaticResource ActionBtnGreen}"
                                                 core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.Play}"
                                                 Click="OnTailToggleClick"/>
@@ -1730,7 +1730,7 @@
                                             <Ellipse Width="9" Height="9" Fill="#ff5f56" Margin="0,0,5,0"/>
                                             <Ellipse Width="9" Height="9" Fill="#ffbd2e" Margin="0,0,5,0"/>
                                             <Ellipse Width="9" Height="9" Fill="#27c93f" Margin="0,0,10,0"/>
-                                            <TextBlock x:Name="TxtTailHeader" Text="not connected" Foreground="#8b95a3" FontFamily="Consolas" FontSize="10.5" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="TxtTailHeader" Text="{core:Tr servers.logs.notConnected}" Foreground="#8b95a3" FontFamily="Consolas" FontSize="10.5" VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Border>
                                     <RichTextBox x:Name="TailRtb" Grid.Row="1" IsReadOnly="True"
@@ -1754,8 +1754,8 @@
                             <!-- Заголовок + кнопка обновить -->
                             <DockPanel Grid.Row="0" Margin="14,12,14,8">
                                 <StackPanel DockPanel.Dock="Left">
-                                    <TextBlock Text="🌐  DNS &amp; Trust checker" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}"/>
-                                    <TextBlock Text="Проверка обязательных DNS-записей, репутации IP и рекомендации по trust'у"
+                                    <TextBlock Text="{core:Tr servers.dns.title}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}"/>
+                                    <TextBlock Text="{core:Tr servers.dns.subtitle}"
                                                FontSize="11" Foreground="{DynamicResource Fg4Brush}" Margin="0,2,0,0"/>
                                 </StackPanel>
                                 <Button DockPanel.Dock="Right" x:Name="BtnRefreshDns" Style="{StaticResource ActionBtnGreen}"
@@ -1774,7 +1774,7 @@
                                     <Border Background="{DynamicResource Bg3Brush}" CornerRadius="8" Padding="14,12" Margin="0,0,0,12"
                                             BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1">
                                         <StackPanel>
-                                            <TextBlock Text="📌  Обязательные DNS-записи" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}" Margin="0,0,0,10"/>
+                                            <TextBlock Text="{core:Tr servers.dns.sectionRequired}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}" Margin="0,0,0,10"/>
                                             <ItemsControl ItemsSource="{Binding Required}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
@@ -1818,7 +1818,7 @@
                                     <Border Background="{DynamicResource Bg3Brush}" CornerRadius="8" Padding="14,12" Margin="0,0,0,12"
                                             BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1">
                                         <StackPanel>
-                                            <TextBlock Text="🛡  IP-репутация (DNSBL)" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}" Margin="0,0,0,10"/>
+                                            <TextBlock Text="{core:Tr servers.dns.sectionBlacklist}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}" Margin="0,0,0,10"/>
                                             <ItemsControl ItemsSource="{Binding Blacklist}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
@@ -1862,8 +1862,8 @@
                                     <Border Background="{DynamicResource Bg3Brush}" CornerRadius="8" Padding="14,12"
                                             BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1">
                                         <StackPanel>
-                                            <TextBlock Text="🔒  Trust boosters (рекомендации)" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}" Margin="0,0,0,4"/>
-                                            <TextBlock Text="MUST — без этого письма в спам гарантированно. BOOST — сильно поднимут репутацию у Gmail/Mail.ru/Yahoo."
+                                            <TextBlock Text="{core:Tr servers.dns.sectionBoosters}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Fg1Brush}" Margin="0,0,0,4"/>
+                                            <TextBlock Text="{core:Tr servers.dns.boostersHint}"
                                                        FontSize="10.5" Foreground="{DynamicResource Fg4Brush}" Margin="0,0,0,10"/>
                                             <ItemsControl ItemsSource="{Binding Boosters}">
                                                 <ItemsControl.ItemTemplate>

@@ -53,25 +53,31 @@ public class LameFlagConverter : IValueConverter
 }
 
 /// <summary>
-/// Код статуса → русская подпись для live-потока.
+/// Код статуса → локализованная подпись для live-потока.
 /// ok=активен, lame_delegation=брошен, timeout=таймаут, nxdomain=нет домена,
 /// no_ns=нет NS, no_a=нет A, error/*=ошибка.
+/// IMultiValueConverter (а не IValueConverter): второй bind — на Fakunator.Core.Loc.Instance.Language,
+/// нужен только чтобы конвертер переоценивался при смене языка (значение не используется).
 /// </summary>
-public class StatusRuConverter : IValueConverter
+public class StatusRuConverter : IMultiValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        => (value as string) switch
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        var code = values is { Length: > 0 } ? values[0] as string : null;
+        var key = code switch
         {
-            "ok" => "активен",
-            "lame_delegation" => "брошен",
-            "timeout" => "таймаут",
-            "nxdomain" => "нет домена",
-            "no_ns" => "нет NS",
-            "no_a" => "нет A",
-            _ => "ошибка",
+            "ok" => "domainscanner.status.code.ok",
+            "lame_delegation" => "domainscanner.status.code.lame",
+            "timeout" => "domainscanner.status.code.timeout",
+            "nxdomain" => "domainscanner.status.code.nxdomain",
+            "no_ns" => "domainscanner.status.code.noNs",
+            "no_a" => "domainscanner.status.code.noA",
+            _ => "domainscanner.status.code.error",
         };
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        => Binding.DoNothing;
+        return Fakunator.Core.Loc.T(key);
+    }
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
 }
 
 /// <summary>Код статуса → цвет надписи (для live-потока).</summary>
@@ -113,19 +119,21 @@ public class HexToColorConverter : IValueConverter
 }
 
 /// <summary>
-/// Если ns_provider пустой или "Unknown" — показываем "не отвечает" (как на макете),
-/// в остальных случаях провайдер как есть.
+/// Если ns_provider пустой или "Unknown" — показываем локализованное "не отвечает" (как на макете),
+/// в остальных случаях провайдер как есть (доменное имя — не переводится).
+/// IMultiValueConverter: второй bind — на Loc.Instance.Language, только для переоценки при смене языка.
 /// </summary>
-public class ProviderOrDeadConverter : IValueConverter
+public class ProviderOrDeadConverter : IMultiValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
     {
-        var s = value as string;
-        if (string.IsNullOrWhiteSpace(s) || s == "Unknown") return "не отвечает";
+        var s = values is { Length: > 0 } ? values[0] as string : null;
+        if (string.IsNullOrWhiteSpace(s) || s == "Unknown")
+            return Fakunator.Core.Loc.T("domainscanner.liveFeed.noResponse");
         return s;
     }
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        => Binding.DoNothing;
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
 }
 
 /// <summary>

@@ -58,7 +58,7 @@ public class DomainScannerViewModel : INotifyPropertyChanged
         }
     }
 
-    private string _statusText = "Не запущено";
+    private string _statusText = "";
     public string StatusText
     {
         get => _statusText;
@@ -69,21 +69,47 @@ public class DomainScannerViewModel : INotifyPropertyChanged
         }
     }
 
+    /// <summary>Смысловая "категория" статуса — определяет цвет dot-индикатора.
+    /// Держим отдельно от StatusText, потому что текст теперь локализуется (ru/en)
+    /// и сравнивать его по префиксу (как раньше) больше нельзя.</summary>
+    private enum StatusColorKind { Neutral, Warn, Error }
+    private StatusColorKind _statusKind = StatusColorKind.Neutral;
+    private string _statusKey = "domainscanner.status.notStarted";
+    private object[] _statusArgs = Array.Empty<object>();
+
+    /// <summary>Задаёт статус через ключ локализации + параметры форматирования и его "цвет".
+    /// StatusText пересобирается сразу и повторно — при смене языка (см. подписку в конструкторе).</summary>
+    private void SetStatus(string key, StatusColorKind kind, params object[] args)
+    {
+        _statusKey = key;
+        _statusArgs = args;
+        _statusKind = kind;
+        ApplyStatusText();
+    }
+
+    private void ApplyStatusText()
+    {
+        var fmt = Loc.T(_statusKey);
+        StatusText = _statusArgs.Length > 0 ? string.Format(fmt, _statusArgs) : fmt;
+        OnPropertyChanged(nameof(StatusDotColor));
+    }
+
     /// <summary>
     /// Цвет dot-индикатора в статусе:
     /// зелёный — идёт скан, оранжевый — остановлено/есть данные в базе,
-    /// серый — пусто, ничего не было.
+    /// серый — пусто, ничего не было, красный — ошибка.
     /// </summary>
     public string StatusDotColor
     {
         get
         {
             if (_running) return "#22c55e";
-            var s = _statusText ?? "";
-            if (s.StartsWith("В базе") || s.StartsWith("Остановлено") || s.StartsWith("Завершено"))
-                return "#f59e0b";
-            if (s.StartsWith("Ошибка")) return "#ef4444";
-            return "#71717a";
+            return _statusKind switch
+            {
+                StatusColorKind.Warn => "#f59e0b",
+                StatusColorKind.Error => "#ef4444",
+                _ => "#71717a",
+            };
         }
     }
 
@@ -143,11 +169,16 @@ public class DomainScannerViewModel : INotifyPropertyChanged
     private CancellationTokenSource? _enrichCts;
     private readonly object _browserLock = new();
 
+    /// <summary>Метка "все / all" — специальный маркер "фильтр не активен" в ComboBox'ах.
+    /// Локализуется, но старое значение "все" тоже распознаётся (см. Norm()) —
+    /// на случай если оно уже где-то сохранено/сравнивается на старте.</summary>
+    private static string AllLabel => Loc.T("domainscanner.filter.all");
+
     /// <summary>Список зон в БД + пункт "все" в начале — для ComboBox фильтра.</summary>
-    public ObservableCollection<string> AvailableZones { get; } = new() { "все" };
+    public ObservableCollection<string> AvailableZones { get; } = new() { AllLabel };
 
     /// <summary>Список NS-провайдеров (топ) + пункт "все" — для ComboBox фильтра.</summary>
-    public ObservableCollection<string> AvailableProviders { get; } = new() { "все" };
+    public ObservableCollection<string> AvailableProviders { get; } = new() { AllLabel };
 
     private int _browserPage = 1;
     public int BrowserPage
@@ -169,8 +200,8 @@ public class DomainScannerViewModel : INotifyPropertyChanged
     // Browser filters. Значения "все" — специальный маркер "фильтр не активен"
     // (см. Norm() — превращает в null для БД-запроса). ComboBox используют этот
     // маркер как SelectedItem по умолчанию.
-    private string _filterZone = "все";
-    private string _filterProvider = "все";
+    private string _filterZone = AllLabel;
+    private string _filterProvider = AllLabel;
     private string _filterNsHost = "";
     private string _filterQuery = "";
     public string FilterZone { get => _filterZone; set => SetField(ref _filterZone, value); }
@@ -219,8 +250,8 @@ public class DomainScannerViewModel : INotifyPropertyChanged
         ApplyFiltersCommand = new RelayCommand(_ => RefreshBrowser());
         ResetFiltersCommand = new RelayCommand(_ =>
         {
-            // "все" — потому что фильтры теперь ComboBox с этим пунктом
-            FilterZone = "все"; FilterProvider = "все";
+            // AllLabel — потому что фильтры теперь ComboBox с этим пунктом
+            FilterZone = AllLabel; FilterProvider = AllLabel;
             FilterNsHost = ""; FilterQuery = "";
             BrowserPage = 1;
             RefreshBrowser();
@@ -242,39 +273,39 @@ public class DomainScannerViewModel : INotifyPropertyChanged
             if (_db == null) return;
             if (Running)
             {
-                MessageBox.Show("Дождитесь окончания текущего сканирования.",
-                    "Очистка БД", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(Loc.T("domainscanner.confirm.clearDbBusyBody"),
+                    Loc.T("domainscanner.confirm.clearDbBusyTitle"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             var total = _db.TotalCount();
             var confirm = MessageBox.Show(
-                $"Удалить ВСЕ {total:N0} доменов из базы?\n\nЭто действие необратимо.",
-                "Очистить базу", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                string.Format(Loc.T("domainscanner.confirm.clearDbBody"), total),
+                Loc.T("domainscanner.confirm.clearDbTitle"), MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (confirm != MessageBoxResult.Yes) return;
 
             int cleared = 0;
             try { cleared = _db.ClearAll(); }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка: {ex.Message}", "Очистка БД",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(string.Format(Loc.T("domainscanner.err.clearDbBody"), ex.Message),
+                    Loc.T("domainscanner.err.clearDbTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
             // Сбросить UI-состояние
             lock (_freshLock) FreshFeed.Clear();
             lock (_topLock) TopProviders.Clear();
-            lock (_browserLock) { BrowserRows.Clear(); AvailableZones.Clear(); AvailableProviders.Clear(); AvailableZones.Add("все"); AvailableProviders.Add("все"); }
+            lock (_browserLock) { BrowserRows.Clear(); AvailableZones.Clear(); AvailableProviders.Clear(); AvailableZones.Add(AllLabel); AvailableProviders.Add(AllLabel); }
             Snapshot = null;
             BrowserTotal = 0;
             BrowserPage = 1;
-            FilterZone = "все"; FilterProvider = "все";
+            FilterZone = AllLabel; FilterProvider = AllLabel;
             FilterNsHost = ""; FilterQuery = "";
-            StatusText = "Не запущено";
+            SetStatus("domainscanner.status.notStarted", StatusColorKind.Neutral);
             ElapsedText = "00:00";
 
-            MessageBox.Show($"База очищена: удалено {cleared:N0} записей.",
-                "Очистка БД", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(string.Format(Loc.T("domainscanner.confirm.clearDbDoneBody"), cleared),
+                Loc.T("domainscanner.confirm.clearDbDoneTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
         });
 
         PickProviderCommand = new RelayCommand(name =>
@@ -312,12 +343,28 @@ public class DomainScannerViewModel : INotifyPropertyChanged
             RefreshTopProvidersFromDb();
             RefreshFilterLists();
             var total = _db.TotalCount();
-            StatusText = total > 0 ? $"В базе: {total:N0}" : "Не запущено";
+            if (total > 0) SetStatus("domainscanner.status.inDb", StatusColorKind.Warn, total);
+            else SetStatus("domainscanner.status.notStarted", StatusColorKind.Neutral);
         }
         catch (Exception ex)
         {
-            StatusText = $"Ошибка БД: {ex.Message}";
+            SetStatus("domainscanner.status.dbError", StatusColorKind.Error, ex.Message);
         }
+
+        // При смене языка: пересобрать StatusText из сохранённого ключа+параметров,
+        // обновить метку "все/all" в списках и текущих значениях фильтров (если стоял маркер "все всё"),
+        // пересобрать текстовые колонки браузера (AgeText/DaysLeftText/RblText локализуются на лету).
+        Loc.Instance.LanguageChanged += (_, _) =>
+        {
+            ApplyStatusText();
+            bool zoneWasAll = _filterZone == "все" || _filterZone == AllLabel;
+            bool providerWasAll = _filterProvider == "все" || _filterProvider == AllLabel;
+            RefreshFilterLists();
+            if (zoneWasAll) FilterZone = AllLabel;
+            if (providerWasAll) FilterProvider = AllLabel;
+            RefreshBrowser();
+            RefreshTopProvidersFromDb();
+        };
     }
 
     private void SaveToConfig()
@@ -333,8 +380,8 @@ public class DomainScannerViewModel : INotifyPropertyChanged
     {
         if (Running || _taskAlive)
         {
-            MessageBox.Show("Предыдущая задача ещё не завершилась — подождите пару секунд.",
-                "Не готово", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(Loc.T("domainscanner.err.notReadyBody"),
+                Loc.T("domainscanner.err.notReadyTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
         _taskAlive = true;
@@ -342,16 +389,16 @@ public class DomainScannerViewModel : INotifyPropertyChanged
         var apiKey = cfg.DomainsMonitorApiKey;
         if (string.IsNullOrWhiteSpace(apiKey))
         {
-            MessageBox.Show("API-ключ domains-monitor.com не задан.\nНастройки → Domain scanner.",
-                "Нет ключа", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(Loc.T("domainscanner.err.noApiKeyBody"),
+                Loc.T("domainscanner.err.noApiKeyTitle"), MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
         var zones = ParseZones(_zones);
         if (zones.Count == 0)
         {
-            MessageBox.Show("Не указана ни одна зона (напр. ru, com).",
-                "Пустой список зон", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(Loc.T("domainscanner.err.noZonesBody"),
+                Loc.T("domainscanner.err.noZonesTitle"), MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
@@ -362,7 +409,7 @@ public class DomainScannerViewModel : INotifyPropertyChanged
 
         _cts = new CancellationTokenSource();
         Running = true;
-        StatusText = "Запуск…";
+        SetStatus("domainscanner.status.starting", StatusColorKind.Neutral);
         _startedAt = DateTime.UtcNow;
         NotificationHub.Notify($"🌐 <b>Скан доменов запущен</b>\nзоны: <code>{string.Join(", ", zones)}</code>");
 
@@ -387,18 +434,18 @@ public class DomainScannerViewModel : INotifyPropertyChanged
         try
         {
             await Task.Run(() => _worker.RunAsync(progress, _cts.Token));
-            StatusText = "Завершено";
+            SetStatus("domainscanner.status.done", StatusColorKind.Warn);
             var total = _db?.TotalCount() ?? 0;
             NotificationHub.Notify($"✅ <b>Скан доменов завершён</b>\nв базе: <b>{total:N0}</b>");
         }
         catch (OperationCanceledException)
         {
-            StatusText = "Остановлено";
+            SetStatus("domainscanner.status.stopped", StatusColorKind.Warn);
             NotificationHub.Notify("⏸ <b>Скан доменов остановлен</b>");
         }
         catch (Exception ex)
         {
-            StatusText = $"Ошибка: {ex.Message}";
+            SetStatus("domainscanner.status.error", StatusColorKind.Error, ex.Message);
             NotificationHub.Notify($"❌ <b>Скан упал</b>\n<code>{ex.Message}</code>");
         }
         finally
@@ -428,11 +475,11 @@ public class DomainScannerViewModel : INotifyPropertyChanged
             lock (_browserLock)
             {
                 AvailableZones.Clear();
-                AvailableZones.Add("все");
+                AvailableZones.Add(AllLabel);
                 foreach (var z in zones) AvailableZones.Add(z);
 
                 AvailableProviders.Clear();
-                AvailableProviders.Add("все");
+                AvailableProviders.Add(AllLabel);
                 foreach (var p in providers) AvailableProviders.Add(p);
             }
         }
@@ -475,7 +522,7 @@ public class DomainScannerViewModel : INotifyPropertyChanged
         _elapsedTimer = null;
         DrainPendingFeed(int.MaxValue);
         Running = false;
-        StatusText = "Остановлено (фон дожимает…)";
+        SetStatus("domainscanner.status.stoppedDraining", StatusColorKind.Warn);
     }
 
     private DateTime _lastTopRebuild = DateTime.MinValue;
@@ -483,9 +530,10 @@ public class DomainScannerViewModel : INotifyPropertyChanged
     private void OnSnapshot(DomainScanSnapshot snap)
     {
         Snapshot = snap;
-        StatusText = snap.Running
-            ? $"Сканируем {snap.CurrentZone} · {snap.Speed:N0}/с"
-            : "Завершено";
+        if (snap.Running)
+            SetStatus("domainscanner.status.scanning", StatusColorKind.Neutral, snap.CurrentZone, snap.Speed);
+        else
+            SetStatus("domainscanner.status.done", StatusColorKind.Warn);
 
         foreach (var rec in snap.FreshFeed)
             _pendingFeed.Enqueue(rec);
@@ -539,7 +587,7 @@ public class DomainScannerViewModel : INotifyPropertyChanged
     }
 
     private static string? Norm(string? s) =>
-        string.IsNullOrWhiteSpace(s) || s == "все" ? null : s;
+        string.IsNullOrWhiteSpace(s) || s == "все" || s == AllLabel ? null : s;
 
     /// <summary>
     /// Прогоняет NS-проверку заново для доменов под текущими фильтрами браузера.
@@ -555,19 +603,18 @@ public class DomainScannerViewModel : INotifyPropertyChanged
 
         if (domains.Count == 0)
         {
-            MessageBox.Show("Под текущие фильтры не попадает ни один домен.",
-                "Проверить заново", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(Loc.T("domainscanner.confirm.reverifyEmptyBody"),
+                Loc.T("domainscanner.confirm.reverifyEmptyTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
         var confirm = MessageBox.Show(
-            $"Будет заново проверено {domains.Count:N0} доменов по текущим фильтрам.\n" +
-            "Те, что больше не соответствуют условию «брошенный» (не lame delegation), будут удалены.\n\nПродолжить?",
-            "Проверить заново", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            string.Format(Loc.T("domainscanner.confirm.reverifyBody"), domains.Count),
+            Loc.T("domainscanner.confirm.reverifyTitle"), MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (confirm != MessageBoxResult.Yes) return;
 
         Running = true;
-        StatusText = $"Перепроверка: 0 / {domains.Count:N0}";
+        SetStatus("domainscanner.status.reverifying", StatusColorKind.Neutral, 0, domains.Count);
         _cts = new CancellationTokenSource();
         var ct = _cts.Token;
 
@@ -620,7 +667,7 @@ public class DomainScannerViewModel : INotifyPropertyChanged
                         if (done % 20 == 0)
                         {
                             var speed = sw.Elapsed.TotalSeconds > 0 ? done / sw.Elapsed.TotalSeconds : 0;
-                            StatusText = $"Перепроверка: {done:N0} / {domains.Count:N0} · {speed:N0}/с";
+                            SetStatus("domainscanner.status.reverifyingSpeed", StatusColorKind.Neutral, done, domains.Count, speed);
                         }
                     }
                     finally { sem.Release(); }
@@ -631,8 +678,8 @@ public class DomainScannerViewModel : INotifyPropertyChanged
         catch (OperationCanceledException) { /* stop pressed */ }
         catch (Exception ex)
         {
-            MessageBox.Show($"Ошибка проверки: {ex.Message}",
-                "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(string.Format(Loc.T("domainscanner.err.reverifyBody"), ex.Message),
+                Loc.T("domainscanner.err.reverifyTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
@@ -641,16 +688,14 @@ public class DomainScannerViewModel : INotifyPropertyChanged
                 deleted = _db.DeleteDomains(toDelete);
 
             Running = false;
-            StatusText = $"Готово: осталось {kept:N0}, удалено {deleted:N0}";
+            SetStatus("domainscanner.status.reverifyDone", StatusColorKind.Warn, kept, deleted);
             RefreshBrowser();
             RefreshTopProvidersFromDb();
             RefreshFilterLists();
 
             MessageBox.Show(
-                $"Перепроверено: {processed:N0}\n" +
-                $"Осталось (всё ещё брошенные): {kept:N0}\n" +
-                $"Удалено (перестали быть брошенными): {deleted:N0}",
-                "Проверить заново", MessageBoxButton.OK, MessageBoxImage.Information);
+                string.Format(Loc.T("domainscanner.confirm.reverifyDoneBody"), processed, kept, deleted),
+                Loc.T("domainscanner.confirm.reverifyDoneTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 
@@ -729,18 +774,18 @@ public class DomainScannerViewModel : INotifyPropertyChanged
         var nsHost = Norm(_filterNsHost);
         var query = Norm(_filterQuery);
         var filters = new List<string>();
-        if (provider != null) filters.Add($"провайдер = «{provider}»");
-        if (zone != null) filters.Add($"зона = .{zone}");
-        if (nsHost != null) filters.Add($"NS-хост содержит «{nsHost}»");
-        if (query != null) filters.Add($"поиск: «{query}»");
+        if (provider != null) filters.Add(string.Format(Loc.T("domainscanner.export.filterProvider"), provider));
+        if (zone != null) filters.Add(string.Format(Loc.T("domainscanner.export.filterZone"), zone));
+        if (nsHost != null) filters.Add(string.Format(Loc.T("domainscanner.export.filterNsHost"), nsHost));
+        if (query != null) filters.Add(string.Format(Loc.T("domainscanner.export.filterQuery"), query));
         var filterLine = filters.Count > 0
-            ? "Активные фильтры:\n  · " + string.Join("\n  · ", filters)
-            : "⚠ Фильтры не заданы — будут выгружены ВСЕ домены базы.";
+            ? Loc.T("domainscanner.export.filtersHeader") + string.Join("\n  · ", filters)
+            : Loc.T("domainscanner.export.noFilters");
 
         var total = BrowserTotal > 0 ? BrowserTotal : _db.TotalCount();
         var confirm = MessageBox.Show(
-            $"Выгрузить {total:N0} доменов.\n\n{filterLine}\n\nПродолжить?",
-            "Экспорт .txt",
+            string.Format(Loc.T("domainscanner.confirm.exportBody"), total, filterLine),
+            Loc.T("domainscanner.confirm.exportTitle"),
             MessageBoxButton.OKCancel,
             filters.Count > 0 ? MessageBoxImage.Information : MessageBoxImage.Warning);
         if (confirm != MessageBoxResult.OK) return;
@@ -749,8 +794,8 @@ public class DomainScannerViewModel : INotifyPropertyChanged
         var slug = SafeSlug(provider ?? "all") + (zone != null ? "_" + zone : "");
         var dlg = new Microsoft.Win32.SaveFileDialog
         {
-            Title = "Экспорт списка доменов",
-            Filter = "Текст (*.txt)|*.txt",
+            Title = Loc.T("domainscanner.export.dialogTitle"),
+            Filter = Loc.T("domainscanner.export.dialogFilter"),
             FileName = $"domains_{slug}.txt",
         };
         if (dlg.ShowDialog() != true) return;
@@ -758,13 +803,13 @@ public class DomainScannerViewModel : INotifyPropertyChanged
         {
             await _db.ExportToFileAsync(zone, provider, nsHost, query,
                 dlg.FileName, CancellationToken.None);
-            MessageBox.Show($"Готово: {total:N0} доменов сохранено в\n{dlg.FileName}",
-                "Экспорт", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(string.Format(Loc.T("domainscanner.confirm.exportDoneBody"), total, dlg.FileName),
+                Loc.T("domainscanner.confirm.exportDoneTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Ошибка экспорта: {ex.Message}",
-                "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(string.Format(Loc.T("domainscanner.err.exportBody"), ex.Message),
+                Loc.T("domainscanner.err.exportTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 

@@ -430,8 +430,8 @@ public class SmtpViewModel : INotifyPropertyChanged
             if (!File.Exists(cleanFile))
             {
                 System.Windows.MessageBox.Show(
-                    $"В последней чистке ({Path.GetFileName(latest.Path)}) нет clean.txt.",
-                    "Загрузка из чистки",
+                    string.Format(Loc.T("smtp.err.noCleanFileBody"), Path.GetFileName(latest.Path)),
+                    Loc.T("smtp.err.loadFromCleanupTitle"),
                     System.Windows.MessageBoxButton.OK,
                     System.Windows.MessageBoxImage.Warning);
                 return;
@@ -445,8 +445,8 @@ public class SmtpViewModel : INotifyPropertyChanged
             if (lines.Count == 0)
             {
                 System.Windows.MessageBox.Show(
-                    $"В последней чистке ({Path.GetFileName(latest.Path)}) clean.txt пуст — 0 валидных адресов.",
-                    "Загрузка из чистки",
+                    string.Format(Loc.T("smtp.err.emptyCleanFileBody"), Path.GetFileName(latest.Path)),
+                    Loc.T("smtp.err.loadFromCleanupTitle"),
                     System.Windows.MessageBoxButton.OK,
                     System.Windows.MessageBoxImage.Information);
                 return;

@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using Fakunator.Core;
 using Fakunator.Core.DomainsManager;
 
 namespace Fakunator.Views;
@@ -20,7 +21,7 @@ public class AddIspAccountDialog : Window
 
     public AddIspAccountDialog()
     {
-        Title = "Добавить аккаунт панели";
+        Title = Loc.T("domains.addIspDialog.title");
         Width = 460;
         SizeToContent = SizeToContent.Height;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -33,7 +34,7 @@ public class AddIspAccountDialog : Window
         // ── Shortcut: подключиться через WebView2 (FirstVDS и подобные) ───
         var quickBtn = new Button
         {
-            Content = "⚡  Подключить FirstVDS через браузер",
+            Content = Loc.T("domains.addIspDialog.btnQuickFirstVds"),
             Padding = new Thickness(14, 10, 14, 10),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             Cursor = System.Windows.Input.Cursors.Hand,
@@ -54,7 +55,7 @@ public class AddIspAccountDialog : Window
 
         var hint = new TextBlock
         {
-            Text = "— или введи данные вручную (обычный ISPmanager с логином+паролем) —",
+            Text = Loc.T("domains.addIspDialog.hintManual"),
             FontSize = 10.5, TextWrapping = TextWrapping.Wrap,
             HorizontalAlignment = HorizontalAlignment.Center,
             Margin = new Thickness(0, 12, 0, 14),
@@ -62,23 +63,23 @@ public class AddIspAccountDialog : Window
         hint.SetResourceReference(TextBlock.ForegroundProperty, "Fg4Brush");
         panel.Children.Add(hint);
 
-        panel.Children.Add(MakeLabel("Хост панели"));
+        panel.Children.Add(MakeLabel(Loc.T("domains.addIspDialog.lblHost")));
         _tbHost.Text = "";
         panel.Children.Add(StyleInput(_tbHost));
-        panel.Children.Add(MakeHint("panel.zomro.com или panel.host.ru:1501"));
+        panel.Children.Add(MakeHint(Loc.T("domains.addIspDialog.hintHost")));
         panel.Children.Add(MakeSpacer(12));
 
-        panel.Children.Add(MakeLabel("Логин"));
+        panel.Children.Add(MakeLabel(Loc.T("domains.addIspDialog.lblLogin")));
         panel.Children.Add(StyleInput(_tbUser));
         panel.Children.Add(MakeSpacer(12));
 
-        panel.Children.Add(MakeLabel("Пароль"));
+        panel.Children.Add(MakeLabel(Loc.T("domains.addIspDialog.lblPassword")));
         panel.Children.Add(StylePassword(_tbPass));
         panel.Children.Add(MakeSpacer(12));
 
-        panel.Children.Add(MakeLabel("Заметка (опционально)"));
+        panel.Children.Add(MakeLabel(Loc.T("domains.addIspDialog.lblNote")));
         panel.Children.Add(StyleInput(_tbName));
-        panel.Children.Add(MakeHint("например: «main zomro» — для отображения в списке"));
+        panel.Children.Add(MakeHint(Loc.T("domains.addIspDialog.hintNote")));
         panel.Children.Add(MakeSpacer(18));
 
         // Buttons row
@@ -87,10 +88,10 @@ public class AddIspAccountDialog : Window
             Orientation = Orientation.Horizontal,
             HorizontalAlignment = HorizontalAlignment.Right,
         };
-        var btnCancel = new Button { Content = "Отмена", Padding = new Thickness(16, 8, 16, 8), MinWidth = 100 };
+        var btnCancel = new Button { Content = Loc.T("domains.addIspDialog.btnCancel"), Padding = new Thickness(16, 8, 16, 8), MinWidth = 100 };
         btnCancel.SetResourceReference(StyleProperty, "GhostBtn");
         btnCancel.Click += (_, _) => { DialogResult = false; Close(); };
-        var btnOk = new Button { Content = "Проверить и сохранить", Padding = new Thickness(16, 8, 16, 8), MinWidth = 200, Margin = new Thickness(8, 0, 0, 0) };
+        var btnOk = new Button { Content = Loc.T("domains.addIspDialog.btnSave"), Padding = new Thickness(16, 8, 16, 8), MinWidth = 200, Margin = new Thickness(8, 0, 0, 0) };
         btnOk.SetResourceReference(StyleProperty, "PrimaryBtn");
         btnOk.Click += (_, _) =>
         {
@@ -99,8 +100,8 @@ public class AddIspAccountDialog : Window
             var pass = _tbPass.Password;
             if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass))
             {
-                MessageBox.Show("Заполните хост, логин и пароль.",
-                    "Не все поля", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(Loc.T("domains.addIspDialog.err.missingFieldsBody"),
+                    Loc.T("domains.addIspDialog.err.missingFieldsTitle"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             Result = new IspAccount

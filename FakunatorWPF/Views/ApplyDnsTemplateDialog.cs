@@ -31,7 +31,7 @@ public class ApplyDnsTemplateDialog : Window
     private readonly ListView _previewList = new() { Height = 240 };
     private readonly TextBlock _summary = new() { FontSize = 11, Margin = new Thickness(0, 8, 0, 0) };
     private readonly Button _btnApply;
-    private readonly CheckBox _cbOverwrite = new() { Content = "Перезаписывать конфликты", IsChecked = false };
+    private readonly CheckBox _cbOverwrite = new() { Content = Loc.T("domains.dnsTemplateDialog.cbOverwrite"), IsChecked = false };
     private DnsTemplate? _selectedTpl;
     private readonly Dictionary<string, TextBox> _placeholderInputs = new();
 
@@ -42,7 +42,7 @@ public class ApplyDnsTemplateDialog : Window
         _sessionId = sessionId;
         _existing = existing;
 
-        Title = $"Применить шаблон DNS · {domain}";
+        Title = string.Format(Loc.T("domains.dnsTemplateDialog.title"), domain);
         Width = 780;
         Height = 720;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -57,12 +57,12 @@ public class ApplyDnsTemplateDialog : Window
             Margin = new Thickness(0, 0, 0, 4),
         };
         title.SetResourceReference(TextBlock.ForegroundProperty, "Fg1Brush");
-        title.Text = $"Применить шаблон DNS к {domain}";
+        title.Text = string.Format(Loc.T("domains.dnsTemplateDialog.heading"), domain);
         panel.Children.Add(title);
 
         var hint = new TextBlock
         {
-            Text = "Выбери шаблон → заполни плейсхолдеры → проверь конфликты → примени. Существующие записи с тем же rkey обновятся; новые создадутся.",
+            Text = Loc.T("domains.dnsTemplateDialog.hint"),
             FontSize = 10.5, TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, 0, 0, 14),
         };
@@ -70,12 +70,14 @@ public class ApplyDnsTemplateDialog : Window
         panel.Children.Add(hint);
 
         // Selector
-        panel.Children.Add(Lbl("Шаблон"));
+        panel.Children.Add(Lbl(Loc.T("domains.dnsTemplateDialog.lblTemplate")));
         var allTemplates = DnsTemplatePresets.All.Concat(Config.Current.DnsTemplates).ToList();
         foreach (var t in allTemplates)
             _cbTemplate.Items.Add(new ComboBoxItem
             {
-                Content = t.IsBuiltin ? $"⚙ {t.Name}  ·  {t.Records.Count} rec" : $"{t.Name}  ·  {t.Records.Count} rec",
+                Content = t.IsBuiltin
+                    ? string.Format(Loc.T("domains.dnsTemplateDialog.itemBuiltin"), t.Name, t.Records.Count)
+                    : string.Format(Loc.T("domains.dnsTemplateDialog.itemUser"), t.Name, t.Records.Count),
                 Tag = t,
             });
         _cbTemplate.SelectionChanged += (_, _) => OnTemplateChanged();
@@ -85,17 +87,17 @@ public class ApplyDnsTemplateDialog : Window
         panel.Children.Add(_placeholdersPanel);
 
         // Preview
-        panel.Children.Add(Lbl("Предпросмотр (после подстановки)"));
+        panel.Children.Add(Lbl(Loc.T("domains.dnsTemplateDialog.lblPreview")));
         _previewList.ItemsSource = _preview;
         _previewList.BorderThickness = new Thickness(0);
         _previewList.Background = Brushes.Transparent;
         var gv = new GridView { AllowsColumnReorder = false };
-        gv.Columns.Add(Col("СТАТУС", 90, "StatusText", "StatusFg"));
-        gv.Columns.Add(Col("ТИП", 60, "Type"));
-        gv.Columns.Add(Col("ИМЯ", 140, "Name"));
-        gv.Columns.Add(Col("ЗНАЧЕНИЕ", 300, "Value"));
-        gv.Columns.Add(Col("TTL", 50, "TtlText"));
-        gv.Columns.Add(Col("PRIO", 50, "PriorityText"));
+        gv.Columns.Add(Col(Loc.T("domains.dns.colStatus"), 90, "StatusText", "StatusFg"));
+        gv.Columns.Add(Col(Loc.T("domains.dns.colType"), 60, "Type"));
+        gv.Columns.Add(Col(Loc.T("domains.dns.colName"), 140, "Name"));
+        gv.Columns.Add(Col(Loc.T("domains.dns.colValue"), 300, "Value"));
+        gv.Columns.Add(Col(Loc.T("domains.dns.colTtl"), 50, "TtlText"));
+        gv.Columns.Add(Col(Loc.T("domains.dns.colPrio"), 50, "PriorityText"));
         _previewList.View = gv;
         panel.Children.Add(_previewList);
 
@@ -109,13 +111,13 @@ public class ApplyDnsTemplateDialog : Window
 
         // Buttons
         var row = new DockPanel { LastChildFill = false, Margin = new Thickness(0, 14, 0, 0) };
-        var btnCancel = new Button { Content = "Отмена", Padding = new Thickness(16, 8, 16, 8), MinWidth = 100 };
+        var btnCancel = new Button { Content = Loc.T("domains.dnsTemplateDialog.btnCancel"), Padding = new Thickness(16, 8, 16, 8), MinWidth = 100 };
         btnCancel.SetResourceReference(StyleProperty, "GhostBtn");
         btnCancel.Click += (_, _) => Close();
         DockPanel.SetDock(btnCancel, Dock.Right);
         _btnApply = new Button
         {
-            Content = "▶ Применить",
+            Content = Loc.T("domains.dnsTemplateDialog.btnApply"),
             Padding = new Thickness(20, 8, 20, 8), MinWidth = 160, Margin = new Thickness(0, 0, 8, 0),
             IsEnabled = false,
         };
@@ -149,7 +151,7 @@ public class ApplyDnsTemplateDialog : Window
 
         if (keys.Count > 0)
         {
-            _placeholdersPanel.Children.Add(Lbl("Плейсхолдеры"));
+            _placeholdersPanel.Children.Add(Lbl(Loc.T("domains.dnsTemplateDialog.lblPlaceholders")));
             foreach (var key in keys)
             {
                 var grid = new Grid { Margin = new Thickness(0, 4, 0, 4) };
@@ -211,16 +213,16 @@ public class ApplyDnsTemplateDialog : Window
                 {
                     bool sameValue = string.Equals(conflict.Value?.Trim().TrimEnd('.'), value?.Trim().TrimEnd('.'),
                         StringComparison.OrdinalIgnoreCase);
-                    if (sameValue) { status = "= идентично"; fg = GrayBrush; }
-                    else { status = "⚠ конфликт"; fg = AmberBrush; conflictCount++; }
+                    if (sameValue) { status = Loc.T("domains.dnsTemplateDialog.statusIdentical"); fg = GrayBrush; }
+                    else { status = Loc.T("domains.dnsTemplateDialog.statusConflict"); fg = AmberBrush; conflictCount++; }
                 }
-                else { status = "✓ новая"; fg = GreenBrush; newCount++; }
+                else { status = Loc.T("domains.dnsTemplateDialog.statusNew"); fg = GreenBrush; newCount++; }
             }
             _preview.Add(new PreviewRow(tr.Type, name, value,
                 tr.Ttl.ToString(), tr.Priority?.ToString() ?? "",
                 status, fg));
         }
-        _summary.Text = $"Новых: {newCount}   ·   Конфликтов: {conflictCount}   ·   Ошибок: {errorCount}";
+        _summary.Text = string.Format(Loc.T("domains.dnsTemplateDialog.summary"), newCount, conflictCount, errorCount);
         _btnApply.IsEnabled = errorCount == 0 && _preview.Count > 0;
     }
 
@@ -268,15 +270,15 @@ public class ApplyDnsTemplateDialog : Window
             }
 
             MessageBox.Show(
-                $"Готово.\nСоздано/обновлено: {ok}\nПропущено (конфликт): {skipped}\nОшибок: {failed}",
-                "Применение шаблона",
+                string.Format(Loc.T("domains.dnsTemplateDialog.doneBody"), ok, skipped, failed),
+                Loc.T("domains.dnsTemplateDialog.dialogTitle"),
                 MessageBoxButton.OK, MessageBoxImage.Information);
             DialogResult = true;
             Close();
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Ошибка: " + ex.Message, "Применение шаблона",
+            MessageBox.Show(string.Format(Loc.T("domains.dnsTemplateDialog.errBody"), ex.Message), Loc.T("domains.dnsTemplateDialog.dialogTitle"),
                 MessageBoxButton.OK, MessageBoxImage.Error);
             _btnApply.IsEnabled = true;
         }

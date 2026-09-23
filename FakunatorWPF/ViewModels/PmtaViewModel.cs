@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
@@ -74,6 +75,10 @@ public class PmtaViewModel : INotifyPropertyChanged
     private int _onlinePanels;
     public int OnlinePanels { get => _onlinePanels; set => SetField(ref _onlinePanels, value); }
 
+    // Текст подзаголовка обзора — пересчитывается ТОЛЬКО из уже загруженных TotalPanels/OnlinePanels,
+    // без похода в сеть. См. также подписку на Loc.Instance.LanguageChanged в конструкторе.
+    public string OverviewSubtitleText => string.Format(Loc.T("pmta.overview.subtitleFormat"), OnlinePanels, TotalPanels);
+
     // ── Общие графики по всем панелям ────────────────────────────────
     public ObservableCollection<double> AggregateOutSeries { get; } = new();
     public ObservableCollection<double> AggregateQueueValues { get; } = new();
@@ -116,7 +121,7 @@ public class PmtaViewModel : INotifyPropertyChanged
                 Stroke = new SolidColorPaint(accent, 2.5f),
                 GeometryStroke = null, GeometryFill = null, GeometrySize = 0,
                 LineSmoothness = 0.5,
-                Name = "Отправлено (rcp/мин)",
+                Name = Loc.T("pmta.chart.aggregateSentName"),
             }
         };
         AggregateQueueSeries = new ISeries[]
@@ -130,7 +135,7 @@ public class PmtaViewModel : INotifyPropertyChanged
                 Stroke = new SolidColorPaint(amber, 2.5f),
                 GeometryStroke = null, GeometryFill = null, GeometrySize = 0,
                 LineSmoothness = 0.5,
-                Name = "Очередь (rcp)",
+                Name = Loc.T("pmta.chart.aggregateQueueName"),
             }
         };
         AggregateYAxes = new[] { new Axis { LabelsPaint = new SolidColorPaint(SKColor.Parse("8b8b95")), TextSize = 10 } };
@@ -163,6 +168,15 @@ public class PmtaViewModel : INotifyPropertyChanged
         // Форсированный первый опрос — чтобы верстка сразу заполнилась данными,
         // а не ждала 7 секунд следующего тика.
         _ = PmtaMonitorService.Instance.PollAllNowAsync();
+
+        // При смене языка НИКАКИХ повторных SSH/HTTP-запросов к PMTA-панелям —
+        // только пересчёт текстовых представлений из уже загруженного Runtime-снапшота
+        // (см. PmtaPanelVm.Refresh(), которая тоже не трогает сеть).
+        Loc.Instance.LanguageChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(OverviewSubtitleText));
+            foreach (var p in Panels) p.Refresh();
+        };
     }
 
     private void ReloadPanels()
@@ -208,6 +222,7 @@ public class PmtaViewModel : INotifyPropertyChanged
         var all = PmtaMonitorService.Instance.Panels.Values.ToList();
         TotalPanels = all.Count;
         OnlinePanels = all.Count(x => x.Online);
+        OnPropertyChanged(nameof(OverviewSubtitleText));
         TotalOutRcpLastMin = (long)Math.Round(all.Sum(x => x.DerivedOutRatePerMin));
         TotalInRcpLastMin = all.Sum(x => x.LastStatus?.Data?.Status?.Traffic?.LastMin?.In?.Rcp ?? 0);
         TotalQueueRcp = all.Sum(x => x.LastStatus?.Data?.Status?.Queue?.Smtp?.Rcp ?? 0);
@@ -251,7 +266,7 @@ public class PmtaViewModel : INotifyPropertyChanged
         var panel = _selectedPanel;
         if (panel == null)
         {
-            MessageBox.Show("Сначала выбери панель.", "PMTA",
+            MessageBox.Show(Loc.T("pmta.commandDialog.err.noPanelSelectedBody"), Loc.T("pmta.commandDialog.err.noPanelSelectedTitle"),
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
@@ -266,9 +281,8 @@ public class PmtaViewModel : INotifyPropertyChanged
         {
             var dangerList = string.Join("\n • ", dlg.Selected.Where(x => x.Dangerous).Select(x => x.Label));
             var yes = MessageBox.Show(
-                $"⚠ Среди выбранных есть необратимые команды:\n\n • {dangerList}\n\n" +
-                $"Панель: {panel.Label} ({panel.EndpointText})\nПродолжить?",
-                "PMTA · подтверждение",
+                string.Format(Loc.T("pmta.commandDialog.confirmDangerBodyFormat"), dangerList, panel.Label, panel.EndpointText),
+                Loc.T("pmta.commandDialog.confirmDangerTitle"),
                 MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (yes != MessageBoxResult.Yes) return;
         }
@@ -294,9 +308,9 @@ public class PmtaViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            report.AppendLine("Общая ошибка: " + ex.Message);
+            report.AppendLine(string.Format(Loc.T("pmta.commandDialog.genericErrorFormat"), ex.Message));
         }
-        MessageBox.Show(report.ToString(), "PMTA · результат",
+        MessageBox.Show(report.ToString(), Loc.T("pmta.commandDialog.resultTitle"),
             MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
@@ -307,8 +321,8 @@ public class PmtaViewModel : INotifyPropertyChanged
     {
         if (vm == null) return;
         var confirm = MessageBox.Show(
-            $"Удалить панель «{vm.Label}»?",
-            "PMTA", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            string.Format(Loc.T("pmta.confirm.removePanelBodyFormat"), vm.Label),
+            Loc.T("pmta.confirm.removePanelTitle"), MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (confirm != MessageBoxResult.Yes) return;
         var cfg = Config.Current;
         cfg.PmtaPanels.RemoveAll(p => p.Id == vm.Runtime.Panel.Id);
@@ -330,12 +344,23 @@ public class PmtaViewModel : INotifyPropertyChanged
     }
 }
 
+/// <summary>Language-independent категория ошибки PMTA — SSOT для группировки/фильтра.
+/// Локализованный текст достаётся отдельно (см. CategoryLabel в PmtaPanelVm) только для
+/// отображения, чтобы смена языка не ломала фильтр и не требовала повторной классификации.</summary>
+public enum PmtaErrorCategory
+{
+    Other, RateLimit, MxSkip, RecipientReject, ConnectionIssue,
+    Perm5xx, Temp4xx, Blocklist, RelayDenied, DnsError, AuthIssue,
+}
+
 /// <summary>Сгруппированная категория ошибок — «сколько раз встретилось + пример».</summary>
 public record PmtaErrorGroup(string Category, int Count, string LatestExample, string LatestTime, Geometry Icon, Brush Color);
 
 /// <summary>Строка полной таблицы «Последние ошибки»: конкретное событие + классификация
-/// (иконка/цвет/подпись) + сколько всего таких ошибок сейчас на панели (Повторы).</summary>
-public record PmtaRecentErrorRow(string Time, string Category, Geometry Icon, Brush Color, string Text, int RepeatCount);
+/// (иконка/цвет/подпись) + сколько всего таких ошибок сейчас на панели (Повторы).
+/// CategoryKind — language-independent ключ для фильтрации; Category — уже локализованная
+/// подпись для отображения.</summary>
+public record PmtaRecentErrorRow(string Time, PmtaErrorCategory CategoryKind, string Category, Geometry Icon, Brush Color, string Text, int RepeatCount);
 
 /// <summary>Обёртка runtime-панели для UI. Держит собственную LiveCharts коллекцию
 /// для realtime-графика этой конкретной панели.</summary>
@@ -348,8 +373,49 @@ public class PmtaPanelVm : INotifyPropertyChanged
     public string EndpointText => $"{(Runtime.Panel.UseHttps ? "https" : "http")}://{Runtime.Panel.Host}:{Runtime.Panel.Port}";
 
     public bool Online => Runtime.Online;
-    public string StatusText => Runtime.Online ? "онлайн" :
-        (Runtime.LastError == null ? "нет данных" : $"⚠ {Runtime.LastError}");
+    // Вычисляется на лету из Runtime.Online/Runtime.LastError (уже загруженные данные) —
+    // безопасно пересчитывать на LanguageChanged без похода в сеть/SSH.
+    public string StatusText => Runtime.Online ? Loc.T("pmta.status.online") :
+        (Runtime.LastError == null ? Loc.T("pmta.status.noData") : string.Format(Loc.T("pmta.status.errorFormat"), ShortenError(Runtime.LastError)));
+
+    /// <summary>Полный, необрезанный текст последней ошибки — для ToolTip у пилюли статуса.
+    /// StatusText показывает только короткую сводку (HTTP-код и т.п.), т.к. сырое сообщение
+    /// исключения иногда включает целиком HTML-тело ответа сервера (403-страницу и т.п.),
+    /// которое не помещается в бейдж фиксированной ширины.</summary>
+    public string StatusTextFull => Runtime.Online ? Loc.T("pmta.status.online") :
+        (Runtime.LastError == null ? Loc.T("pmta.status.noData") : string.Format(Loc.T("pmta.status.errorFormat"), Runtime.LastError));
+
+    private static string ShortenError(string raw)
+    {
+        if (raw.Contains("timed out", StringComparison.OrdinalIgnoreCase) ||
+            raw.Contains("timeout", StringComparison.OrdinalIgnoreCase))
+            return Loc.T("pmta.status.errTimeout");
+        if (raw.Contains("No connection", StringComparison.OrdinalIgnoreCase) ||
+            raw.Contains("actively refused", StringComparison.OrdinalIgnoreCase) ||
+            raw.Contains("Connection refused", StringComparison.OrdinalIgnoreCase))
+            return Loc.T("pmta.status.errConnect");
+
+        // HttpRequestException обычно даёт "...does not indicate success: 403 (...)" — вытаскиваем
+        // только код, остальное (включая возможный HTML в теле ответа) отбрасываем.
+        var m = Regex.Match(raw, @"\b([1-5]\d{2})\b");
+        if (m.Success)
+        {
+            var code = m.Groups[1].Value;
+            var label = code switch
+            {
+                "401" => Loc.T("pmta.status.err401"),
+                "403" => Loc.T("pmta.status.err403"),
+                "404" => Loc.T("pmta.status.err404"),
+                _ when code[0] is '5' => Loc.T("pmta.status.err5xx"),
+                _ => "",
+            };
+            return string.IsNullOrEmpty(label) ? $"HTTP {code}" : $"HTTP {code} — {label}";
+        }
+
+        const int maxLen = 60;
+        var oneLine = raw.Replace("\r", " ").Replace("\n", " ").Trim();
+        return oneLine.Length > maxLen ? oneLine[..maxLen] + "…" : oneLine;
+    }
 
     /// <summary>Возраст последнего опроса — чтобы визуально подтвердить что данные живые,
     /// а не «залипли» (актуально для «Сводки ошибок», которая иначе выглядит статично,
@@ -358,11 +424,11 @@ public class PmtaPanelVm : INotifyPropertyChanged
     {
         get
         {
-            if (Runtime.LastUpdated == default) return "нет данных";
+            if (Runtime.LastUpdated == default) return Loc.T("pmta.status.noData");
             var age = DateTime.UtcNow - Runtime.LastUpdated;
-            if (age < TimeSpan.FromSeconds(1)) return "обновлено только что";
-            if (age < TimeSpan.FromMinutes(1)) return $"обновлено {(int)age.TotalSeconds}с назад";
-            return $"обновлено {(int)age.TotalMinutes}мин назад";
+            if (age < TimeSpan.FromSeconds(1)) return Loc.T("pmta.lastPolled.justNow");
+            if (age < TimeSpan.FromMinutes(1)) return string.Format(Loc.T("pmta.lastPolled.secAgoFormat"), (int)age.TotalSeconds);
+            return string.Format(Loc.T("pmta.lastPolled.minAgoFormat"), (int)age.TotalMinutes);
         }
     }
     public Brush StatusColor => Runtime.Online
@@ -454,12 +520,12 @@ public class PmtaPanelVm : INotifyPropertyChanged
         get
         {
             var all = RecentErrorsRaw();
-            return all.GroupBy(e => ClassifyRich(e.Text).Label)
+            return all.GroupBy(e => Classify(e.Text).Category)
                 .Select(g =>
                 {
                     var latest = g.OrderByDescending(e => e.Time).First();
-                    var (label, icon, color) = ClassifyRich(latest.Text);
-                    return new PmtaErrorGroup(label, g.Count(), latest.Text, latest.Time, icon, color);
+                    var (category, icon, color) = Classify(latest.Text);
+                    return new PmtaErrorGroup(CategoryLabel(category), g.Count(), latest.Text, latest.Time, icon, color);
                 })
                 .OrderByDescending(g => g.Count).Take(4);
         }
@@ -474,49 +540,90 @@ public class PmtaPanelVm : INotifyPropertyChanged
 
     private static Brush Freeze(SolidColorBrush b) { b.Freeze(); return b; }
 
-    private static (string Label, Geometry Icon, Brush Color) ClassifyRich(string text)
+    // Классификация ошибок по RAW-тексту из PMTA (английские подстроки протокола/сервера —
+    // не зависят от языка UI, поэтому сравнение строк тут не антипаттерн). Категория —
+    // language-independent enum; локализованная подпись достаётся через CategoryLabel()
+    // ТОЛЬКО в момент отображения, так что смена языка не требует новой классификации.
+    private static (PmtaErrorCategory Category, Geometry Icon, Brush Color) Classify(string text)
     {
-        if (string.IsNullOrEmpty(text)) return ("Прочее", PhosphorIcons.FileText, GrayBrush);
+        if (string.IsNullOrEmpty(text)) return (PmtaErrorCategory.Other, PhosphorIcons.FileText, GrayBrush);
         var s = text.ToLowerInvariant();
-        if (s.Contains("rate limit")) return ("Rate-limit", PhosphorIcons.ArrowClockwise, AmberBrush);
-        if (s.Contains("skip of mx")) return ("MX skip", PhosphorIcons.ArrowClockwise, AmberBrush);
-        if (s.Contains("recipient errors detected")) return ("Отказ получателя", PhosphorIcons.Warning, AmberBrush);
-        if (s.Contains("connection refused") || s.Contains("timed out") || s.Contains("timeout")) return ("Проблемы соединения", PhosphorIcons.Warning, AmberBrush);
-        if (s.Contains("550") || s.Contains("554") || s.Contains("permanent")) return ("5xx (постоянный отказ)", PhosphorIcons.XCircle, RedBrush);
-        if (s.Contains("421") || s.Contains("451") || s.Contains("temporary")) return ("4xx (временный отказ)", PhosphorIcons.Warning, AmberBrush);
-        if (s.Contains("blocked") || s.Contains("blacklist") || s.Contains("blocklist") || s.Contains("spamhaus")) return ("Блок-лист", PhosphorIcons.XCircle, RedBrush);
-        if (s.Contains("relay") || s.Contains("access denied")) return ("Relay/access denied", PhosphorIcons.XCircle, RedBrush);
-        if (s.Contains("dns") || s.Contains("resolve") || s.Contains("nxdomain")) return ("DNS-ошибки", PhosphorIcons.Globe, BlueBrush);
-        if (s.Contains("auth")) return ("Auth-проблемы", PhosphorIcons.Warning, AmberBrush);
-        return ("Прочее", PhosphorIcons.FileText, GrayBrush);
+        if (s.Contains("rate limit")) return (PmtaErrorCategory.RateLimit, PhosphorIcons.ArrowClockwise, AmberBrush);
+        if (s.Contains("skip of mx")) return (PmtaErrorCategory.MxSkip, PhosphorIcons.ArrowClockwise, AmberBrush);
+        if (s.Contains("recipient errors detected")) return (PmtaErrorCategory.RecipientReject, PhosphorIcons.Warning, AmberBrush);
+        if (s.Contains("connection refused") || s.Contains("timed out") || s.Contains("timeout")) return (PmtaErrorCategory.ConnectionIssue, PhosphorIcons.Warning, AmberBrush);
+        if (s.Contains("550") || s.Contains("554") || s.Contains("permanent")) return (PmtaErrorCategory.Perm5xx, PhosphorIcons.XCircle, RedBrush);
+        if (s.Contains("421") || s.Contains("451") || s.Contains("temporary")) return (PmtaErrorCategory.Temp4xx, PhosphorIcons.Warning, AmberBrush);
+        if (s.Contains("blocked") || s.Contains("blacklist") || s.Contains("blocklist") || s.Contains("spamhaus")) return (PmtaErrorCategory.Blocklist, PhosphorIcons.XCircle, RedBrush);
+        if (s.Contains("relay") || s.Contains("access denied")) return (PmtaErrorCategory.RelayDenied, PhosphorIcons.XCircle, RedBrush);
+        if (s.Contains("dns") || s.Contains("resolve") || s.Contains("nxdomain")) return (PmtaErrorCategory.DnsError, PhosphorIcons.Globe, BlueBrush);
+        if (s.Contains("auth")) return (PmtaErrorCategory.AuthIssue, PhosphorIcons.Warning, AmberBrush);
+        return (PmtaErrorCategory.Other, PhosphorIcons.FileText, GrayBrush);
     }
+
+    private static string CategoryLabel(PmtaErrorCategory c) => Loc.T(c switch
+    {
+        PmtaErrorCategory.RateLimit => "pmta.errCat.rateLimit",
+        PmtaErrorCategory.MxSkip => "pmta.errCat.mxSkip",
+        PmtaErrorCategory.RecipientReject => "pmta.errCat.recipientReject",
+        PmtaErrorCategory.ConnectionIssue => "pmta.errCat.connectionIssue",
+        PmtaErrorCategory.Perm5xx => "pmta.errCat.perm5xx",
+        PmtaErrorCategory.Temp4xx => "pmta.errCat.temp4xx",
+        PmtaErrorCategory.Blocklist => "pmta.errCat.blocklist",
+        PmtaErrorCategory.RelayDenied => "pmta.errCat.relayDenied",
+        PmtaErrorCategory.DnsError => "pmta.errCat.dnsError",
+        PmtaErrorCategory.AuthIssue => "pmta.errCat.authIssue",
+        _ => "pmta.errCat.other",
+    });
 
     public IEnumerable<PmtaRecentErrorRow> RecentErrorRows
     {
         get
         {
             var full = RecentErrorsRaw();
-            var counts = full.GroupBy(e => ClassifyRich(e.Text).Label).ToDictionary(g => g.Key, g => g.Count());
+            var counts = full.GroupBy(e => Classify(e.Text).Category).ToDictionary(g => g.Key, g => g.Count());
             return full.OrderByDescending(e => e.Time).Take(20)
                 .Select(e =>
                 {
-                    var (label, icon, color) = ClassifyRich(e.Text);
-                    return new PmtaRecentErrorRow(e.Time, label, icon, color, e.Text,
-                        counts.TryGetValue(label, out var c) ? c : 1);
+                    var (category, icon, color) = Classify(e.Text);
+                    return new PmtaRecentErrorRow(e.Time, category, CategoryLabel(category), icon, color, e.Text,
+                        counts.TryGetValue(category, out var c) ? c : 1);
                 });
         }
     }
 
-    private string _errorTypeFilter = "Все типы";
+    // SSOT фильтра — language-independent (null = «все типы»), а не текст текущего языка.
+    // Раньше сравнение шло по локализованной строке "Все типы"/категории — это тот самый
+    // антипаттерн (см. DomainScannerViewModel/DomainsManagerViewModel), из-за которого смена
+    // языка ломала выбранный фильтр. ErrorTypeFilter — обёртка для UI-биндинга ComboBox.
+    private PmtaErrorCategory? _errorCategoryFilter;
     public string ErrorTypeFilter
     {
-        get => _errorTypeFilter;
-        set { _errorTypeFilter = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ErrorTypeFilter))); PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FilteredRecentErrorRows))); }
+        get => _errorCategoryFilter == null ? Loc.T("pmta.errFilter.allTypes") : CategoryLabel(_errorCategoryFilter.Value);
+        set
+        {
+            var allLabel = Loc.T("pmta.errFilter.allTypes");
+            if (string.IsNullOrEmpty(value) || value == allLabel)
+            {
+                _errorCategoryFilter = null;
+            }
+            else
+            {
+                var match = Enum.GetValues<PmtaErrorCategory>()
+                    .Where(c => CategoryLabel(c) == value)
+                    .Select(c => (PmtaErrorCategory?)c)
+                    .FirstOrDefault();
+                _errorCategoryFilter = match;
+            }
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ErrorTypeFilter)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FilteredRecentErrorRows)));
+        }
     }
     public IEnumerable<string> ErrorTypeFilterOptions =>
-        new[] { "Все типы" }.Concat(RecentErrorRows.Select(r => r.Category).Distinct().OrderBy(x => x));
+        new[] { Loc.T("pmta.errFilter.allTypes") }.Concat(
+            RecentErrorRows.Select(r => r.CategoryKind).Distinct().Select(CategoryLabel).OrderBy(x => x));
     public IEnumerable<PmtaRecentErrorRow> FilteredRecentErrorRows =>
-        ErrorTypeFilter == "Все типы" ? RecentErrorRows : RecentErrorRows.Where(r => r.Category == ErrorTypeFilter);
+        _errorCategoryFilter == null ? RecentErrorRows : RecentErrorRows.Where(r => r.CategoryKind == _errorCategoryFilter.Value);
     public bool HasRecentErrors => FilteredRecentErrorRows.Any();
     public bool NoRecentErrors => !HasRecentErrors;
 
@@ -543,7 +650,7 @@ public class PmtaPanelVm : INotifyPropertyChanged
                 Stroke = new SolidColorPaint(green, 2.5f),
                 GeometryStroke = null, GeometryFill = null, GeometrySize = 0,
                 LineSmoothness = 0.5,
-                Name = "rcp/мин",
+                Name = Loc.T("pmta.chart.panelSentName"),
             }
         };
         QueueSeriesChart = new ISeries[]
@@ -556,10 +663,15 @@ public class PmtaPanelVm : INotifyPropertyChanged
                 Stroke = new SolidColorPaint(amber, 2.5f),
                 GeometryStroke = null, GeometryFill = null, GeometrySize = 0,
                 LineSmoothness = 0.5,
-                Name = "очередь",
+                Name = Loc.T("pmta.chart.panelQueueName"),
             }
         };
         YAxes = new[] { new Axis { LabelsPaint = new SolidColorPaint(SKColor.Parse("8b8b95")), TextSize = 10 } };
+
+        // Смена языка НЕ дёргает сеть/SSH — только пересчитывает текстовые представления
+        // (StatusText/LastPolledText/ErrorSummary/RecentErrorRows/...) из уже закешированного
+        // Runtime-снапшота этой панели. Пустая строка в PropertyChanged = "обнови все биндинги".
+        Loc.Instance.LanguageChanged += (_, _) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(""));
     }
 
     /// <summary>Ёмкость графиков — ~1 час при опросе раз в 7с (PmtaMonitorService.PollInterval).

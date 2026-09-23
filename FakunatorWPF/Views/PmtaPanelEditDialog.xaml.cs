@@ -2,6 +2,7 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using Fakunator.Core;
 using Fakunator.Core.Pmta;
 
 namespace Fakunator.Views;
@@ -17,7 +18,7 @@ public partial class PmtaPanelEditDialog : Window
         _existing = existing;
         if (existing != null)
         {
-            TxtHeader.Text = "Редактировать PMTA-панель";
+            TxtHeader.Text = Loc.T("pmta.panelEditDialog.headingEdit");
             TbLabel.Text = existing.Label;
             TbHost.Text = existing.Host;
             TbPort.Text = existing.Port.ToString();
@@ -36,13 +37,13 @@ public partial class PmtaPanelEditDialog : Window
         var host = TbHost.Text?.Trim() ?? "";
         if (string.IsNullOrWhiteSpace(host))
         {
-            TxtTest.Text = "⚠ Хост обязателен.";
+            TxtTest.Text = Loc.T("pmta.panelEditDialog.err.hostRequired");
             TxtTest.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
             return null;
         }
         if (!int.TryParse(TbPort.Text, out var port) || port <= 0 || port > 65535)
         {
-            TxtTest.Text = "⚠ Порт должен быть 1..65535.";
+            TxtTest.Text = Loc.T("pmta.panelEditDialog.err.portRange");
             TxtTest.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
             return null;
         }
@@ -62,7 +63,7 @@ public partial class PmtaPanelEditDialog : Window
     {
         var p = Build();
         if (p == null) return;
-        TxtTest.Text = "Подключаюсь…";
+        TxtTest.Text = Loc.T("pmta.panelEditDialog.testConnecting");
         TxtTest.Foreground = (Brush)FindResource("Fg4Brush");
         try
         {
@@ -70,13 +71,13 @@ public partial class PmtaPanelEditDialog : Window
             var st = await client.GetStatusAsync();
             var info = st?.Data?.Mta?.Product;
             var traf = st?.Data?.Status?.Traffic?.LastMin?.Out?.Rcp ?? 0;
-            TxtTest.Text = $"✅ OK · {info?.Name ?? "?"} {info?.Version ?? ""}\n" +
-                           $"host: {st?.Data?.Mta?.FullHostName}  ·  сейчас {traf} rcp/мин";
+            TxtTest.Text = string.Format(Loc.T("pmta.panelEditDialog.testOkFormat"),
+                info?.Name ?? "?", info?.Version ?? "", st?.Data?.Mta?.FullHostName, traf);
             TxtTest.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
         }
         catch (Exception ex)
         {
-            TxtTest.Text = "❌ Ошибка: " + ex.Message;
+            TxtTest.Text = string.Format(Loc.T("pmta.panelEditDialog.testErrorFormat"), ex.Message);
             TxtTest.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
         }
     }

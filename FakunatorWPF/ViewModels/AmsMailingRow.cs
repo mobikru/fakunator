@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
+using Fakunator.Core;
 using Fakunator.Core.AmsApi;
 
 namespace Fakunator.ViewModels;
@@ -24,20 +25,21 @@ public class AmsMailingRow : INotifyPropertyChanged
     public string Name => Model.Name;
 
     // ── Тип рассылки: mailing / transactional / validation ───────────
+    // Ключ, не текст — иначе сравнение/отображение ломается при смене языка (ru/en).
     public string TypeText => Model.Type switch
     {
-        "mailing" => "рассылка",
-        "transactional" => "транзакц.",
-        "validation" => "валидация",
+        "mailing" => Loc.T("ams.type.mailing"),
+        "transactional" => Loc.T("ams.type.transactional"),
+        "validation" => Loc.T("ams.type.validation"),
         _ => Model.Type,
     };
 
     // ── Состояние (idle / working / stopping) ────────────────────────
     public string StateText => Model.State switch
     {
-        "idle" => "остановлена",
-        "working" => "работает",
-        "stopping" => "останавливается…",
+        "idle" => Loc.T("ams.state.idle"),
+        "working" => Loc.T("ams.state.working"),
+        "stopping" => Loc.T("ams.state.stopping"),
         _ => Model.State,
     };
 
@@ -116,8 +118,8 @@ public class AmsMailingRow : INotifyPropertyChanged
         {
             if (!DateTime.TryParse(Model.LastStartDate, out var dt)) return "—";
             var delta = DateTime.Now - dt;
-            if (delta.TotalHours < 24) return "сегодня, " + dt.ToString("HH:mm");
-            if (delta.TotalDays < 2) return "вчера, " + dt.ToString("HH:mm");
+            if (delta.TotalHours < 24) return string.Format(Loc.T("ams.row.todayFormat"), dt.ToString("HH:mm"));
+            if (delta.TotalDays < 2) return string.Format(Loc.T("ams.row.yesterdayFormat"), dt.ToString("HH:mm"));
             return dt.ToString("dd.MM HH:mm");
         }
     }
@@ -179,6 +181,11 @@ public class AmsMailingRow : INotifyPropertyChanged
         Model.State = state;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
     }
+
+    /// <summary>Пере-notify всех свойств без смены модели — вызывается при смене языка (ru/en),
+    /// чтобы TypeText/StateText/UpdatedText (локализуются через Loc.T) переоценились в UI.</summary>
+    public void RefreshLocalization() =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
 
     public event PropertyChangedEventHandler? PropertyChanged;
 }

@@ -9,6 +9,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Threading;
+using Fakunator.Core;
 using Fakunator.Core.Server;
 
 namespace Fakunator.ViewModels;
@@ -32,8 +33,8 @@ public sealed class ServerListViewModel : INotifyPropertyChanged
 
     // Legacy — оставлено для правого блока (заголовок в info-panel и т.п.).
     public string Summary => Rows.Count == 0
-        ? "нет серверов"
-        : $"{Rows.Count} · {Rows.Count(r => r.IsOnline)} online";
+        ? Loc.T("servers.status.summaryEmpty")
+        : string.Format(Loc.T("servers.status.summaryFormat"), Rows.Count, Rows.Count(r => r.IsOnline));
 
     // ─── Счётчики для фильтр-пилюль ──────────────────────────
     public int CountAll      => Rows.Count;
@@ -41,14 +42,14 @@ public sealed class ServerListViewModel : INotifyPropertyChanged
     public int CountProblems => Rows.Count(r => r.HealthState == HealthState.Degraded);
     public int CountOffline  => Rows.Count(r => r.HealthState == HealthState.Offline);
 
-    public string TotalText => $"{CountAll} всего";
+    public string TotalText => string.Format(Loc.T("servers.panel.totalFormat"), CountAll);
     public string ShownText
     {
         get
         {
             int shown = 0;
             foreach (var _ in RowsView) shown++;
-            return $"Показано {shown} из {CountAll}";
+            return string.Format(Loc.T("servers.panel.shownFormat"), shown, CountAll);
         }
     }
 
@@ -129,6 +130,15 @@ public sealed class ServerListViewModel : INotifyPropertyChanged
         var initial = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         initial.Tick += (_, _) => { initial.Stop(); _ = PollAllAsync(); };
         initial.Start();
+
+        // При смене языка НИКАКИХ повторных SSH-опросов серверов — только пересчёт
+        // текстовых представлений из уже загруженного Health-снапшота (см. RaiseCountersAndShown()
+        // и ServerRowVm.RefreshLocalizedText(), которые тоже не трогают сеть).
+        Loc.Instance.LanguageChanged += (_, _) =>
+        {
+            RaiseCountersAndShown();
+            foreach (var row in Rows) row.RefreshLocalizedText();
+        };
     }
 
     private bool RowFilter(object obj)
@@ -273,23 +283,25 @@ public sealed class ServerRowVm : INotifyPropertyChanged
         }
     }
 
-    /// <summary>Короткий человечный статус — "Онлайн" / "Проблемы" / "Офлайн" / "проверяется…"</summary>
+    /// <summary>Короткий человечный статус — вычисляется из language-independent HealthState,
+    /// сам текст берётся из Loc только в момент рендера (безопасно пересчитывать на LanguageChanged).</summary>
     public string StatusShort => HealthState switch
     {
-        HealthState.Online   => "Онлайн",
-        HealthState.Degraded => "Проблемы",
-        HealthState.Offline  => "Офлайн",
-        _                    => "проверяется…"
+        HealthState.Online   => Loc.T("servers.status.online"),
+        HealthState.Degraded => Loc.T("servers.status.degraded"),
+        HealthState.Offline  => Loc.T("servers.status.offline"),
+        _                    => Loc.T("servers.status.checking")
     };
 
     public string StatusText
     {
         get
         {
-            if (Health == null) return "проверяется…";
-            if (!Health.IsReachable) return "offline: " + (string.IsNullOrEmpty(Health.ErrorMessage) ? "SSH недоступен" : Health.ErrorMessage);
+            if (Health == null) return Loc.T("servers.status.checking");
+            if (!Health.IsReachable) return string.Format(Loc.T("servers.status.offlineFormat"),
+                string.IsNullOrEmpty(Health.ErrorMessage) ? Loc.T("servers.status.sshUnavailable") : Health.ErrorMessage);
             var failed = Health.Services.Count(kv => kv.Value != "active");
-            return failed == 0 ? "все сервисы работают" : $"{failed} сервисов не активны";
+            return failed == 0 ? Loc.T("servers.status.allServicesOk") : string.Format(Loc.T("servers.status.servicesDownFormat"), failed);
         }
     }
 
@@ -366,9 +378,9 @@ public sealed class ServerRowVm : INotifyPropertyChanged
         return MakeBrush(color);
     }
     private string SvcText(string name)
-        => Health == null ? "проверяется"
+        => Health == null ? Loc.T("servers.status.svcChecking")
          : Health.Services.TryGetValue(name, out var v) ? v
-         : "не установлен";
+         : Loc.T("servers.status.svcNotInstalled");
 
     public ServerRowVm(ServerConfig config, ServerListViewModel? owner = null)
     {
@@ -381,6 +393,10 @@ public sealed class ServerRowVm : INotifyPropertyChanged
         Health = h;
         _owner?.RaiseCountersAndShown();
     }
+
+    /// <summary>Пересчитывает все локализованные текстовые представления из уже закешированного
+    /// Health — вызывается из ServerListViewModel на Loc.Instance.LanguageChanged, без похода в сеть.</summary>
+    public void RefreshLocalizedText() => NotifyAll();
 
     private void NotifyOne(string p)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));

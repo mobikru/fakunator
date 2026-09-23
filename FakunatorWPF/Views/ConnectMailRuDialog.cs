@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using Fakunator.Core;
 using Fakunator.Core.Postmaster;
 
 namespace Fakunator.Views;
@@ -49,7 +50,7 @@ public class ConnectMailRuDialog : Window
 
     public ConnectMailRuDialog()
     {
-        Title = "Подключить mail.ru";
+        Title = Loc.T("domains.connectMailRuDialog.title");
         Width = 580;
         SizeToContent = SizeToContent.Height;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -61,7 +62,7 @@ public class ConnectMailRuDialog : Window
 
         var title = new TextBlock
         {
-            Text = "Подключение mail.ru — постмастер",
+            Text = Loc.T("domains.connectMailRuDialog.heading"),
             FontSize = 15, FontWeight = FontWeights.SemiBold,
             Margin = new Thickness(0, 0, 0, 4),
         };
@@ -70,8 +71,7 @@ public class ConnectMailRuDialog : Window
 
         var hint = new TextBlock
         {
-            Text = "Логин + пароль нужны для полностью автоматической верификации доменов " +
-                   "(публичный OAuth API постмастера этого не даёт). Хранятся локально в config.json.",
+            Text = Loc.T("domains.connectMailRuDialog.hint"),
             FontSize = 10.5, TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, 0, 0, 14),
         };
@@ -79,20 +79,19 @@ public class ConnectMailRuDialog : Window
         panel.Children.Add(hint);
 
         // ── Шаг 1: логин + пароль ─────────────────────────────────
-        panel.Children.Add(Section("1. Учётка mail.ru"));
-        panel.Children.Add(Label("Email"));
+        panel.Children.Add(Section(Loc.T("domains.connectMailRuDialog.section1")));
+        panel.Children.Add(Label(Loc.T("domains.connectMailRuDialog.lblEmail")));
         panel.Children.Add(StyleInput(_tbUser));
         panel.Children.Add(Spacer(8));
-        panel.Children.Add(Label("Пароль"));
+        panel.Children.Add(Label(Loc.T("domains.connectMailRuDialog.lblPassword")));
         panel.Children.Add(StylePasswordInput(_pbPass));
         panel.Children.Add(Spacer(14));
 
         // ── Шаг 2: refresh_token (опционально) ────────────────────
-        panel.Children.Add(Section("2. refresh_token для API-статистики (опционально)"));
+        panel.Children.Add(Section(Loc.T("domains.connectMailRuDialog.section2")));
         var apiHint = new TextBlock
         {
-            Text = "Без этого блока графики/цифры постмастера показываться не будут, но добавление и " +
-                   "верификация доменов — работают. Получить: нажми кнопку ниже, залогинься, вставь JSON.",
+            Text = Loc.T("domains.connectMailRuDialog.apiHint"),
             FontSize = 10, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 6),
         };
         apiHint.SetResourceReference(TextBlock.ForegroundProperty, "Fg4Brush");
@@ -100,7 +99,7 @@ public class ConnectMailRuDialog : Window
 
         var btnOpen = new Button
         {
-            Content = "🌐  Получить refresh_token в браузере",
+            Content = Loc.T("domains.connectMailRuDialog.btnOpenBrowser"),
             Padding = new Thickness(14, 6, 14, 6),
             HorizontalAlignment = HorizontalAlignment.Left,
             Cursor = System.Windows.Input.Cursors.Hand,
@@ -110,11 +109,11 @@ public class ConnectMailRuDialog : Window
         btnOpen.Click += (_, _) =>
         {
             try { Process.Start(new ProcessStartInfo(OAuthUrl) { UseShellExecute = true }); }
-            catch (Exception ex) { MessageBox.Show(ex.Message, "Ошибка"); }
+            catch (Exception ex) { MessageBox.Show(ex.Message, Loc.T("domains.connectMailRuDialog.errOpenBrowserTitle")); }
         };
         panel.Children.Add(btnOpen);
 
-        panel.Children.Add(Label("refresh_token или JSON (можно пропустить)"));
+        panel.Children.Add(Label(Loc.T("domains.connectMailRuDialog.lblToken")));
         panel.Children.Add(StyleBigInput(_tbToken));
 
         _statusLbl.SetResourceReference(TextBlock.ForegroundProperty, "Fg3Brush");
@@ -122,10 +121,10 @@ public class ConnectMailRuDialog : Window
         panel.Children.Add(Spacer(14));
 
         var row = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
-        var cancel = new Button { Content = "Отмена", Padding = new Thickness(16, 8, 16, 8), MinWidth = 100 };
+        var cancel = new Button { Content = Loc.T("domains.connectMailRuDialog.btnCancel"), Padding = new Thickness(16, 8, 16, 8), MinWidth = 100 };
         cancel.SetResourceReference(StyleProperty, "GhostBtn");
         cancel.Click += (_, _) => { DialogResult = false; Close(); };
-        _btnOk = new Button { Content = "Проверить и сохранить", Padding = new Thickness(16, 8, 16, 8), MinWidth = 200, Margin = new Thickness(8, 0, 0, 0) };
+        _btnOk = new Button { Content = Loc.T("domains.connectMailRuDialog.btnSave"), Padding = new Thickness(16, 8, 16, 8), MinWidth = 200, Margin = new Thickness(8, 0, 0, 0) };
         _btnOk.SetResourceReference(StyleProperty, "PrimaryBtn");
         _btnOk.Click += async (_, _) => await SaveAsync();
         row.Children.Add(cancel);
@@ -142,12 +141,12 @@ public class ConnectMailRuDialog : Window
         var rawToken = _tbToken.Text.Trim();
         if (string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass))
         {
-            _statusLbl.Text = "Введи email и пароль.";
+            _statusLbl.Text = Loc.T("domains.connectMailRuDialog.errEmptyFields");
             return;
         }
 
         _btnOk.IsEnabled = false;
-        _statusLbl.Text = "Проверяю логин mail.ru…";
+        _statusLbl.Text = Loc.T("domains.connectMailRuDialog.checkingLogin");
         try
         {
             using var session = new MailRuWebSession(user);
@@ -155,7 +154,7 @@ public class ConnectMailRuDialog : Window
         }
         catch (Exception ex)
         {
-            _statusLbl.Text = $"Логин не прошёл: {ex.Message}";
+            _statusLbl.Text = string.Format(Loc.T("domains.connectMailRuDialog.loginFailed"), ex.Message);
             _btnOk.IsEnabled = true;
             return;
         }
@@ -166,7 +165,7 @@ public class ConnectMailRuDialog : Window
             refresh = ExtractRefreshToken(rawToken);
             if (!string.IsNullOrEmpty(refresh))
             {
-                _statusLbl.Text = "Проверяю refresh_token…";
+                _statusLbl.Text = Loc.T("domains.connectMailRuDialog.checkingToken");
                 try
                 {
                     using var oauth = new MailRuOAuthClient();
@@ -176,7 +175,7 @@ public class ConnectMailRuDialog : Window
                 }
                 catch (Exception ex)
                 {
-                    _statusLbl.Text = $"refresh_token невалиден: {ex.Message}. Сохранить только с паролем?";
+                    _statusLbl.Text = string.Format(Loc.T("domains.connectMailRuDialog.tokenInvalid"), ex.Message);
                     // не блокируем — юзер может пересохранить с рабочим токеном позже
                     refresh = "";
                 }

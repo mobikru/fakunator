@@ -1,0 +1,15 @@
+<UserControl x:Class="Fakunator.Controls.FlagIcon"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Векторные флаги из circle-flags (HatScripts, MIT) — все нарисованы в одном
+         512x512 круге, поэтому у любых двух флагов гарантированно один и тот же
+         размер и чёткость на любом масштабе (никаких PNG с разным исходным
+         соотношением сторон, которые надо было бы то тянуть, то обрезать). -->
+    <Viewbox>
+        <Canvas x:Name="RootCanvas" Width="512" Height="512">
+            <Canvas.Clip>
+                <EllipseGeometry Center="256,256" RadiusX="256" RadiusY="256"/>
+            </Canvas.Clip>
+        </Canvas>
+    </Viewbox>
+</UserControl>

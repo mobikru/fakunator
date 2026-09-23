@@ -1,6 +1,7 @@
 <UserControl x:Class="Fakunator.Views.SidebarDomainsManagerView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:core="clr-namespace:Fakunator.Core">
 
     <DockPanel Margin="16,16,16,20" LastChildFill="True">
         <StackPanel DockPanel.Dock="Top">
@@ -13,9 +14,9 @@
                                Foreground="{DynamicResource Accent2Brush}"
                                VerticalAlignment="Center" Margin="0,0,10,0"/>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Домены" FontSize="13" FontWeight="SemiBold"
+                        <TextBlock Text="{core:Tr domains.sidebar.title}" FontSize="13" FontWeight="SemiBold"
                                    Foreground="{DynamicResource Fg1Brush}"/>
-                        <TextBlock Text="Управление через ISP панели"
+                        <TextBlock Text="{core:Tr domains.sidebar.subtitle}"
                                    FontSize="10.5"
                                    Foreground="{DynamicResource Fg3Brush}"
                                    Margin="0,2,0,0"/>
@@ -23,12 +24,12 @@
                 </DockPanel>
             </Border>
 
-            <TextBlock Text="АККАУНТЫ ПАНЕЛЕЙ"
+            <TextBlock Text="{core:Tr domains.sidebar.accountsHeader}"
                        FontSize="9.5" FontWeight="SemiBold"
                        Foreground="{DynamicResource Fg3Brush}"
                        Margin="2,0,0,10"/>
 
-            <Button Content="+  Добавить аккаунт"
+            <Button Content="{core:Tr domains.sidebar.btnAddAccount}"
                     Command="{Binding AddAccountCommand}"
                     Style="{StaticResource PrimaryBtn}"
                     HorizontalAlignment="Stretch"
@@ -45,18 +46,18 @@
             </Border>
 
             <!-- ── Mail.ru Postmaster (ниже ISP-аккаунтов) ─────────── -->
-            <TextBlock Text="MAIL.RU POSTMASTER"
+            <TextBlock Text="{core:Tr domains.sidebar.postmasterHeader}"
                        FontSize="9.5" FontWeight="SemiBold"
                        Foreground="{DynamicResource Fg3Brush}"
                        Margin="2,4,0,8"/>
 
-            <Button Content="✉  Подключить mail.ru"
+            <Button Content="{core:Tr domains.sidebar.btnConnectMailRu}"
                     Command="{Binding ConnectMailRuCommand}"
                     Style="{StaticResource GhostBtn}"
                     HorizontalAlignment="Stretch"
                     Padding="0,8" Margin="0,0,0,4"/>
 
-            <Button Content="📊  Домены и статистика"
+            <Button Content="{core:Tr domains.sidebar.btnOpenPostmaster}"
                     Command="{Binding OpenPostmasterCommand}"
                     Style="{StaticResource PrimaryBtn}"
                     HorizontalAlignment="Stretch"
@@ -75,7 +76,7 @@
                                         Background="Transparent" BorderThickness="0"
                                         Foreground="{DynamicResource Fg4Brush}"
                                         FontSize="16" Padding="4,0"
-                                        Cursor="Hand" ToolTip="Отключить"/>
+                                        Cursor="Hand" ToolTip="{core:Tr domains.sidebar.tooltipDisconnectMailRu}"/>
                                 <TextBlock Text="{Binding Username}"
                                            FontSize="11.5"
                                            Foreground="{DynamicResource Fg1Brush}"
@@ -135,7 +136,7 @@
                                 Background="Transparent" BorderThickness="0"
                                 Foreground="{DynamicResource Fg4Brush}"
                                 FontSize="16" Padding="6,0"
-                                Cursor="Hand" ToolTip="Удалить аккаунт"/>
+                                Cursor="Hand" ToolTip="{core:Tr domains.sidebar.tooltipRemoveAccount}"/>
                         <StackPanel>
                             <TextBlock Text="{Binding DisplayName}"
                                        FontSize="12" FontWeight="SemiBold"

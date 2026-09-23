@@ -2,22 +2,30 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
+using Fakunator.Core;
 using Fakunator.ViewModels;
 
 namespace Fakunator.Views;
 
 public partial class CleanupLoadedView : UserControl
 {
+    private CleanupViewModel? _vm;
+
     public CleanupLoadedView()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        Loc.Instance.LanguageChanged += (_, _) =>
+        {
+            if (_vm != null) UpdateFileInfo(_vm);
+        };
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
         if (e.NewValue is CleanupViewModel vm)
         {
+            _vm = vm;
             vm.PropertyChanged += OnViewModelPropertyChanged;
             UpdateFileInfo(vm);
             UpdatePreview(vm);
@@ -49,7 +57,7 @@ public partial class CleanupLoadedView : UserControl
     private void UpdateFileInfo(CleanupViewModel vm)
     {
         TxtFileName.Text = vm.FileName ?? "???";
-        TxtFileMeta.Text = $"{vm.TotalLines:N0} строк  ·  {FormatSize(vm.FileSize)}  ·  UTF-8";
+        TxtFileMeta.Text = string.Format(Loc.T("cleanup.loaded.meta"), vm.TotalLines, FormatSize(vm.FileSize));
     }
 
     private void UpdatePreview(CleanupViewModel vm)

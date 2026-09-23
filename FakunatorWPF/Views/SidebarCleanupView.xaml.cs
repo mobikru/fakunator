@@ -27,6 +27,13 @@ public partial class SidebarCleanupView : UserControl
 
         // Restore Spamhaus DBL toggle from config
         SpamhausToggle.IsOn = Config.Current.UseSpamhausDbl;
+
+        Loc.Instance.LanguageChanged += (_, _) =>
+        {
+            for (int i = 0; i < Tokens.CategoryOrder.Length; i++)
+                _categoryChecks[i].Content = Loc.T($"cat.{Tokens.CategoryOrder[i]}");
+            UpdateCategoryButtonText();
+        };
     }
 
     private void BuildCategoryPopup()
@@ -34,7 +41,7 @@ public partial class SidebarCleanupView : UserControl
         for (int i = 0; i < Tokens.CategoryOrder.Length; i++)
         {
             var key = Tokens.CategoryOrder[i];
-            var label = Tokens.CategoryLabels[key];
+            var label = Loc.T($"cat.{key}");
             var color = Tokens.CategoryColors[key];
 
             var row = new DockPanel { Margin = new Thickness(4, 3, 4, 3) };
@@ -140,8 +147,9 @@ public partial class SidebarCleanupView : UserControl
         var checkedCount = _categoryChecks.Count(cb => cb.IsChecked == true);
         var total = _categoryChecks.Length;
 
-        var prefix = checkedCount == total ? "Все категории" : $"{checkedCount} категорий";
-        TxtCategoryBtn.Text = $"{prefix} · {checkedCount} / {total} ▾";
+        TxtCategoryBtn.Text = checkedCount == total
+            ? string.Format(Loc.T("cleanup.sidebar.allCategories"), checkedCount, total)
+            : string.Format(Loc.T("cleanup.sidebar.someCategories"), checkedCount, total);
     }
 
     private void OnOpenBlacklistFile(object sender, MouseButtonEventArgs e)
@@ -169,14 +177,14 @@ public partial class SidebarCleanupView : UserControl
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Не удалось открыть файл:\n{ex.Message}",
-                        "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show(string.Format(Loc.T("cleanup.sidebar.fileOpenErrBody"), ex.Message),
+                        Loc.T("cleanup.sidebar.fileOpenErrTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             else
             {
-                MessageBox.Show($"Файл не найден:\n{path}",
-                    "Чёрные списки", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(string.Format(Loc.T("cleanup.sidebar.fileNotFoundBody"), path),
+                    Loc.T("cleanup.sidebar.fileNotFoundTitle"), MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
     }
@@ -190,7 +198,7 @@ public partial class SidebarCleanupView : UserControl
 
         BtnRefreshGitHub.IsEnabled = false;
         TxtUpdateProgress.Visibility = Visibility.Visible;
-        TxtUpdateProgress.Text = "Подключение к GitHub...";
+        TxtUpdateProgress.Text = Loc.T("cleanup.sidebar.githubConnecting");
 
         var dataDir = Blocklists.FindDataDir();
         var progress = new Progress<string>(msg =>
@@ -206,11 +214,11 @@ public partial class SidebarCleanupView : UserControl
             {
                 // Показываем краткую ошибку в статус-строке, полный текст — в MessageBox.
                 var shortErr = error.Length > 80 ? error.Substring(0, 77) + "..." : error;
-                TxtUpdateProgress.Text = $"Обновлено: {updated}, ошибка: {shortErr}";
+                TxtUpdateProgress.Text = string.Format(Loc.T("cleanup.sidebar.githubUpdatedErr"), updated, shortErr);
                 TxtUpdateProgress.SetResourceReference(TextBlock.ForegroundProperty, "DangerBrush");
                 System.Windows.MessageBox.Show(
-                    $"При обновлении списков произошла ошибка:\n\n{error}",
-                    "Ошибка обновления", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                    string.Format(Loc.T("cleanup.sidebar.githubUpdateErrBody"), error),
+                    Loc.T("cleanup.sidebar.githubUpdateErrTitle"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
             }
             else if (updated > 0)
             {
@@ -223,11 +231,11 @@ public partial class SidebarCleanupView : UserControl
         }
         catch (OperationCanceledException)
         {
-            TxtUpdateProgress.Text = "Обновление отменено";
+            TxtUpdateProgress.Text = Loc.T("cleanup.sidebar.githubCancelled");
         }
         catch (Exception ex)
         {
-            TxtUpdateProgress.Text = $"Ошибка: {ex.Message}";
+            TxtUpdateProgress.Text = string.Format(Loc.T("cleanup.sidebar.githubError"), ex.Message);
             TxtUpdateProgress.SetResourceReference(TextBlock.ForegroundProperty, "DangerBrush");
         }
         finally

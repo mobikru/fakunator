@@ -283,8 +283,8 @@ public class AnalyzeViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             System.Windows.MessageBox.Show(
-                $"Ошибка при загрузке файла:\n{ex.Message}",
-                "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                string.Format(Loc.T("analyze.err.loadFileBody"), ex.Message),
+                Loc.T("analyze.err.loadFileTitle"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
         }
     }
 

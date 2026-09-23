@@ -1,6 +1,7 @@
 <UserControl x:Class="Fakunator.Views.SmtpIdleView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:core="clr-namespace:Fakunator.Core">
 
     <Grid Margin="20,14">
         <Grid.RowDefinitions>
@@ -21,21 +22,21 @@
                     <DockPanel>
                         <!-- Header -->
                         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
-                            <TextBlock Text="EMAIL-АДРЕСА" FontSize="10" FontWeight="SemiBold"
+                            <TextBlock Text="{core:Tr smtp.idle.emailsHeader}" FontSize="10" FontWeight="SemiBold"
                                        Foreground="{DynamicResource Fg3Brush}"
                                        VerticalAlignment="Center"/>
                             <TextBlock x:Name="TxtEmailCount" DockPanel.Dock="Right"
-                                       Text="0 строк" FontSize="11"
+                                       Text="0" FontSize="11"
                                        Foreground="{DynamicResource Fg4Brush}"
                                        HorizontalAlignment="Right" VerticalAlignment="Center"/>
                         </DockPanel>
 
                         <!-- Bottom buttons -->
                         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,10,0,0">
-                            <Button Content="Загрузить .txt..." Style="{StaticResource GhostBtn}"
+                            <Button Content="{core:Tr smtp.idle.btnLoadTxt}" Style="{StaticResource GhostBtn}"
                                     Padding="12,6" Margin="0,0,6,0"
                                     Click="OnLoadEmailsFile"/>
-                            <Button Content="Из последней чистки" Style="{StaticResource GhostBtn}"
+                            <Button Content="{core:Tr smtp.idle.btnLoadFromCleanup}" Style="{StaticResource GhostBtn}"
                                     Padding="12,6"
                                     Click="OnLoadFromCleanup"/>
                         </StackPanel>
@@ -63,26 +64,26 @@
                         <!-- Header -->
                         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="ПРОКСИ" FontSize="10" FontWeight="SemiBold"
+                                <TextBlock Text="{core:Tr smtp.idle.proxiesHeader}" FontSize="10" FontWeight="SemiBold"
                                            Foreground="{DynamicResource Fg3Brush}"
                                            VerticalAlignment="Center"/>
-                                <TextBlock Text=" · HOST:PORT:USER:PASS" FontSize="10"
+                                <TextBlock Text="{core:Tr smtp.idle.proxiesHeaderHint}" FontSize="10"
                                            Foreground="{DynamicResource Fg4Brush}"
                                            VerticalAlignment="Center"/>
                             </StackPanel>
                             <TextBlock x:Name="TxtProxyCount" DockPanel.Dock="Right"
-                                       Text="0 прокси" FontSize="11"
+                                       Text="0" FontSize="11"
                                        Foreground="{DynamicResource Fg4Brush}"
                                        HorizontalAlignment="Right" VerticalAlignment="Center"/>
                         </DockPanel>
 
                         <!-- Bottom buttons -->
                         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,10,0,0">
-                            <Button Content="▶  Проверить прокси" Style="{StaticResource PrimaryBtn}"
+                            <Button Content="{core:Tr smtp.idle.btnCheckProxies}" Style="{StaticResource PrimaryBtn}"
                                     Padding="12,6" Margin="0,0,6,0"
                                     x:Name="BtnCheckProxies"
                                     Click="OnCheckProxies"/>
-                            <Button Content="Загрузить .txt..." Style="{StaticResource GhostBtn}"
+                            <Button Content="{core:Tr smtp.idle.btnLoadTxt}" Style="{StaticResource GhostBtn}"
                                     Padding="12,6" Margin="0,0,6,0"
                                     Click="OnLoadProxiesFile"/>
                             <TextBlock x:Name="TxtProxyStatus" FontSize="11"
@@ -120,11 +121,11 @@
 
                 <!-- Buttons -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button x:Name="BtnStart" Content="Запустить проверку"
+                    <Button x:Name="BtnStart" Content="{core:Tr smtp.idle.btnStart}"
                             Style="{StaticResource PrimaryBtn}"
                             Padding="24,10" FontSize="14"
                             Click="OnStartClick"/>
-                    <Button Content="Открыть папку результатов"
+                    <Button Content="{core:Tr smtp.idle.btnOpenOutputFolder}"
                             Style="{StaticResource GhostBtn}"
                             Padding="12,8" Margin="8,0,0,0"
                             Click="OnOpenOutputFolder"/>

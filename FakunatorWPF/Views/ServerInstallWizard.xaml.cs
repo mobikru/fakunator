@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using Fakunator.Core;
 
 namespace Fakunator.Views;
 
@@ -57,10 +58,10 @@ public partial class ServerInstallWizard : Window
         BtnBack.IsEnabled = _step > 1;
         BtnNext.Content = _step switch
         {
-            4 => "Начать установку →",
-            5 => "Пропустить лог",
-            6 => "Готово",
-            _ => "Далее →"
+            4 => Loc.T("servers.wizard.nav.startInstallArrow"),
+            5 => Loc.T("servers.wizard.nav.skipLog"),
+            6 => Loc.T("servers.wizard.step.done"),
+            _ => Loc.T("servers.wizard.nav.nextArrow")
         };
     }
 

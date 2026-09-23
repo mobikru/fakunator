@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using Fakunator.Core;
 using Fakunator.ViewModels;
 using Microsoft.Win32;
 
@@ -10,10 +11,16 @@ namespace Fakunator.Views;
 
 public partial class AnalyzeIdleView : UserControl
 {
+    private AnalyzeViewModel? _vm;
+
     public AnalyzeIdleView()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        Loc.Instance.LanguageChanged += (_, _) =>
+        {
+            if (_vm != null) SyncFromVm(_vm);
+        };
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -23,6 +30,7 @@ public partial class AnalyzeIdleView : UserControl
 
         if (e.NewValue is AnalyzeViewModel vm)
         {
+            _vm = vm;
             vm.PropertyChanged += OnVmPropertyChanged;
             SyncFromVm(vm);
         }
@@ -43,14 +51,14 @@ public partial class AnalyzeIdleView : UserControl
 
     private void SyncFromVm(AnalyzeViewModel vm)
     {
-        TxtEmailCount.Text = $"{vm.TotalLines:N0} строк";
+        TxtEmailCount.Text = string.Format(Loc.T("analyze.idle.lineCount"), vm.TotalLines);
 
         if (!string.IsNullOrEmpty(vm.FileName))
         {
             var sizeKb = vm.FileSize / 1024.0;
             TxtFileInfo.Text = sizeKb >= 1024
-                ? $"{vm.FileName} · {sizeKb / 1024.0:F1} МБ"
-                : $"{vm.FileName} · {sizeKb:F0} КБ";
+                ? string.Format(Loc.T("analyze.idle.fileInfoMb"), vm.FileName, sizeKb / 1024.0)
+                : string.Format(Loc.T("analyze.idle.fileInfoKb"), vm.FileName, sizeKb);
         }
         else
         {
@@ -70,7 +78,7 @@ public partial class AnalyzeIdleView : UserControl
     {
         var dlg = new OpenFileDialog
         {
-            Title = "Выберите файл с email-адресами",
+            Title = Loc.T("analyze.idle.dialogTitle"),
             Filter = "Text files|*.txt;*.csv;*.tsv|All files|*.*",
             CheckFileExists = true,
         };

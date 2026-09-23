@@ -2,6 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:Fakunator.Controls"
+             xmlns:core="clr-namespace:Fakunator.Core"
              AllowDrop="True"
              DragOver="OnDragOver" DragLeave="OnDragLeave" Drop="OnDrop">
 
@@ -42,7 +43,7 @@
                     </Border>
 
                     <!-- Title -->
-                    <TextBlock Text="Перетащите файл с email-адресами"
+                    <TextBlock Text="{core:Tr cleanup.idle.title}"
                                FontSize="18" FontWeight="SemiBold"
                                Foreground="{DynamicResource Fg1Brush}"
                                HorizontalAlignment="Center" Margin="0,0,0,10"/>
@@ -53,15 +54,15 @@
                                HorizontalAlignment="Center" Margin="0,0,0,20"
                                TextWrapping="Wrap" MaxWidth="440"
                                LineHeight="20">
-                        <Run Text="TXT, CSV или TSV — по одному адресу в строке."/>
+                        <Run Text="{core:Tr cleanup.idle.desc1}"/>
                         <LineBreak/>
-                        <Run Text="Дубликаты, ловушки, корпоративные домены и"/>
+                        <Run Text="{core:Tr cleanup.idle.desc2}"/>
                         <LineBreak/>
-                        <Run Text="одноразовые сервисы будут отсечены автоматически."/>
+                        <Run Text="{core:Tr cleanup.idle.desc3}"/>
                     </TextBlock>
 
                     <!-- Button -->
-                    <Button Content="Выбрать файл" Style="{StaticResource AccentBtn}"
+                    <Button Content="{core:Tr cleanup.idle.btnSelect}" Style="{StaticResource AccentBtn}"
                             HorizontalAlignment="Center" Padding="20,8"
                             Click="OnSelectFileClick"/>
                 </StackPanel>

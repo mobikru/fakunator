@@ -13,10 +13,16 @@ namespace Fakunator.Views;
 
 public partial class AnalyzeRunningView : UserControl
 {
+    private AnalyzeViewModel? _vm;
+
     public AnalyzeRunningView()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        Loc.Instance.LanguageChanged += (_, _) =>
+        {
+            if (_vm != null) UpdateFromSnapshot(_vm.CurrentSnapshot);
+        };
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -26,6 +32,7 @@ public partial class AnalyzeRunningView : UserControl
 
         if (e.NewValue is AnalyzeViewModel vm)
         {
+            _vm = vm;
             vm.PropertyChanged += OnVmPropertyChanged;
             CountryBarsPanel.Children.Clear();
             UpdateFromSnapshot(vm.CurrentSnapshot);
@@ -44,8 +51,8 @@ public partial class AnalyzeRunningView : UserControl
         if (snap is null)
         {
             TxtPercent.Text = "0.0%";
-            TxtPhase.Text = "Фаза: ожидание";
-            TxtProcessed.Text = "0 / 0 обработано";
+            TxtPhase.Text = Loc.T("analyze.running.phaseWaiting");
+            TxtProcessed.Text = string.Format(Loc.T("analyze.running.processed"), 0, 0);
             KpiProcessed.Text = "0";
             KpiDb.Text = "0";
             KpiAi.Text = "0";
@@ -68,15 +75,15 @@ public partial class AnalyzeRunningView : UserControl
 
         var phaseName = snap.Phase switch
         {
-            "init" => "⏳ Инициализация...",
-            "db" => "\U0001F4C2 Этап 1: Поиск по локальной БД (оффлайн, бесплатно)",
-            "ai1" => "\U0001F916 Этап 2: AI-классификация pass 1 (платный)",
-            "ai2" => "\U0001F504 Этап 3: AI-перепроверка pass 2 (платный)",
-            "done" => "✅ Завершено",
+            "init" => Loc.T("analyze.running.phaseInit"),
+            "db" => Loc.T("analyze.running.phaseDb"),
+            "ai1" => Loc.T("analyze.running.phaseAi1"),
+            "ai2" => Loc.T("analyze.running.phaseAi2"),
+            "done" => Loc.T("analyze.running.phaseDone"),
             _ => snap.Phase,
         };
         TxtPhase.Text = phaseName;
-        TxtProcessed.Text = $"{snap.Processed:N0} / {snap.Total:N0} уникальных обработано";
+        TxtProcessed.Text = string.Format(Loc.T("analyze.running.processed"), snap.Processed, snap.Total);
 
         // Progress bar
         var trackBorder = ProgressFill.Parent as FrameworkElement;
@@ -110,7 +117,7 @@ public partial class AnalyzeRunningView : UserControl
         {
             Pass2Panel.Visibility = System.Windows.Visibility.Visible;
             double pass2Pct = (double)snap.Pass2Processed / snap.Pass2Total * 100;
-            TxtPass2Count.Text = $"{snap.Pass2Processed:N0} / {snap.Pass2Total:N0} ({pass2Pct:F0}%)";
+            TxtPass2Count.Text = string.Format(Loc.T("analyze.running.pass2Count"), snap.Pass2Processed, snap.Pass2Total, pass2Pct);
             var pass2Track = Pass2Fill.Parent as FrameworkElement;
             double pass2Width = pass2Track?.ActualWidth ?? 0;
             if (pass2Width > 0)

@@ -16,10 +16,16 @@ namespace Fakunator.Views;
 
 public partial class AnalyzeDoneView : UserControl
 {
+    private AnalyzeViewModel? _vm;
+
     public AnalyzeDoneView()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        Loc.Instance.LanguageChanged += (_, _) =>
+        {
+            if (_vm?.State == AnalyzeViewModel.AnalyzeState.Done) PopulateFromVm(_vm);
+        };
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -29,6 +35,7 @@ public partial class AnalyzeDoneView : UserControl
 
         if (e.NewValue is AnalyzeViewModel vm)
         {
+            _vm = vm;
             vm.PropertyChanged += OnVmPropertyChanged;
             if (vm.State == AnalyzeViewModel.AnalyzeState.Done)
                 PopulateFromVm(vm);
@@ -58,20 +65,20 @@ public partial class AnalyzeDoneView : UserControl
         HeroCost.Text = $"$ {snap.CostUsd:F4}";
         HeroTokens.Text = (snap.InputTokens + snap.OutputTokens).ToString("N0");
 
-        TxtHeroTitle.Text = $"Анализ завершён · {HeroElapsed.Text}";
+        TxtHeroTitle.Text = string.Format(Loc.T("analyze.done.titleWithTime"), HeroElapsed.Text);
 
         int dbCount = GetCount(snap, "db") + GetCount(snap, "db+morph");
         int aiCount = GetCount(snap, "ai") + GetCount(snap, "ai+ai2");
         int unkCount = GetCount(snap, "unknown");
 
-        TxtSubtitle.Text = $"Из {snap.Total:N0} адресов: {dbCount:N0} через БД, {aiCount:N0} через AI, {unkCount:N0} неизвестно";
+        TxtSubtitle.Text = string.Format(Loc.T("analyze.done.subtitle"), snap.Total, dbCount, aiCount, unkCount);
 
         // KPIs
         KpiProcessed.Text = snap.Processed.ToString("N0");
         KpiDb.Text = dbCount.ToString("N0");
         KpiAi.Text = aiCount.ToString("N0");
         KpiUnknown.Text = unkCount.ToString("N0");
-        KpiSpeed.Text = $"{snap.Speed:N1}/с";
+        KpiSpeed.Text = string.Format(Loc.T("unit.perSecN1"), snap.Speed);
 
         // Country bar chart
         BuildCountryBars(snap.CountryStats, snap.Processed);
@@ -250,7 +257,7 @@ public partial class AnalyzeDoneView : UserControl
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Ошибка экспорта: {ex.Message}", "Ошибка",
+            MessageBox.Show(string.Format(Loc.T("analyze.err.exportBody"), ex.Message), Loc.T("analyze.err.exportTitle"),
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -290,7 +297,7 @@ public partial class AnalyzeDoneView : UserControl
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Ошибка экспорта: {ex.Message}", "Ошибка",
+            MessageBox.Show(string.Format(Loc.T("analyze.err.exportBody"), ex.Message), Loc.T("analyze.err.exportTitle"),
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -338,20 +345,20 @@ public partial class AnalyzeDoneView : UserControl
 
             GenderDisplay = r.Gender switch
             {
-                "M" => "♂ M",
-                "F" => "♀ F",
-                "N" => "◇ N",
-                _ => "?",
+                "M" => Loc.T("analyze.done.genderM"),
+                "F" => Loc.T("analyze.done.genderF"),
+                "N" => Loc.T("analyze.done.genderN"),
+                _ => Loc.T("analyze.done.genderUnknown"),
             };
 
             CountryDisplay = CountryFlags.GetFlagWithIso(r.Iso);
 
             SourceDisplay = r.Source switch
             {
-                "db" or "db+morph" => "БД",
-                "ai" => "AI",
-                "ai+ai2" => "AI x2",
-                _ => "?",
+                "db" or "db+morph" => Loc.T("analyze.done.sourceDb"),
+                "ai" => Loc.T("analyze.done.sourceAi"),
+                "ai+ai2" => Loc.T("analyze.done.sourceAi2"),
+                _ => Loc.T("analyze.done.sourceUnknown"),
             };
         }
     }

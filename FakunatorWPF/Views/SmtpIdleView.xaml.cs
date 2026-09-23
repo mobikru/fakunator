@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using Fakunator.Core;
 using Fakunator.ViewModels;
 using Microsoft.Win32;
 
@@ -12,10 +13,20 @@ namespace Fakunator.Views;
 
 public partial class SmtpIdleView : UserControl
 {
+    private SmtpViewModel? _vm;
+
     public SmtpIdleView()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        Loc.Instance.LanguageChanged += (_, _) =>
+        {
+            if (_vm != null)
+            {
+                UpdateCounts(_vm);
+                UpdateRunInfo(_vm);
+            }
+        };
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -25,6 +36,7 @@ public partial class SmtpIdleView : UserControl
 
         if (e.NewValue is SmtpViewModel vm)
         {
+            _vm = vm;
             vm.PropertyChanged += OnVmPropertyChanged;
             UpdateCounts(vm);
             UpdateRunInfo(vm);
@@ -50,13 +62,13 @@ public partial class SmtpIdleView : UserControl
 
     private void UpdateCounts(SmtpViewModel vm)
     {
-        TxtEmailCount.Text = $"{vm.EmailCount} строк";
-        TxtProxyCount.Text = $"{vm.ProxyCount} прокси";
+        TxtEmailCount.Text = string.Format(Loc.T("smtp.idle.emailCount"), vm.EmailCount);
+        TxtProxyCount.Text = string.Format(Loc.T("smtp.idle.proxyCount"), vm.ProxyCount);
     }
 
     private void UpdateRunInfo(SmtpViewModel vm)
     {
-        TxtRunInfo.Text = $"прокси {vm.ProxyCount} · адресов {vm.EmailCount} · в папку smtp_output/";
+        TxtRunInfo.Text = string.Format(Loc.T("smtp.idle.runInfo"), vm.ProxyCount, vm.EmailCount);
     }
 
     // ── Email text ───────────────────────────────────────────────────
@@ -71,7 +83,7 @@ public partial class SmtpIdleView : UserControl
     {
         var dlg = new OpenFileDialog
         {
-            Title = "Загрузить email-адреса",
+            Title = Loc.T("smtp.idle.dialogLoadEmailsTitle"),
             Filter = "Text files|*.txt;*.csv|All files|*.*",
             CheckFileExists = true,
         };
@@ -83,7 +95,8 @@ public partial class SmtpIdleView : UserControl
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(string.Format(Loc.T("smtp.err.genericBody"), ex.Message),
+                    Loc.T("smtp.err.genericTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }
@@ -100,7 +113,7 @@ public partial class SmtpIdleView : UserControl
                 Dispatcher.Invoke(() =>
                 {
                     TxtEmails.Text = vm.EmailsText;
-                    TxtEmailCount.Text = $"{vm.EmailCount:N0} строк";
+                    TxtEmailCount.Text = string.Format(Loc.T("smtp.idle.emailCount"), vm.EmailCount);
                 });
                 vm.PropertyChanged -= OnPropChanged;
             }
@@ -127,7 +140,8 @@ public partial class SmtpIdleView : UserControl
 
         if (proxyLines.Length == 0)
         {
-            MessageBox.Show("Нет прокси для проверки", "Проверка", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(Loc.T("smtp.err.noProxiesBody"), Loc.T("smtp.err.noProxiesTitle"),
+                MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
@@ -136,7 +150,7 @@ public partial class SmtpIdleView : UserControl
 
         TxtProxyStatus.Foreground = (System.Windows.Media.Brush)FindResource(
             dlg.AliveCount > 0 ? "CleanBrush" : "DangerBrush");
-        TxtProxyStatus.Text = $"✓ {dlg.AliveCount} живых · ✗ {dlg.DeadCount} мёртвых";
+        TxtProxyStatus.Text = string.Format(Loc.T("smtp.idle.proxyStatus"), dlg.AliveCount, dlg.DeadCount);
 
         if (useAlive && dlg.AliveProxies.Count > 0)
         {
@@ -148,7 +162,7 @@ public partial class SmtpIdleView : UserControl
     {
         var dlg = new OpenFileDialog
         {
-            Title = "Загрузить прокси",
+            Title = Loc.T("smtp.idle.dialogLoadProxiesTitle"),
             Filter = "Text files|*.txt|All files|*.*",
             CheckFileExists = true,
         };
@@ -160,7 +174,8 @@ public partial class SmtpIdleView : UserControl
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(string.Format(Loc.T("smtp.err.genericBody"), ex.Message),
+                    Loc.T("smtp.err.genericTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

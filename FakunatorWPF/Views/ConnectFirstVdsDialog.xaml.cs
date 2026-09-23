@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Xml.Linq;
+using Fakunator.Core;
 using Fakunator.Core.DomainsManager;
 using Microsoft.Web.WebView2.Core;
 
@@ -52,10 +53,10 @@ public partial class ConnectFirstVdsDialog : Window
             }
             catch (Exception ex)
             {
-                SetStatus("Ошибка WebView2: " + ex.Message);
+                SetStatus(string.Format(Loc.T("domains.connectVdsDialog.errWebview2"), ex.Message));
                 MessageBox.Show(
-                    "Не удалось инициализировать WebView2.\n\nВероятно на машине не установлен Microsoft Edge WebView2 Runtime.\nСкачай отсюда: https://go.microsoft.com/fwlink/p/?LinkId=2124703\n\n" + ex.Message,
-                    "WebView2 не готов", MessageBoxButton.OK, MessageBoxImage.Error);
+                    string.Format(Loc.T("domains.connectVdsDialog.errWebview2Body"), ex.Message),
+                    Loc.T("domains.connectVdsDialog.errWebview2Title"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         };
     }
@@ -81,7 +82,7 @@ public partial class ConnectFirstVdsDialog : Window
         var elid = TxtServerId.Text?.Trim();
         if (string.IsNullOrEmpty(elid) || !elid.All(char.IsDigit))
         {
-            SetStatus("Введи ID сервера (или подожди — программа сама найдёт его в DOM)");
+            SetStatus(Loc.T("domains.connectVdsDialog.enterServerId"));
             return;
         }
         OpenPanel(elid);
@@ -115,7 +116,7 @@ public partial class ConnectFirstVdsDialog : Window
             var ids = System.Text.Json.JsonSerializer.Deserialize<string>(raw) ?? "";
             if (string.IsNullOrEmpty(ids))
             {
-                SetStatus("Ожидание списка серверов…");
+                SetStatus(Loc.T("domains.connectVdsDialog.waitingServers"));
                 return;
             }
             var arr = ids.Split(',', StringSplitOptions.RemoveEmptyEntries).Distinct().ToList();
@@ -127,10 +128,9 @@ public partial class ConnectFirstVdsDialog : Window
             {
                 Dispatcher.Invoke(() =>
                 {
-                    var msg = "Найдено серверов: " + arr.Count
-                              + "\n\n" + string.Join("\n", arr.Select((s, i) => $"{i + 1}. id={s}"))
-                              + "\n\nВведи номер (по умолчанию 1):";
-                    var input = Microsoft.VisualBasic.Interaction.InputBox(msg, "Выбор сервера", "1");
+                    var msg = string.Format(Loc.T("domains.connectVdsDialog.multiServerPrompt"),
+                        arr.Count, string.Join("\n", arr.Select((s, i) => $"{i + 1}. id={s}")));
+                    var input = Microsoft.VisualBasic.Interaction.InputBox(msg, Loc.T("domains.connectVdsDialog.pickServerTitle"), "1");
                     if (int.TryParse(input, out var idx) && idx >= 1 && idx <= arr.Count)
                         elid = arr[idx - 1];
                 });
@@ -146,7 +146,7 @@ public partial class ConnectFirstVdsDialog : Window
         _panelOpened = true;
         _pollTimer?.Stop();
         _pickedServerId = elid;
-        SetStatus($"Переходим в панель ISP сервера {elid}…");
+        SetStatus(string.Format(Loc.T("domains.connectVdsDialog.openingPanel"), elid));
         var gotoUrl = $"https://my.firstvds.ru/billmgr?func=gotoserver.additionalpanel"
                       + $"&elid={elid}&panel=dnsmgr&newwindow=yes";
         Web.CoreWebView2.Navigate(gotoUrl);
@@ -294,11 +294,11 @@ public partial class ConnectFirstVdsDialog : Window
             }
             if (string.IsNullOrEmpty(sid))
             {
-                SetStatus("Не удалось извлечь sessionId. URL: " + url);
+                SetStatus(string.Format(Loc.T("domains.connectVdsDialog.sessionExtracted"), url));
                 return;
             }
 
-            SetStatus($"Успех — сессия получена ({host})");
+            SetStatus(string.Format(Loc.T("domains.connectVdsDialog.sessionSuccess"), host));
             Result = new IspAccount
             {
                 Host = host,
@@ -314,7 +314,7 @@ public partial class ConnectFirstVdsDialog : Window
             await Task.Delay(400); // даём юзеру увидеть «успех»
             Close();
         }
-        catch (Exception ex) { SetStatus("Ошибка извлечения сессии: " + ex.Message); }
+        catch (Exception ex) { SetStatus(string.Format(Loc.T("domains.connectVdsDialog.errExtractSession"), ex.Message)); }
     }
 
     private void SetStatus(string s) => Dispatcher.Invoke(() => StatusLine.Text = s);

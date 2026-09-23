@@ -13,11 +13,16 @@ public partial class SmtpRunningView : UserControl
 {
     private const int MaxFeedItems = 20;
     private readonly List<UIElement> _feedRows = new();
+    private SmtpViewModel? _vm;
 
     public SmtpRunningView()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        Loc.Instance.LanguageChanged += (_, _) =>
+        {
+            if (_vm != null) UpdateFromSnapshot(_vm.CurrentSnapshot);
+        };
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -27,6 +32,7 @@ public partial class SmtpRunningView : UserControl
 
         if (e.NewValue is SmtpViewModel vm)
         {
+            _vm = vm;
             vm.PropertyChanged += OnVmPropertyChanged;
             FeedPanel.Children.Clear();
             _feedRows.Clear();
@@ -46,8 +52,8 @@ public partial class SmtpRunningView : UserControl
         if (snap is null)
         {
             TxtPercent.Text = "0.0%";
-            TxtProcessed.Text = "0 / 0 обработано";
-            TxtSpeed.Text = "скорость 0/с · 0 сессий";
+            TxtProcessed.Text = string.Format(Loc.T("smtp.running.processed"), 0, 0);
+            TxtSpeed.Text = string.Format(Loc.T("smtp.running.speed"), 0, 0);
             KpiProcessed.Text = "0";
             KpiValid.Text = "0";
             KpiInvalid.Text = "0";
@@ -63,8 +69,8 @@ public partial class SmtpRunningView : UserControl
 
         double pct = snap.Total > 0 ? (double)snap.Processed / snap.Total * 100 : 0;
         TxtPercent.Text = $"{pct:F1}%";
-        TxtProcessed.Text = $"{snap.Processed:N0} / {snap.Total:N0} обработано";
-        TxtSpeed.Text = $"скорость {snap.Speed:N1}/с · {snap.ActiveSessions} сессий";
+        TxtProcessed.Text = string.Format(Loc.T("smtp.running.processed"), snap.Processed, snap.Total);
+        TxtSpeed.Text = string.Format(Loc.T("smtp.running.speed"), snap.Speed, snap.ActiveSessions);
 
         // Progress bar width
         var trackBorder = ProgressFill.Parent as FrameworkElement;
@@ -93,13 +99,12 @@ public partial class SmtpRunningView : UserControl
         {
             var lastErr = snap.RecentErrors.Count > 0 ? snap.RecentErrors[^1].Error : "";
             var sourcesWord = snap.ProxyStats.Count == 1 && snap.ProxyStats[0].Address == "DIRECT:0"
-                ? "проверка идёт напрямую без прокси"
-                : $"не отвечает ни один из {snap.ProxyStats.Count} источников";
-            TxtNetworkIssueMsg.Text =
-                $"{sourcesWord}. Вероятная причина — заблокирован исходящий SMTP-порт 25 " +
-                "(у хостера/провайдера) или прокси не поддерживают этот порт. " +
-                "Открой порт 25 у провайдера или укажи рабочие прокси в настройках." +
-                (string.IsNullOrEmpty(lastErr) ? "" : $"\nПоследняя ошибка: {lastErr}");
+                ? Loc.T("smtp.running.networkIssueDirect")
+                : string.Format(Loc.T("smtp.running.networkIssueProxies"), snap.ProxyStats.Count);
+            var lastErrSuffix = string.IsNullOrEmpty(lastErr)
+                ? ""
+                : string.Format(Loc.T("smtp.running.networkIssueLastErr"), lastErr);
+            TxtNetworkIssueMsg.Text = string.Format(Loc.T("smtp.running.networkIssueMsg"), sourcesWord, lastErrSuffix);
             NetworkIssueBanner.Visibility = Visibility.Visible;
         }
         else
@@ -209,7 +214,7 @@ public partial class SmtpRunningView : UserControl
     private UIElement BuildFeedRow(SmtpVerdict v)
     {
         var colorHex = Verdicts.Colors.TryGetValue(v.Verdict, out var ch) ? ch : "#71717a";
-        var label = Verdicts.Labels.TryGetValue(v.Verdict, out var lb) ? lb : v.Verdict;
+        var label = Verdicts.Labels.ContainsKey(v.Verdict) ? Loc.T($"smtp.verdict.{v.Verdict}") : v.Verdict;
         var catColor = ColorFromHex(colorHex);
 
         var row = new DockPanel { Margin = new Thickness(0, 0, 0, 3) };

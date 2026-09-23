@@ -37,7 +37,7 @@ public class MailRuVerifyDialog : Window
         _sessionId = sessionId;
         _domain = domain;
 
-        Title = $"Верификация в mail.ru · {domain}";
+        Title = string.Format(Loc.T("domains.mailRuVerifyDialog.title"), domain);
         Width = 620;
         SizeToContent = SizeToContent.Height;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -55,7 +55,7 @@ public class MailRuVerifyDialog : Window
             Margin = new Thickness(0, 0, 0, 4),
         };
         head.SetResourceReference(TextBlock.ForegroundProperty, "Fg1Brush");
-        head.Inlines.Add("Автоматическая верификация  ");
+        head.Inlines.Add(Loc.T("domains.mailRuVerifyDialog.heading"));
         var mono = new Run(domain);
         mono.SetResourceReference(Run.FontFamilyProperty, "MonoFont");
         head.Inlines.Add(mono);
@@ -63,8 +63,7 @@ public class MailRuVerifyDialog : Window
 
         var subhead = new TextBlock
         {
-            Text = "Программа сама добавит домен в Постмастер, создаст TXT-запись в DNS-панели " +
-                   "и запустит проверку на стороне mail.ru.",
+            Text = Loc.T("domains.mailRuVerifyDialog.subheading"),
             FontSize = 11.5,
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, 0, 0, 18),
@@ -79,7 +78,7 @@ public class MailRuVerifyDialog : Window
         selectRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
         var accCol = new StackPanel();
-        accCol.Children.Add(Label("Аккаунт mail.ru"));
+        accCol.Children.Add(Label(Loc.T("domains.mailRuVerifyDialog.lblAccount")));
         StyleCombo(_cbAccount);
         foreach (var acc in Config.Current.PostmasterAccounts)
             _cbAccount.Items.Add(new ComboBoxItem { Content = acc.Username, Tag = acc });
@@ -89,7 +88,7 @@ public class MailRuVerifyDialog : Window
         selectRow.Children.Add(accCol);
 
         var ispCol = new StackPanel();
-        ispCol.Children.Add(Label("DNS-панель для TXT"));
+        ispCol.Children.Add(Label(Loc.T("domains.mailRuVerifyDialog.lblDnsPanel")));
         StyleCombo(_cbIsp);
         foreach (var isp in Config.Current.IspAccounts)
             _cbIsp.Items.Add(new ComboBoxItem { Content = isp.DisplayName + " · " + isp.Host, Tag = isp });
@@ -120,7 +119,7 @@ public class MailRuVerifyDialog : Window
         var stepsPanel = new StackPanel();
         var stepsHeader = new TextBlock
         {
-            Text = "ШАГИ",
+            Text = Loc.T("domains.mailRuVerifyDialog.stepsHeader"),
             FontSize = 9.5,
             FontWeight = FontWeights.SemiBold,
             Margin = new Thickness(0, 0, 0, 8),
@@ -129,10 +128,10 @@ public class MailRuVerifyDialog : Window
         stepsPanel.Children.Add(stepsHeader);
         var steps = new (string Title, string Tag)[]
         {
-            ("Добавление домена в Постмастер", "api v1"),
-            ("Создание TXT-записи в DNS-панели", "TXT"),
-            ("Ожидание распространения DNS", "~60 с"),
-            ("Запуск проверки на стороне mail.ru", "verify"),
+            (Loc.T("domains.mailRuVerifyDialog.step1"), "api v1"),
+            (Loc.T("domains.mailRuVerifyDialog.step2"), "TXT"),
+            (Loc.T("domains.mailRuVerifyDialog.step3"), Loc.T("domains.mailRuVerifyDialog.step3Tag")),
+            (Loc.T("domains.mailRuVerifyDialog.step4"), "verify"),
         };
         _stepBadges = new StepBadge[steps.Length];
         for (int i = 0; i < steps.Length; i++)
@@ -148,7 +147,7 @@ public class MailRuVerifyDialog : Window
         var btnRow = new DockPanel { LastChildFill = false };
         _btnStart = new Button
         {
-            Content = "▶  Верифицировать полностью автоматически",
+            Content = Loc.T("domains.mailRuVerifyDialog.btnStart"),
             Padding = new Thickness(16, 10, 16, 10),
             FontSize = 12.5,
             Cursor = System.Windows.Input.Cursors.Hand,
@@ -160,12 +159,12 @@ public class MailRuVerifyDialog : Window
 
         _btnCheckOnly = new Button
         {
-            Content = "↻  Только проверить сейчас",
+            Content = Loc.T("domains.mailRuVerifyDialog.btnCheckOnly"),
             Padding = new Thickness(14, 10, 14, 10),
             FontSize = 12,
             Margin = new Thickness(8, 0, 0, 0),
             Cursor = System.Windows.Input.Cursors.Hand,
-            ToolTip = "Не пересоздавать TXT — просто снова попросить mail.ru проверить",
+            ToolTip = Loc.T("domains.mailRuVerifyDialog.tooltipCheckOnly"),
         };
         _btnCheckOnly.SetResourceReference(StyleProperty, "GhostBtn");
         _btnCheckOnly.Click += async (_, _) => await RunCheckOnlyAsync();
@@ -285,12 +284,12 @@ public class MailRuVerifyDialog : Window
         var isp = (_cbIsp.SelectedItem as ComboBoxItem)?.Tag as IspAccount ?? _ispAccount;
         if (selected == null)
         {
-            _statusLbl.Text = "Нет подключённого mail.ru-аккаунта.";
+            _statusLbl.Text = Loc.T("domains.mailRuVerifyDialog.errNoAccount");
             return;
         }
         if (string.IsNullOrEmpty(selected.Password))
         {
-            _statusLbl.Text = "У этого аккаунта не сохранён пароль. Переподключи с паролем.";
+            _statusLbl.Text = Loc.T("domains.mailRuVerifyDialog.errNoPassword");
             return;
         }
 
@@ -302,18 +301,18 @@ public class MailRuVerifyDialog : Window
             using var session = new MailRuWebSession(selected.Username);
 
             _stepBadges[0].SetActive();
-            SetStatus("Логин в mail.ru…");
+            SetStatus(Loc.T("domains.mailRuVerifyDialog.statusLoggingIn"));
             await session.LoginAsync(selected.Password);
-            AppendLog($"✓ Залогинен как {selected.Username}");
+            AppendLog(string.Format(Loc.T("domains.mailRuVerifyDialog.logLoggedIn"), selected.Username));
 
-            SetStatus($"Добавляю домен {_domain} в постмастер…");
+            SetStatus(string.Format(Loc.T("domains.mailRuVerifyDialog.statusAddingDomain"), _domain));
             var code = await session.AddDomainAndGetTxtAsync(_domain);
-            AppendLog($"✓ Строка верификации получена: mailru-verification: {code}");
+            AppendLog(string.Format(Loc.T("domains.mailRuVerifyDialog.logVerificationCode"), code));
             _stepBadges[0].SetDone();
 
             _stepBadges[1].SetActive();
             var txtValue = $"mailru-verification: {code}";
-            SetStatus($"Создаю TXT-запись в панели ISP…");
+            SetStatus(Loc.T("domains.mailRuVerifyDialog.statusCreatingTxt"));
             // Нужна сессия для выбранной ISP-панели (если она не совпадает с открытой)
             string sessionId = _sessionId;
             if (isp != _ispAccount)
@@ -326,38 +325,38 @@ public class MailRuVerifyDialog : Window
             {
                 var ok = await ispClient.UpsertRecordAsync(sessionId, _domain, "TXT", "@", txtValue, 3600);
                 if (!ok) throw new Exception("Панель ISP отказала.");
-                AppendLog($"✓ TXT добавлена: @ IN TXT \"{txtValue}\"");
+                AppendLog(string.Format(Loc.T("domains.mailRuVerifyDialog.logTxtAdded"), txtValue));
             }
             catch (Exception ex) when (ex.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase)
                                     || ex.Message.Contains("уже сущест", StringComparison.OrdinalIgnoreCase))
             {
-                AppendLog($"↺ TXT уже была ранее — переиспользуем существующую");
+                AppendLog(Loc.T("domains.mailRuVerifyDialog.logTxtReused"));
             }
             _stepBadges[1].SetDone();
 
             _stepBadges[2].SetActive();
-            SetStatus("Жду 45 секунд для пропагации DNS…");
+            SetStatus(Loc.T("domains.mailRuVerifyDialog.statusWaitingDns"));
             for (int i = 45; i > 0; i -= 5)
             {
                 await Task.Delay(5000);
-                SetStatus($"Жду пропагации DNS… осталось {i - 5} сек");
+                SetStatus(string.Format(Loc.T("domains.mailRuVerifyDialog.statusWaitingDnsCountdown"), i - 5));
             }
-            AppendLog("✓ Пауза окончена");
+            AppendLog(Loc.T("domains.mailRuVerifyDialog.logPauseDone"));
             _stepBadges[2].SetDone();
 
             _stepBadges[3].SetActive();
-            SetStatus("Запускаю проверку на стороне mail.ru…");
+            SetStatus(Loc.T("domains.mailRuVerifyDialog.statusRunningCheck"));
             var vr = await session.RequestVerifyAsync(_domain);
             HandleVerifyResult(vr, selected);
         }
         catch (MailRuWebException ex)
         {
-            SetStatus($"❌ mail.ru: {ex.Message}");
+            SetStatus(string.Format(Loc.T("domains.mailRuVerifyDialog.errMailru"), ex.Message));
             MarkCurrentAsError();
         }
         catch (Exception ex)
         {
-            SetStatus($"❌ Ошибка: {ex.Message}");
+            SetStatus(string.Format(Loc.T("domains.mailRuVerifyDialog.errGeneric"), ex.Message));
             MarkCurrentAsError();
         }
         finally
@@ -380,8 +379,8 @@ public class MailRuVerifyDialog : Window
     private async Task RunCheckOnlyAsync()
     {
         var selected = (_cbAccount.SelectedItem as ComboBoxItem)?.Tag as PostmasterAccount;
-        if (selected == null) { _statusLbl.Text = "Нет подключённого mail.ru-аккаунта."; return; }
-        if (string.IsNullOrEmpty(selected.Password)) { _statusLbl.Text = "Нет сохранённого пароля."; return; }
+        if (selected == null) { _statusLbl.Text = Loc.T("domains.mailRuVerifyDialog.errNoAccount"); return; }
+        if (string.IsNullOrEmpty(selected.Password)) { _statusLbl.Text = Loc.T("domains.mailRuVerifyDialog.errNoPasswordShort"); return; }
 
         _btnStart.IsEnabled = false;
         _btnCheckOnly.IsEnabled = false;
@@ -389,16 +388,16 @@ public class MailRuVerifyDialog : Window
         try
         {
             using var session = new MailRuWebSession(selected.Username);
-            SetStatus("Логин в mail.ru…");
+            SetStatus(Loc.T("domains.mailRuVerifyDialog.statusLoggingIn"));
             await session.LoginAsync(selected.Password);
-            AppendLog($"✓ Залогинен как {selected.Username}");
+            AppendLog(string.Format(Loc.T("domains.mailRuVerifyDialog.logLoggedIn"), selected.Username));
 
-            SetStatus("Прошу mail.ru перепроверить домен…");
+            SetStatus(Loc.T("domains.mailRuVerifyDialog.statusRecheck"));
             var vr = await session.RequestVerifyAsync(_domain);
             HandleVerifyResult(vr, selected);
         }
-        catch (MailRuWebException ex) { SetStatus($"❌ mail.ru: {ex.Message}"); }
-        catch (Exception ex) { SetStatus($"❌ Ошибка: {ex.Message}"); }
+        catch (MailRuWebException ex) { SetStatus(string.Format(Loc.T("domains.mailRuVerifyDialog.errMailru"), ex.Message)); }
+        catch (Exception ex) { SetStatus(string.Format(Loc.T("domains.mailRuVerifyDialog.errGeneric"), ex.Message)); }
         finally { _btnStart.IsEnabled = true; _btnCheckOnly.IsEnabled = true; }
     }
 
@@ -407,7 +406,8 @@ public class MailRuVerifyDialog : Window
         if (vr.IsSuccess)
         {
             _stepBadges[3].SetDone();
-            SetStatus($"✅ {_domain}: {(string.IsNullOrEmpty(vr.Message) ? "домен подтверждён" : vr.Message)}");
+            SetStatus(string.Format(Loc.T("domains.mailRuVerifyDialog.statusVerified"), _domain,
+                string.IsNullOrEmpty(vr.Message) ? Loc.T("domains.mailRuVerifyDialog.defaultVerifiedMsg") : vr.Message));
             if (!string.IsNullOrEmpty(selected.RefreshToken))
                 await FetchTroublesAsync(selected);
             return;
@@ -417,18 +417,18 @@ public class MailRuVerifyDialog : Window
             _stepBadges[3].SetError();
             var reason = !string.IsNullOrEmpty(vr.Message) ? vr.Message
                        : !string.IsNullOrEmpty(vr.Error) ? vr.Error
-                       : "TXT-запись не найдена или не совпадает";
-            SetStatus($"❌ mail.ru не подтвердил: {reason}");
-            AppendLog("DNS ещё не пропагировался, TXT создана не на @, или значение не совпадает.");
-            AppendLog("Подожди 2-5 мин и жми «↻ Только проверить сейчас».");
+                       : Loc.T("domains.mailRuVerifyDialog.defaultFailReason");
+            SetStatus(string.Format(Loc.T("domains.mailRuVerifyDialog.statusNotVerified"), reason));
+            AppendLog(Loc.T("domains.mailRuVerifyDialog.logHintNotPropagated"));
+            AppendLog(Loc.T("domains.mailRuVerifyDialog.logHintRetry"));
             return;
         }
         if (string.Equals(vr.Status, "pending", StringComparison.OrdinalIgnoreCase))
         {
-            SetStatus($"⌛ mail.ru всё ещё проверяет. Попробуй через минуту снова.");
+            SetStatus(Loc.T("domains.mailRuVerifyDialog.statusPending"));
             return;
         }
-        SetStatus($"⚠ Неожиданный ответ mail.ru (HTTP {vr.HttpStatus}).");
+        SetStatus(string.Format(Loc.T("domains.mailRuVerifyDialog.statusUnexpected"), vr.HttpStatus));
         AppendLog(vr.BodySnippet.Replace("\n", " ").Replace("\r", ""));
     }
 
@@ -441,12 +441,12 @@ public class MailRuVerifyDialog : Window
             using var api = new PostmasterApiClient(tokens.AccessToken);
             var troubles = await api.TroublesListAsync(_domain);
             if (troubles.Count == 0)
-                AppendLog("Проблем SPF/DKIM/DMARC не обнаружено.");
+                AppendLog(Loc.T("domains.mailRuVerifyDialog.logNoProblems"));
             else
-                AppendLog("Проблемы:\n" + string.Join("\n",
+                AppendLog(Loc.T("domains.mailRuVerifyDialog.logProblemsHeader") + string.Join("\n",
                     troubles.Select(t => $"    · {t.Type}: {t.Description}")));
         }
-        catch (Exception ex) { AppendLog($"(не удалось подтянуть troubles: {ex.Message})"); }
+        catch (Exception ex) { AppendLog(string.Format(Loc.T("domains.mailRuVerifyDialog.logTroublesFetchFailed"), ex.Message)); }
     }
 
     private void SetStatus(string s) => Dispatcher.Invoke(() => _statusLbl.Text = s);

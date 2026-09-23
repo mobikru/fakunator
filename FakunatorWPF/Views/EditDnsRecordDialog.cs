@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
 using System.Windows.Media;
+using Fakunator.Core;
 using Fakunator.Core.DomainsManager;
 
 namespace Fakunator.Views;
@@ -26,13 +27,13 @@ public class EditDnsRecordDialog : Window
     private readonly TextBlock _previewText;
     private readonly (string Key, string Label, string Hint)[] _types = new (string, string, string)[]
     {
-        ("A",     "A",     "IPv4-адрес"),
-        ("AAAA",  "AAAA",  "IPv6-адрес"),
-        ("CNAME", "CNAME", "Альтернативное имя"),
-        ("MX",    "MX",    "Почтовый сервер"),
-        ("TXT",   "TXT",   "Произвольный текст (SPF/DKIM/DMARC)"),
-        ("NS",    "NS",    "Делегирование поддомена"),
-        ("SRV",   "SRV",   "Сервисная запись"),
+        ("A",     "A",     Loc.T("domains.editDnsDialog.hintA")),
+        ("AAAA",  "AAAA",  Loc.T("domains.editDnsDialog.hintAaaa")),
+        ("CNAME", "CNAME", Loc.T("domains.editDnsDialog.hintCname")),
+        ("MX",    "MX",    Loc.T("domains.editDnsDialog.hintMx")),
+        ("TXT",   "TXT",   Loc.T("domains.editDnsDialog.hintTxt")),
+        ("NS",    "NS",    Loc.T("domains.editDnsDialog.hintNs")),
+        ("SRV",   "SRV",   Loc.T("domains.editDnsDialog.hintSrv")),
     };
     private readonly RadioButton[] _typeChips;
     private readonly TextBlock _typeHint;
@@ -41,7 +42,9 @@ public class EditDnsRecordDialog : Window
     {
         _domain = domain;
         EditingRecord = editing;
-        Title = editing == null ? $"Новая запись · {domain}" : $"Редактирование · {domain}";
+        Title = editing == null
+            ? string.Format(Loc.T("domains.editDnsDialog.titleNew"), domain)
+            : string.Format(Loc.T("domains.editDnsDialog.titleEdit"), domain);
         Width = 540;
         SizeToContent = SizeToContent.Height;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -109,7 +112,7 @@ public class EditDnsRecordDialog : Window
         var titles = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
         var t1 = new TextBlock
         {
-            Text = editing == null ? "Новая DNS-запись" : "Редактирование записи",
+            Text = editing == null ? Loc.T("domains.editDnsDialog.headingNew") : Loc.T("domains.editDnsDialog.headingEdit"),
             FontSize = 15, FontWeight = FontWeights.SemiBold,
         };
         t1.SetResourceReference(TextBlock.ForegroundProperty, "Fg1Brush");
@@ -146,7 +149,7 @@ public class EditDnsRecordDialog : Window
         }
         root.Children.Add(new TextBlock
         {
-            Text = "ТИП ЗАПИСИ", FontSize = 9.5, FontWeight = FontWeights.SemiBold,
+            Text = Loc.T("domains.editDnsDialog.typeHeader"), FontSize = 9.5, FontWeight = FontWeights.SemiBold,
             Margin = new Thickness(22, 20, 22, 6),
             Foreground = new SolidColorBrush(Color.FromRgb(0x71, 0x71, 0x7a)),
         });
@@ -168,21 +171,21 @@ public class EditDnsRecordDialog : Window
         fieldGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
         var nameCol = new StackPanel();
-        nameCol.Children.Add(FieldLabel("Имя"));
+        nameCol.Children.Add(FieldLabel(Loc.T("domains.editDnsDialog.lblName")));
         _tbName = MakeInput();
         _tbName.Text = "@";
         _tbName.TextChanged += (_, _) => UpdatePreview();
         nameCol.Children.Add(_tbName);
-        nameCol.Children.Add(FieldHint("«@» — корень, «www» и т.п."));
+        nameCol.Children.Add(FieldHint(Loc.T("domains.editDnsDialog.hintName")));
         Grid.SetColumn(nameCol, 0);
         fieldGrid.Children.Add(nameCol);
 
         var valCol = new StackPanel();
-        valCol.Children.Add(FieldLabel("Значение"));
+        valCol.Children.Add(FieldLabel(Loc.T("domains.editDnsDialog.lblValue")));
         _tbValue = MakeInput();
         _tbValue.TextChanged += (_, _) => UpdatePreview();
         valCol.Children.Add(_tbValue);
-        valCol.Children.Add(FieldHint("IP для A, hostname для CNAME/MX, текст для TXT"));
+        valCol.Children.Add(FieldHint(Loc.T("domains.editDnsDialog.hintValue")));
         Grid.SetColumn(valCol, 2);
         fieldGrid.Children.Add(valCol);
         root.Children.Add(fieldGrid);
@@ -194,7 +197,7 @@ public class EditDnsRecordDialog : Window
         extraRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
         var ttlCol = new StackPanel();
-        ttlCol.Children.Add(FieldLabel("TTL, сек"));
+        ttlCol.Children.Add(FieldLabel(Loc.T("domains.editDnsDialog.lblTtl")));
         _tbTtl = MakeInput();
         _tbTtl.Text = "3600";
         ttlCol.Children.Add(_tbTtl);
@@ -202,7 +205,7 @@ public class EditDnsRecordDialog : Window
         extraRow.Children.Add(ttlCol);
 
         _prioBlock = new StackPanel();
-        _prioBlock.Children.Add(FieldLabel("Приоритет (MX)"));
+        _prioBlock.Children.Add(FieldLabel(Loc.T("domains.editDnsDialog.lblPriority")));
         _tbPrio = MakeInput();
         _tbPrio.Text = "10";
         _prioBlock.Children.Add(_tbPrio);
@@ -213,7 +216,7 @@ public class EditDnsRecordDialog : Window
         // ── Preview ────────────────────────────────────────────────
         root.Children.Add(new TextBlock
         {
-            Text = "ПРЕДПРОСМОТР", FontSize = 9.5, FontWeight = FontWeights.SemiBold,
+            Text = Loc.T("domains.editDnsDialog.previewHeader"), FontSize = 9.5, FontWeight = FontWeights.SemiBold,
             Margin = new Thickness(22, 20, 22, 6),
             Foreground = new SolidColorBrush(Color.FromRgb(0x71, 0x71, 0x7a)),
         });
@@ -244,7 +247,7 @@ public class EditDnsRecordDialog : Window
         };
         var cancel = new Button
         {
-            Content = "Отмена", Padding = new Thickness(18, 9, 18, 9), MinWidth = 100,
+            Content = Loc.T("domains.editDnsDialog.btnCancel"), Padding = new Thickness(18, 9, 18, 9), MinWidth = 100,
             Cursor = System.Windows.Input.Cursors.Hand,
         };
         cancel.SetResourceReference(StyleProperty, "GhostBtn");
@@ -252,7 +255,7 @@ public class EditDnsRecordDialog : Window
         DockPanel.SetDock(cancel, Dock.Right);
         var ok = new Button
         {
-            Content = editing == null ? "Добавить запись" : "Сохранить",
+            Content = editing == null ? Loc.T("domains.editDnsDialog.btnAdd") : Loc.T("domains.editDnsDialog.btnSave"),
             Padding = new Thickness(20, 9, 20, 9), MinWidth = 160,
             Cursor = System.Windows.Input.Cursors.Hand,
             Margin = new Thickness(0, 0, 8, 0),
@@ -300,7 +303,7 @@ public class EditDnsRecordDialog : Window
         var value = _tbValue.Text.Trim();
         if (string.IsNullOrEmpty(value))
         {
-            MessageBox.Show("Введите значение записи.", "Пусто",
+            MessageBox.Show(Loc.T("domains.editDnsDialog.err.emptyValueBody"), Loc.T("domains.editDnsDialog.err.emptyValueTitle"),
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }

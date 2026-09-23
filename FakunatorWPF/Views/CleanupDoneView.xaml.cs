@@ -13,10 +13,16 @@ namespace Fakunator.Views;
 
 public partial class CleanupDoneView : UserControl
 {
+    private CleanupViewModel? _vm;
+
     public CleanupDoneView()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        Loc.Instance.LanguageChanged += (_, _) =>
+        {
+            if (_vm?.State == CleanupViewModel.CleanupState.Done) PopulateFromSnapshot(_vm);
+        };
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -28,6 +34,7 @@ public partial class CleanupDoneView : UserControl
 
         if (e.NewValue is CleanupViewModel vm)
         {
+            _vm = vm;
             vm.PropertyChanged += OnViewModelPropertyChanged;
             if (vm.State == CleanupViewModel.CleanupState.Done)
             {
@@ -58,22 +65,22 @@ public partial class CleanupDoneView : UserControl
             ? ts.ToString(@"h\:mm\:ss")
             : ts.ToString(@"mm\:ss");
 
-        HeroSpeed.Text = $"{snap.Speed:N0}/с";
+        HeroSpeed.Text = string.Format(Loc.T("unit.perSecShort"), snap.Speed);
         HeroFileSize.Text = FormatSize(vm.FileSize);
 
         // Subtitle
         int cleanCount = snap.Counts.TryGetValue("clean", out var c) ? c : 0;
         double cleanPct = snap.Total > 0 ? (double)cleanCount / snap.Total * 100 : 0;
-        TxtSubtitle.Text = $"Из {snap.Total:N0} строк получено {cleanCount:N0} чистых адресов ({cleanPct:F1}%)";
+        TxtSubtitle.Text = string.Format(Loc.T("cleanup.done.subtitle"), snap.Total, cleanCount, cleanPct);
 
         // Clean + Duplicate big cards
         CleanCount.Text = cleanCount.ToString("N0");
-        CleanPct.Text = $"{cleanPct:F1}% · итоговая база";
+        CleanPct.Text = string.Format(Loc.T("cleanup.done.validPct"), cleanPct);
 
         int dupCount = snap.Counts.TryGetValue("duplicate", out var d) ? d : 0;
         double dupPct = snap.Total > 0 ? (double)dupCount / snap.Total * 100 : 0;
         DupCount.Text = dupCount.ToString("N0");
-        DupPct.Text = $"{dupPct:F1}% · учтены правила gmail";
+        DupPct.Text = string.Format(Loc.T("cleanup.done.duplicatesPct"), dupPct);
 
         // Provider donut legend
         BuildDonutLegend(snap);
@@ -93,7 +100,7 @@ public partial class CleanupDoneView : UserControl
             int count = snap.Providers.TryGetValue(key, out var v) ? v : 0;
             if (count == 0) continue;
 
-            string label = Tokens.ProviderLabels.TryGetValue(key, out var l) ? l : key;
+            string label = Loc.T($"provider.{key}");
             string colorHex = Tokens.ProviderColors[key];
             var color = (Color)ColorConverter.ConvertFromString(colorHex);
 
@@ -149,7 +156,7 @@ public partial class CleanupDoneView : UserControl
             int count = snap.Counts.TryGetValue(cat, out var v) ? v : 0;
             double pct = snap.Total > 0 ? (double)count / snap.Total * 100 : 0;
 
-            string label = Tokens.CategoryLabels.TryGetValue(cat, out var l) ? l : cat;
+            string label = Loc.T($"cat.{cat}");
             string colorHex = Tokens.CategoryColors.TryGetValue(cat, out var ch) ? ch : "#71717a";
 
             var color = (Color)ColorConverter.ConvertFromString(colorHex);

@@ -30,7 +30,7 @@ public class DnsTemplateEditorDialog : Window
 
     public DnsTemplateEditorDialog()
     {
-        Title = "Редактор DNS-шаблонов";
+        Title = Loc.T("domains.dnsTemplateEditor.title");
         Width = 900;
         Height = 620;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -46,14 +46,14 @@ public class DnsTemplateEditorDialog : Window
         var leftHdr = new DockPanel { Margin = new Thickness(0, 0, 0, 6) };
         var addBtn = new Button
         {
-            Content = "+ Новый", Padding = new Thickness(12, 6, 12, 6), FontSize = 11.5,
+            Content = Loc.T("domains.dnsTemplateEditor.btnNew"), Padding = new Thickness(12, 6, 12, 6), FontSize = 11.5,
             Cursor = Cursors.Hand,
         };
         addBtn.SetResourceReference(StyleProperty, "AccentBtn");
         addBtn.Click += (_, _) => OnNewTemplate();
         var delBtn = new Button
         {
-            Content = "× Удалить", Padding = new Thickness(10, 6, 10, 6), FontSize = 11.5,
+            Content = Loc.T("domains.dnsTemplateEditor.btnDeleteTemplate"), Padding = new Thickness(10, 6, 10, 6), FontSize = 11.5,
             Cursor = Cursors.Hand, Margin = new Thickness(6, 0, 0, 0),
         };
         delBtn.SetResourceReference(StyleProperty, "DangerBtn");
@@ -75,12 +75,12 @@ public class DnsTemplateEditorDialog : Window
 
         // ── RIGHT: details ──────────────────────────────────────────
         _rightPanel.Margin = new Thickness(0);
-        _rightPanel.Children.Add(Lbl("Название"));
+        _rightPanel.Children.Add(Lbl(Loc.T("domains.dnsTemplateEditor.lblName")));
         _rightPanel.Children.Add(StyleInput(_tbName));
-        _rightPanel.Children.Add(Lbl("Описание"));
+        _rightPanel.Children.Add(Lbl(Loc.T("domains.dnsTemplateEditor.lblDescription")));
         _rightPanel.Children.Add(StyleInput(_tbDesc));
 
-        _rightPanel.Children.Add(Lbl("Записи"));
+        _rightPanel.Children.Add(Lbl(Loc.T("domains.dnsTemplateEditor.lblRecords")));
         _recordsList.ItemsSource = _records;
         _recordsList.BorderThickness = new Thickness(0);
         _recordsList.Background = Brushes.Transparent;
@@ -88,22 +88,22 @@ public class DnsTemplateEditorDialog : Window
         _recordsList.SelectionMode = SelectionMode.Single;
         _recordsList.MouseDoubleClick += (_, _) => OnEditRecord();
         var gv = new GridView { AllowsColumnReorder = false };
-        gv.Columns.Add(Col("ТИП", 60, "Type"));
-        gv.Columns.Add(Col("ИМЯ", 140, "Name"));
-        gv.Columns.Add(Col("ЗНАЧЕНИЕ", 320, "Value"));
-        gv.Columns.Add(Col("TTL", 55, "Ttl"));
-        gv.Columns.Add(Col("PRIO", 50, "Priority"));
+        gv.Columns.Add(Col(Loc.T("domains.dns.colType"), 60, "Type"));
+        gv.Columns.Add(Col(Loc.T("domains.dns.colName"), 140, "Name"));
+        gv.Columns.Add(Col(Loc.T("domains.dns.colValue"), 320, "Value"));
+        gv.Columns.Add(Col(Loc.T("domains.dns.colTtl"), 55, "Ttl"));
+        gv.Columns.Add(Col(Loc.T("domains.dns.colPrio"), 50, "Priority"));
         _recordsList.View = gv;
         _rightPanel.Children.Add(_recordsList);
 
         var recBtns = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0) };
-        var addRecBtn = new Button { Content = "+ Запись", Padding = new Thickness(12, 6, 12, 6), FontSize = 11.5, Cursor = Cursors.Hand };
+        var addRecBtn = new Button { Content = Loc.T("domains.dns.btnAddRecord"), Padding = new Thickness(12, 6, 12, 6), FontSize = 11.5, Cursor = Cursors.Hand };
         addRecBtn.SetResourceReference(StyleProperty, "GhostBtn");
         addRecBtn.Click += (_, _) => OnAddRecord();
-        var editRecBtn = new Button { Content = "✎ Изменить", Padding = new Thickness(12, 6, 12, 6), FontSize = 11.5, Cursor = Cursors.Hand, Margin = new Thickness(6, 0, 0, 0) };
+        var editRecBtn = new Button { Content = Loc.T("domains.dnsTemplateEditor.btnEditRecord"), Padding = new Thickness(12, 6, 12, 6), FontSize = 11.5, Cursor = Cursors.Hand, Margin = new Thickness(6, 0, 0, 0) };
         editRecBtn.SetResourceReference(StyleProperty, "GhostBtn");
         editRecBtn.Click += (_, _) => OnEditRecord();
-        var delRecBtn = new Button { Content = "× Удалить", Padding = new Thickness(12, 6, 12, 6), FontSize = 11.5, Cursor = Cursors.Hand, Margin = new Thickness(6, 0, 0, 0) };
+        var delRecBtn = new Button { Content = Loc.T("domains.dnsTemplateEditor.btnDeleteRecord"), Padding = new Thickness(12, 6, 12, 6), FontSize = 11.5, Cursor = Cursors.Hand, Margin = new Thickness(6, 0, 0, 0) };
         delRecBtn.SetResourceReference(StyleProperty, "DangerBtn");
         delRecBtn.Click += (_, _) => OnDeleteRecord();
         recBtns.Children.Add(addRecBtn);
@@ -113,11 +113,11 @@ public class DnsTemplateEditorDialog : Window
 
         // Save + Close
         var bottom = new DockPanel { Margin = new Thickness(0, 16, 0, 0), LastChildFill = false };
-        var closeBtn = new Button { Content = "Закрыть", Padding = new Thickness(16, 8, 16, 8), MinWidth = 100 };
+        var closeBtn = new Button { Content = Loc.T("domains.dnsTemplateEditor.btnClose"), Padding = new Thickness(16, 8, 16, 8), MinWidth = 100 };
         closeBtn.SetResourceReference(StyleProperty, "GhostBtn");
         closeBtn.Click += (_, _) => Close();
         DockPanel.SetDock(closeBtn, Dock.Right);
-        var saveBtn = new Button { Content = "Сохранить", Padding = new Thickness(20, 8, 20, 8), MinWidth = 140, Margin = new Thickness(0, 0, 8, 0) };
+        var saveBtn = new Button { Content = Loc.T("domains.dnsTemplateEditor.btnSave"), Padding = new Thickness(20, 8, 20, 8), MinWidth = 140, Margin = new Thickness(0, 0, 8, 0) };
         saveBtn.SetResourceReference(StyleProperty, "PrimaryBtn");
         saveBtn.Click += (_, _) => SaveCurrent();
         DockPanel.SetDock(saveBtn, Dock.Right);
@@ -160,7 +160,7 @@ public class DnsTemplateEditorDialog : Window
 
     private void OnNewTemplate()
     {
-        var t = new DnsTemplate { Name = "Новый шаблон", Description = "" };
+        var t = new DnsTemplate { Name = Loc.T("domains.dnsTemplateEditor.newTemplateName"), Description = "" };
         Config.Current.DnsTemplates.Add(t);
         Config.Current.SaveNow();
         Reload();
@@ -172,11 +172,12 @@ public class DnsTemplateEditorDialog : Window
         if (_selected == null) return;
         if (_selected.IsBuiltin)
         {
-            MessageBox.Show("Встроенные шаблоны нельзя удалить (только клонировать через «+ Новый»).",
-                "Только для чтения", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(Loc.T("domains.dnsTemplateEditor.err.builtinCannotDeleteBody"),
+                Loc.T("domains.dnsTemplateEditor.err.builtinCannotDeleteTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
-        if (MessageBox.Show($"Удалить шаблон «{_selected.Template.Name}»?", "Подтвердить",
+        if (MessageBox.Show(string.Format(Loc.T("domains.dnsTemplateEditor.confirmDeleteBody"), _selected.Template.Name),
+            Loc.T("domains.dnsTemplateEditor.confirmDeleteTitle"),
             MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
         Config.Current.DnsTemplates.Remove(_selected.Template);
         Config.Current.SaveNow();
@@ -195,8 +196,8 @@ public class DnsTemplateEditorDialog : Window
         if (_selected == null || _selected.IsBuiltin) { WarnReadOnly(); return; }
         if (_recordsList.SelectedItem is not DnsTemplateRecord r)
         {
-            MessageBox.Show("Сначала выделите запись в списке — потом жми «✎ Изменить».",
-                "Не выбрано", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(Loc.T("domains.dnsTemplateEditor.selectRecordEditBody"),
+                Loc.T("domains.dnsTemplateEditor.notSelectedTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
         if (EditRecord(r))
@@ -211,8 +212,8 @@ public class DnsTemplateEditorDialog : Window
         if (_selected == null || _selected.IsBuiltin) { WarnReadOnly(); return; }
         if (_recordsList.SelectedItem is not DnsTemplateRecord r)
         {
-            MessageBox.Show("Сначала выделите запись в списке — потом жми «× Удалить».",
-                "Не выбрано", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(Loc.T("domains.dnsTemplateEditor.selectRecordDeleteBody"),
+                Loc.T("domains.dnsTemplateEditor.notSelectedTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
         _records.Remove(r);
@@ -224,7 +225,7 @@ public class DnsTemplateEditorDialog : Window
         // делаем модалку на лету).
         var dlg = new Window
         {
-            Title = "Запись шаблона", Width = 480, SizeToContent = SizeToContent.Height,
+            Title = Loc.T("domains.dnsTemplateEditor.recordDialogTitle"), Width = 480, SizeToContent = SizeToContent.Height,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
             ResizeMode = ResizeMode.NoResize, Owner = this,
         };
@@ -233,16 +234,16 @@ public class DnsTemplateEditorDialog : Window
         var typeBox = new ComboBox { Height = 32, FontSize = 12 };
         foreach (var t in new[] { "A", "AAAA", "CNAME", "MX", "TXT", "NS", "SRV" }) typeBox.Items.Add(t);
         typeBox.SelectedItem = r.Type;
-        p.Children.Add(Lbl("Тип")); p.Children.Add(typeBox);
-        var nameBox = MkInput(r.Name); p.Children.Add(Lbl("Имя (@ = корень)")); p.Children.Add(nameBox);
-        var valueBox = MkInput(r.Value); p.Children.Add(Lbl("Значение (можно {domain}, {ip}, …)")); p.Children.Add(valueBox);
-        var ttlBox = MkInput(r.Ttl.ToString()); p.Children.Add(Lbl("TTL")); p.Children.Add(ttlBox);
-        var prioBox = MkInput(r.Priority?.ToString() ?? ""); p.Children.Add(Lbl("Приоритет (для MX)")); p.Children.Add(prioBox);
+        p.Children.Add(Lbl(Loc.T("domains.dnsTemplateEditor.lblType"))); p.Children.Add(typeBox);
+        var nameBox = MkInput(r.Name); p.Children.Add(Lbl(Loc.T("domains.dnsTemplateEditor.lblRecordName"))); p.Children.Add(nameBox);
+        var valueBox = MkInput(r.Value); p.Children.Add(Lbl(Loc.T("domains.dnsTemplateEditor.lblRecordValue"))); p.Children.Add(valueBox);
+        var ttlBox = MkInput(r.Ttl.ToString()); p.Children.Add(Lbl(Loc.T("domains.dnsTemplateEditor.lblTtl"))); p.Children.Add(ttlBox);
+        var prioBox = MkInput(r.Priority?.ToString() ?? ""); p.Children.Add(Lbl(Loc.T("domains.dnsTemplateEditor.lblPriority"))); p.Children.Add(prioBox);
 
         var btnRow = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 16, 0, 0) };
-        var okB = new Button { Content = "OK", Padding = new Thickness(20, 6, 20, 6), MinWidth = 90 };
+        var okB = new Button { Content = Loc.T("domains.dnsTemplateEditor.btnOk"), Padding = new Thickness(20, 6, 20, 6), MinWidth = 90 };
         okB.SetResourceReference(StyleProperty, "PrimaryBtn");
-        var caB = new Button { Content = "Отмена", Padding = new Thickness(16, 6, 16, 6), MinWidth = 90, Margin = new Thickness(8, 0, 0, 0) };
+        var caB = new Button { Content = Loc.T("domains.dnsTemplateEditor.btnCancel"), Padding = new Thickness(16, 6, 16, 6), MinWidth = 90, Margin = new Thickness(8, 0, 0, 0) };
         caB.SetResourceReference(StyleProperty, "GhostBtn");
         bool ok = false;
         okB.Click += (_, _) => { ok = true; dlg.Close(); };
@@ -269,13 +270,14 @@ public class DnsTemplateEditorDialog : Window
         _selected.Template.Description = _tbDesc.Text.Trim();
         _selected.Template.Records = _records.ToList();
         Config.Current.SaveNow();
-        MessageBox.Show("Шаблон сохранён.", "OK", MessageBoxButton.OK, MessageBoxImage.Information);
+        MessageBox.Show(Loc.T("domains.dnsTemplateEditor.savedBody"), Loc.T("domains.dnsTemplateEditor.savedTitle"),
+            MessageBoxButton.OK, MessageBoxImage.Information);
         Reload();
     }
 
     private void WarnReadOnly() =>
-        MessageBox.Show("Встроенные шаблоны только для чтения — клонируй через «+ Новый».",
-            "Только для чтения", MessageBoxButton.OK, MessageBoxImage.Information);
+        MessageBox.Show(Loc.T("domains.dnsTemplateEditor.readonlyBody"),
+            Loc.T("domains.dnsTemplateEditor.readonlyTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
 
     private static DnsTemplateRecord Clone(DnsTemplateRecord r) => new()
     { Type = r.Type, Name = r.Name, Value = r.Value, Ttl = r.Ttl, Priority = r.Priority };

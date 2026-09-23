@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
+using Fakunator.Core;
 using Fakunator.Core.DomainScanner;
 using Fakunator.Core.DomainsManager;
 using Fakunator.Core.Postmaster;
@@ -83,6 +84,11 @@ public class PostmasterAccountChip : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
 }
 
+/// <summary>Статус домена в постмастере — общий для chip'а в DNS-таблице (NotAdded/Verified/Rejected)
+/// и для строки постмастер-таблицы (Pending/Verified/Rejected). Отдельно от текста —
+/// текст локализуется (ru/en) и сравнивать его строкой больше нельзя.</summary>
+public enum PmChipStatus { NotAdded, Pending, Verified, Rejected }
+
 /// <summary>Строка «домен в DNS-панели» с готовыми к UI полями.</summary>
 public class DnsDomainRow : INotifyPropertyChanged
 {
@@ -95,18 +101,25 @@ public class DnsDomainRow : INotifyPropertyChanged
     private Brush _statusDot = Brushes.Gray;
     public Brush StatusDot { get => _statusDot; set { if (!Equals(_statusDot, value)) { _statusDot = value; OnPc(); } } }
 
-    private string _postmasterStatusText = "не добавлен";
-    public string PostmasterStatusText
+    private PmChipStatus _pmChipStatus = PmChipStatus.NotAdded;
+    public PmChipStatus PostmasterStatus
     {
-        get => _postmasterStatusText;
-        set { if (_postmasterStatusText != value) { _postmasterStatusText = value; OnPc(); OnPc(nameof(PostmasterChipIcon)); } }
+        get => _pmChipStatus;
+        set { if (_pmChipStatus != value) { _pmChipStatus = value; OnPc(); OnPc(nameof(PostmasterStatusText)); OnPc(nameof(PostmasterChipIcon)); } }
     }
 
-    // Иконка чипа — маленький глиф ✓/○/✕ в зависимости от текста
-    public string PostmasterChipIcon => _postmasterStatusText switch
+    public string PostmasterStatusText => _pmChipStatus switch
     {
-        "верифицирован" => "●",
-        "отклонён" => "✕",
+        PmChipStatus.Verified => Loc.T("domains.pmStatus.verified"),
+        PmChipStatus.Rejected => Loc.T("domains.pmStatus.rejected"),
+        _ => Loc.T("domains.pmStatus.notAdded"),
+    };
+
+    // Иконка чипа — маленький глиф ✓/○/✕ в зависимости от статуса
+    public string PostmasterChipIcon => _pmChipStatus switch
+    {
+        PmChipStatus.Verified => "●",
+        PmChipStatus.Rejected => "✕",
         _ => "○"
     };
 
@@ -135,12 +148,13 @@ public class DnsDomainRow : INotifyPropertyChanged
     {
         get
         {
-            if (_h == null) return "…";
-            if (_h.CreatedAt == null) return "?";
+            // Переиспользуем ключи домена-сканера — то же самое понятие "возраст домена".
+            if (_h == null) return Loc.T("domainscanner.browser.ageLoading");
+            if (_h.CreatedAt == null) return Loc.T("domainscanner.browser.ageUnknown");
             var d = (DateTime.UtcNow - _h.CreatedAt.Value).TotalDays;
-            if (d < 30) return $"{(int)d} дн.";
-            if (d < 365) return $"{(int)(d / 30)} мес.";
-            return $"{d / 365:F1} лет";
+            if (d < 30) return string.Format(Loc.T("domainscanner.browser.ageDays"), (int)d);
+            if (d < 365) return string.Format(Loc.T("domainscanner.browser.ageMonths"), (int)(d / 30));
+            return string.Format(Loc.T("domainscanner.browser.ageYears"), d / 365);
         }
     }
     public Brush AgeColor
@@ -158,10 +172,12 @@ public class DnsDomainRow : INotifyPropertyChanged
     {
         get
         {
-            if (_h == null) return "…";
-            if (_h.ExpiresAt == null) return "?";
+            if (_h == null) return Loc.T("domainscanner.browser.ageLoading");
+            if (_h.ExpiresAt == null) return Loc.T("domainscanner.browser.ageUnknown");
             var d = (int)(_h.ExpiresAt.Value - DateTime.UtcNow).TotalDays;
-            return d < 0 ? $"истёк {-d}д" : d + " дн.";
+            return d < 0
+                ? string.Format(Loc.T("domainscanner.browser.daysLeftExpired"), -d)
+                : string.Format(Loc.T("domainscanner.browser.daysLeftSuffix"), d);
         }
     }
     public Brush DaysLeftColor
@@ -175,27 +191,35 @@ public class DnsDomainRow : INotifyPropertyChanged
             return Green;
         }
     }
-    private static readonly Dictionary<string, string> RuCat = new()
+    // Переиспользуем ту же карту "категория RBL → ключ Loc", что и браузер доменов-сканера.
+    private static readonly Dictionary<string, string> RblCatKeys = new()
     {
-        ["spam"] = "спам", ["phishing"] = "фишинг", ["malware"] = "вирусы",
-        ["botnet"] = "ботнет", ["abuse"] = "злоупотр.", ["cracked"] = "взломан",
-        ["redirector"] = "редиректор", ["jwspamspy"] = "jwspam",
-        ["abused-spam"] = "угнан: спам", ["abused-phishing"] = "угнан: фишинг",
-        ["abused-malware"] = "угнан: вирусы", ["abused-botnet"] = "угнан: ботнет",
-        ["listed"] = "в списке",
+        ["spam"] = "domainscanner.browser.rblCat.spam",
+        ["phishing"] = "domainscanner.browser.rblCat.phishing",
+        ["malware"] = "domainscanner.browser.rblCat.malware",
+        ["botnet"] = "domainscanner.browser.rblCat.botnet",
+        ["abuse"] = "domainscanner.browser.rblCat.abuse",
+        ["cracked"] = "domainscanner.browser.rblCat.cracked",
+        ["redirector"] = "domainscanner.browser.rblCat.redirector",
+        ["jwspamspy"] = "domainscanner.browser.rblCat.jwspamspy",
+        ["abused-spam"] = "domainscanner.browser.rblCat.abusedSpam",
+        ["abused-phishing"] = "domainscanner.browser.rblCat.abusedPhishing",
+        ["abused-malware"] = "domainscanner.browser.rblCat.abusedMalware",
+        ["abused-botnet"] = "domainscanner.browser.rblCat.abusedBotnet",
+        ["listed"] = "domainscanner.browser.rblCat.listed",
     };
     public string RblText
     {
         get
         {
-            if (_h == null) return "…";
-            if (_h.RblHits.Count == 0) return "✓ чистый";
+            if (_h == null) return Loc.T("domainscanner.browser.ageLoading");
+            if (_h.RblHits.Count == 0) return Loc.T("domainscanner.browser.rblClean");
             var cats = new HashSet<string>();
             foreach (var hit in _h.RblHits)
             {
                 var i = hit.IndexOf(':');
                 var cat = i >= 0 ? hit[(i + 1)..] : hit;
-                cats.Add(RuCat.TryGetValue(cat, out var ru) ? ru : cat);
+                cats.Add(RblCatKeys.TryGetValue(cat, out var key) ? Loc.T(key) : cat);
             }
             return "✗ " + string.Join(" · ", cats);
         }
@@ -203,6 +227,10 @@ public class DnsDomainRow : INotifyPropertyChanged
     public Brush RblColor => _h == null ? Gray : (_h.RblHits.Count == 0 ? Green : Red);
 
     public DnsDomainRow(string domain) { Domain = domain; }
+
+    /// <summary>Вызывается при смене языка — все локализованные геттеры (Age/DaysLeft/Rbl/PostmasterStatus)
+    /// пересчитаются заново, WPF перечитает все bindings строки.</summary>
+    public void NotifyLocalizationChanged() => OnPc(string.Empty);
 
     public event PropertyChangedEventHandler? PropertyChanged;
     private void OnPc([CallerMemberName] string? p = null) =>
@@ -248,8 +276,26 @@ public class PostmasterDomainRow : INotifyPropertyChanged
     private string _troublesMark = "";
     public string TroublesMark { get => _troublesMark; set => Set(ref _troublesMark, value); }
 
-    private string _verificationText = "—";
-    public string VerificationText { get => _verificationText; set => Set(ref _verificationText, value); }
+    private PmChipStatus _verificationStatus = PmChipStatus.NotAdded;
+    /// <summary>Смысловой статус верификации — используем для сравнений в VM вместо текста
+    /// (текст локализуется и меняется вместе с языком).</summary>
+    public PmChipStatus VerificationStatus
+    {
+        get => _verificationStatus;
+        set
+        {
+            if (_verificationStatus == value) return;
+            _verificationStatus = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(VerificationStatus)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(VerificationText)));
+        }
+    }
+    public string VerificationText => _verificationStatus switch
+    {
+        PmChipStatus.Verified => Loc.T("domains.pmStatus.verified"),
+        PmChipStatus.Rejected => Loc.T("domains.pmStatus.rejected"),
+        _ => Loc.T("domains.pmStatus.pending"),
+    };
 
     private string _verificationIcon = "○";
     public string VerificationIcon { get => _verificationIcon; set => Set(ref _verificationIcon, value); }
@@ -324,6 +370,10 @@ public class PostmasterDomainRow : INotifyPropertyChanged
     public List<PostmasterTrouble> Troubles { get; set; } = new();
     public Dictionary<string, double> AllStats { get; set; } = new();
     public List<PostmasterDaily> Daily { get; set; } = new();
+
+    /// <summary>Вызывается при смене языка — пересчитывает VerificationText.</summary>
+    public void NotifyLocalizationChanged() =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(VerificationText)));
 
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Set<T>(ref T field, T value, [CallerMemberName] string? name = null)

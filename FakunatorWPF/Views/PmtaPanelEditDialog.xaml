@@ -1,25 +1,26 @@
 <Window x:Class="Fakunator.Views.PmtaPanelEditDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="PMTA-панель" Width="520" SizeToContent="Height"
+        xmlns:core="clr-namespace:Fakunator.Core"
+        Title="{core:Tr pmta.panelEditDialog.windowTitle}" Width="520" SizeToContent="Height"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
         Background="{DynamicResource Bg1Brush}">
     <StackPanel Margin="24">
-        <TextBlock x:Name="TxtHeader" Text="Добавить PMTA-панель" FontSize="17" FontWeight="SemiBold"
+        <TextBlock x:Name="TxtHeader" Text="{core:Tr pmta.panelEditDialog.headingAdd}" FontSize="17" FontWeight="SemiBold"
                    Foreground="{DynamicResource Fg1Brush}" Margin="0,0,0,4"/>
-        <TextBlock Text="Данные web-monitor'а PowerMTA (порт 8080/1111/etc)"
+        <TextBlock Text="{core:Tr pmta.panelEditDialog.subtitle}"
                    FontSize="11" Foreground="{DynamicResource Fg4Brush}" Margin="0,0,0,18"/>
 
-        <TextBlock Text="НАЗВАНИЕ (для UI)" FontSize="10.5" FontWeight="SemiBold"
+        <TextBlock Text="{core:Tr pmta.panelEditDialog.lblLabel}" FontSize="10.5" FontWeight="SemiBold"
                    Foreground="{DynamicResource Fg3Brush}" Margin="0,0,0,4"/>
         <TextBox x:Name="TbLabel" Height="32" FontSize="12" Padding="10,0"
                  Background="{DynamicResource Bg2Brush}" Foreground="{DynamicResource Fg1Brush}"
                  BorderBrush="{DynamicResource Border1Brush}" BorderThickness="1"
                  VerticalContentAlignment="Center"/>
-        <TextBlock Text="Например «PMTA-1» или «Основная»." FontSize="10"
+        <TextBlock Text="{core:Tr pmta.panelEditDialog.hintLabel}" FontSize="10"
                    Foreground="{DynamicResource Fg4Brush}" Margin="0,4,0,14"/>
 
-        <TextBlock Text="ХОСТ (IP или домен, без схемы)" FontSize="10.5" FontWeight="SemiBold"
+        <TextBlock Text="{core:Tr pmta.panelEditDialog.lblHost}" FontSize="10.5" FontWeight="SemiBold"
                    Foreground="{DynamicResource Fg3Brush}" Margin="0,0,0,4"/>
         <TextBox x:Name="TbHost" Height="32" FontSize="12" Padding="10,0"
                  Background="{DynamicResource Bg2Brush}" Foreground="{DynamicResource Fg1Brush}"
@@ -33,7 +34,7 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0">
-                <TextBlock Text="ПОРТ" FontSize="10.5" FontWeight="SemiBold"
+                <TextBlock Text="{core:Tr pmta.panelEditDialog.lblPort}" FontSize="10.5" FontWeight="SemiBold"
                            Foreground="{DynamicResource Fg3Brush}" Margin="0,0,0,4"/>
                 <TextBox x:Name="TbPort" Text="8080" Height="32" FontSize="12" Padding="10,0"
                          Background="{DynamicResource Bg2Brush}" Foreground="{DynamicResource Fg1Brush}"
@@ -41,7 +42,7 @@
                          VerticalContentAlignment="Center"/>
             </StackPanel>
             <StackPanel Grid.Column="2">
-                <TextBlock Text="ПРОТОКОЛ" FontSize="10.5" FontWeight="SemiBold"
+                <TextBlock Text="{core:Tr pmta.panelEditDialog.lblProtocol}" FontSize="10.5" FontWeight="SemiBold"
                            Foreground="{DynamicResource Fg3Brush}" Margin="0,0,0,4"/>
                 <ComboBox x:Name="CbScheme" Height="32" FontSize="12" Padding="10,0"
                           Background="{DynamicResource Bg2Brush}" Foreground="{DynamicResource Fg1Brush}"
@@ -52,10 +53,10 @@
             </StackPanel>
         </Grid>
 
-        <CheckBox x:Name="CbIgnoreCert" Content="Игнорировать ошибки SSL-сертификата (self-signed)"
+        <CheckBox x:Name="CbIgnoreCert" Content="{core:Tr pmta.panelEditDialog.cbIgnoreCert}"
                   IsChecked="True" Foreground="{DynamicResource Fg2Brush}"
                   FontSize="12" Margin="0,16,0,0"/>
-        <CheckBox x:Name="CbEnabled" Content="Панель включена (мониторинг активен)"
+        <CheckBox x:Name="CbEnabled" Content="{core:Tr pmta.panelEditDialog.cbEnabled}"
                   IsChecked="True" Foreground="{DynamicResource Fg2Brush}"
                   FontSize="12" Margin="0,8,0,0"/>
 
@@ -64,13 +65,13 @@
                    TextWrapping="Wrap"/>
 
         <DockPanel Margin="0,20,0,0" LastChildFill="False">
-            <Button DockPanel.Dock="Left" Content="Проверить подключение"
+            <Button DockPanel.Dock="Left" Content="{core:Tr pmta.panelEditDialog.btnTestConnection}"
                     Padding="14,7" Cursor="Hand" Style="{DynamicResource GhostBtn}"
                     Click="OnTest"/>
-            <Button DockPanel.Dock="Right" Content="Сохранить"
+            <Button DockPanel.Dock="Right" Content="{core:Tr pmta.panelEditDialog.btnSave}"
                     Padding="18,7" MinWidth="110" Cursor="Hand"
                     Style="{DynamicResource AccentBtn}" Click="OnSave"/>
-            <Button DockPanel.Dock="Right" Content="Отмена"
+            <Button DockPanel.Dock="Right" Content="{core:Tr pmta.panelEditDialog.btnCancel}"
                     Padding="14,7" MinWidth="90" Margin="0,0,8,0" Cursor="Hand"
                     Style="{DynamicResource GhostBtn}" Click="OnCancel"/>
         </DockPanel>

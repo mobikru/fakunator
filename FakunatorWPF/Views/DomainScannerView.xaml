@@ -1,6 +1,7 @@
 <UserControl x:Class="Fakunator.Views.DomainScannerView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:core="clr-namespace:Fakunator.Core">
 
     <UserControl.Resources>
         <!-- Общий стиль compact-input (для фильтров/поиска в браузере) -->
@@ -234,7 +235,7 @@
                         <TextBlock x:Name="KpiFetched" Text="0" FontSize="19" FontWeight="Bold"
                                    FontFamily="{StaticResource MonoFont}"
                                    Foreground="{DynamicResource Fg1Brush}"/>
-                        <TextBlock Text="ПОЛУЧЕНО ИЗ API" FontSize="9.5" FontWeight="SemiBold"
+                        <TextBlock Text="{core:Tr domainscanner.kpi.fetched}" FontSize="9.5" FontWeight="SemiBold"
                                    Foreground="{DynamicResource Fg3Brush}"
                                    Margin="0,6,0,0"/>
                     </StackPanel>
@@ -244,7 +245,7 @@
                         <TextBlock x:Name="KpiProcessed" Text="0" FontSize="19" FontWeight="Bold"
                                    FontFamily="{StaticResource MonoFont}"
                                    Foreground="{DynamicResource Fg1Brush}"/>
-                        <TextBlock Text="ПРОВЕРЕНО" FontSize="9.5" FontWeight="SemiBold"
+                        <TextBlock Text="{core:Tr domainscanner.kpi.checked}" FontSize="9.5" FontWeight="SemiBold"
                                    Foreground="{DynamicResource Fg3Brush}"
                                    Margin="0,6,0,0"/>
                     </StackPanel>
@@ -254,7 +255,7 @@
                         <TextBlock x:Name="KpiSaved" Text="0" FontSize="19" FontWeight="Bold"
                                    FontFamily="{StaticResource MonoFont}"
                                    Foreground="#ef4444"/>
-                        <TextBlock Text="БРОШЕННЫХ" FontSize="9.5" FontWeight="SemiBold"
+                        <TextBlock Text="{core:Tr domainscanner.kpi.abandoned}" FontSize="9.5" FontWeight="SemiBold"
                                    Foreground="{DynamicResource Fg3Brush}"
                                    Margin="0,6,0,0"/>
                     </StackPanel>
@@ -264,7 +265,7 @@
                         <TextBlock x:Name="KpiSpeed" Text="0" FontSize="19" FontWeight="Bold"
                                    FontFamily="{StaticResource MonoFont}"
                                    Foreground="{DynamicResource Fg1Brush}"/>
-                        <TextBlock Text="ДОМЕНОВ/СЕК" FontSize="9.5" FontWeight="SemiBold"
+                        <TextBlock Text="{core:Tr domainscanner.kpi.speed}" FontSize="9.5" FontWeight="SemiBold"
                                    Foreground="{DynamicResource Fg3Brush}"
                                    Margin="0,6,0,0"/>
                     </StackPanel>
@@ -274,7 +275,7 @@
                         <TextBlock x:Name="KpiErrors" Text="0" FontSize="19" FontWeight="Bold"
                                    FontFamily="{StaticResource MonoFont}"
                                    Foreground="#f59e0b"/>
-                        <TextBlock Text="ОШИБОК" FontSize="9.5" FontWeight="SemiBold"
+                        <TextBlock Text="{core:Tr domainscanner.kpi.errors}" FontSize="9.5" FontWeight="SemiBold"
                                    Foreground="{DynamicResource Fg3Brush}"
                                    Margin="0,6,0,0"/>
                     </StackPanel>
@@ -284,7 +285,7 @@
                         <TextBlock x:Name="KpiTotal" Text="0" FontSize="19" FontWeight="Bold"
                                    FontFamily="{StaticResource MonoFont}"
                                    Foreground="{DynamicResource Fg1Brush}"/>
-                        <TextBlock Text="ВСЕГО В БАЗЕ" FontSize="9.5" FontWeight="SemiBold"
+                        <TextBlock Text="{core:Tr domainscanner.kpi.totalInDb}" FontSize="9.5" FontWeight="SemiBold"
                                    Foreground="{DynamicResource Fg3Brush}"
                                    Margin="0,6,0,0"/>
                     </StackPanel>
@@ -314,12 +315,12 @@
                             <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
                                 <Ellipse Width="8" Height="8" Fill="#f59e0b"
                                          VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                <TextBlock Text="ЖИВОЙ ПОТОК ОБРАБОТКИ"
+                                <TextBlock Text="{core:Tr domainscanner.liveFeed.title}"
                                            FontSize="10.5" FontWeight="SemiBold"
                                            Foreground="{DynamicResource Fg2Brush}"
                                            VerticalAlignment="Center"/>
                             </StackPanel>
-                            <TextBlock Text="последние 60 сек" DockPanel.Dock="Right"
+                            <TextBlock Text="{core:Tr domainscanner.liveFeed.last60sec}" DockPanel.Dock="Right"
                                        FontSize="10.5"
                                        HorizontalAlignment="Right"
                                        VerticalAlignment="Center"
@@ -336,11 +337,11 @@
                             <ColumnDefinition Width="220"/>
                             <ColumnDefinition Width="120"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="ДОМЕН" FontSize="9.5"
+                        <TextBlock Grid.Column="0" Text="{core:Tr domainscanner.colDomain}" FontSize="9.5"
                                    Foreground="{DynamicResource Fg4Brush}" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Column="1" Text="NS-ПРОВАЙДЕР" FontSize="9.5"
+                        <TextBlock Grid.Column="1" Text="{core:Tr domainscanner.colNsProvider}" FontSize="9.5"
                                    Foreground="{DynamicResource Fg4Brush}" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Column="2" Text="СТАТУС" FontSize="9.5"
+                        <TextBlock Grid.Column="2" Text="{core:Tr domainscanner.liveFeed.colStatus}" FontSize="9.5"
                                    Foreground="{DynamicResource Fg4Brush}" FontWeight="SemiBold"
                                    HorizontalAlignment="Right"/>
                     </Grid>
@@ -368,20 +369,32 @@
                                                Foreground="{DynamicResource Fg1Brush}"
                                                TextTrimming="CharacterEllipsis"/>
                                     <TextBlock Grid.Column="1" FontSize="11.5"
-                                               Text="{Binding NsProvider, Converter={StaticResource ProviderOrDead}}"
                                                Foreground="{DynamicResource Fg2Brush}"
-                                               TextTrimming="CharacterEllipsis"/>
+                                               TextTrimming="CharacterEllipsis">
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{StaticResource ProviderOrDead}">
+                                                <Binding Path="NsProvider"/>
+                                                <Binding Path="[domainscanner.liveFeed.noResponse]" Source="{x:Static core:Loc.Instance}"/>
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
                                     <TextBlock Grid.Column="2" FontSize="11.5" FontWeight="SemiBold"
                                                HorizontalAlignment="Right"
-                                               Text="{Binding Status, Converter={StaticResource StatusRu}}"
-                                               Foreground="{Binding Status, Converter={StaticResource StatusColor}}"/>
+                                               Foreground="{Binding Status, Converter={StaticResource StatusColor}}">
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{StaticResource StatusRu}">
+                                                <Binding Path="Status"/>
+                                                <Binding Path="[domainscanner.liveFeed.colStatus]" Source="{x:Static core:Loc.Instance}"/>
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
                     <TextBlock x:Name="TxtFeedPlaceholder"
-                               Text="ожидание запуска" FontSize="11.5"
+                               Text="{core:Tr domainscanner.liveFeed.waiting}" FontSize="11.5"
                                Foreground="{DynamicResource Fg4Brush}"
                                HorizontalAlignment="Center" Margin="0,20,0,10"/>
                     </StackPanel>  <!-- FeedContent -->
@@ -395,20 +408,19 @@
                 <DockPanel LastChildFill="True">
                     <DockPanel DockPanel.Dock="Top" Margin="0,0,0,14">
                         <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="БРАУЗЕР ДОМЕНОВ" FontSize="10.5" FontWeight="SemiBold"
+                            <TextBlock Text="{core:Tr domainscanner.browser.title}" FontSize="10.5" FontWeight="SemiBold"
                                        Foreground="{DynamicResource Fg2Brush}"
                                        VerticalAlignment="Center"/>
                             <TextBlock x:Name="TxtBrowserCount" Margin="12,0,0,0"
                                        VerticalAlignment="Center"
                                        FontSize="10.5"
-                                       Foreground="{DynamicResource Fg4Brush}"
-                                       Text="0 записей"/>
+                                       Foreground="{DynamicResource Fg4Brush}"/>
                         </StackPanel>
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
                                     HorizontalAlignment="Right">
-                            <Button Content="↻ Проверить заново" Style="{StaticResource ToolBtn}"
+                            <Button Content="{core:Tr domainscanner.browser.btnReverify}" Style="{StaticResource ToolBtn}"
                                     Command="{Binding ReverifyCommand}"/>
-                            <Button Content="⤓ Экспорт .txt" Style="{StaticResource ToolBtn}"
+                            <Button Content="{core:Tr domainscanner.browser.btnExport}" Style="{StaticResource ToolBtn}"
                                     Margin="8,0,0,0"
                                     Command="{Binding ExportCommand}"/>
                         </StackPanel>
@@ -416,11 +428,11 @@
 
                     <!-- Filters row -->
                     <DockPanel DockPanel.Dock="Top" Margin="0,0,0,14">
-                        <Button DockPanel.Dock="Right" Content="Сбросить"
+                        <Button DockPanel.Dock="Right" Content="{core:Tr domainscanner.browser.btnReset}"
                                 Style="{StaticResource ResetBtn}"
                                 Margin="8,0,0,0"
                                 Command="{Binding ResetFiltersCommand}"/>
-                        <Button DockPanel.Dock="Right" Content="Применить"
+                        <Button DockPanel.Dock="Right" Content="{core:Tr domainscanner.browser.btnApply}"
                                 Style="{StaticResource ApplyBtn}"
                                 Command="{Binding ApplyFiltersCommand}"/>
                         <StackPanel Orientation="Horizontal">
@@ -444,7 +456,7 @@
                                            Foreground="{DynamicResource Fg4Brush}"
                                            FontSize="11.5"
                                            Margin="10,0,0,0" VerticalAlignment="Center"
-                                           Text="ns1.r">
+                                           Text="{core:Tr domainscanner.browser.nsHostPlaceholder}">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -466,7 +478,7 @@
                                            Foreground="{DynamicResource Fg4Brush}"
                                            FontSize="11.5"
                                            Margin="10,0,0,0" VerticalAlignment="Center"
-                                           Text="поиск по имени">
+                                           Text="{core:Tr domainscanner.browser.searchPlaceholder}">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -492,17 +504,17 @@
                             <ColumnDefinition Width="100"/>
                             <ColumnDefinition Width="120"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="ДОМЕН" FontSize="9.5"
+                        <TextBlock Grid.Column="0" Text="{core:Tr domainscanner.colDomain}" FontSize="9.5"
                                    Foreground="{DynamicResource Fg4Brush}" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Column="1" Text="ЗОНА" FontSize="9.5"
+                        <TextBlock Grid.Column="1" Text="{core:Tr domainscanner.browser.colZone}" FontSize="9.5"
                                    Foreground="{DynamicResource Fg4Brush}" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Column="2" Text="NS-ПРОВАЙДЕР" FontSize="9.5"
+                        <TextBlock Grid.Column="2" Text="{core:Tr domainscanner.colNsProvider}" FontSize="9.5"
                                    Foreground="{DynamicResource Fg4Brush}" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Column="3" Text="ВОЗРАСТ" FontSize="9.5"
+                        <TextBlock Grid.Column="3" Text="{core:Tr domainscanner.browser.colAge}" FontSize="9.5"
                                    Foreground="{DynamicResource Fg4Brush}" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Column="4" Text="ОСТАЛОСЬ" FontSize="9.5"
+                        <TextBlock Grid.Column="4" Text="{core:Tr domainscanner.browser.colDaysLeft}" FontSize="9.5"
                                    Foreground="{DynamicResource Fg4Brush}" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Column="5" Text="RBL" FontSize="9.5"
+                        <TextBlock Grid.Column="5" Text="{core:Tr domainscanner.browser.colRbl}" FontSize="9.5"
                                    Foreground="{DynamicResource Fg4Brush}" FontWeight="SemiBold"/>
                     </Grid>
                     <Border DockPanel.Dock="Top" Height="1"
@@ -511,21 +523,21 @@
                     <!-- Pagination footer прикреплён к низу — ставим ПЕРЕД BrowserList -->
                     <DockPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
                         <TextBlock DockPanel.Dock="Right" FontSize="10.5"
-                                   Text="Никаких SMTP-проверок — только DNS и локальные правила"
+                                   Text="{core:Tr domainscanner.browser.footerNote}"
                                    Foreground="{DynamicResource Fg4Brush}"
                                    HorizontalAlignment="Right"
                                    VerticalAlignment="Center"/>
                         <StackPanel Orientation="Horizontal">
-                            <Button Content="← Назад" Style="{StaticResource ToolBtn}"
+                            <Button Content="{core:Tr domainscanner.browser.btnPrev}" Style="{StaticResource ToolBtn}"
                                     Command="{Binding PrevPageCommand}"/>
                             <TextBlock Margin="14,0,14,0" VerticalAlignment="Center" FontSize="11.5"
                                        Foreground="{DynamicResource Fg2Brush}">
-                                <Run Text="стр. "/>
+                                <Run Text="{core:Tr domainscanner.browser.pagePrefix}"/>
                                 <Run Text="{Binding BrowserPage}"/>
-                                <Run Text=" из "/>
+                                <Run Text="{core:Tr domainscanner.browser.pageOf}"/>
                                 <Run Text="{Binding BrowserTotalPages, Mode=OneWay}"/>
                             </TextBlock>
-                            <Button Content="Вперёд →" Style="{StaticResource ToolBtn}"
+                            <Button Content="{core:Tr domainscanner.browser.btnNext}" Style="{StaticResource ToolBtn}"
                                     Command="{Binding NextPageCommand}"/>
                         </StackPanel>
                     </DockPanel>

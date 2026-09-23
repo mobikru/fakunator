@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using Fakunator.Core;
 using Fakunator.ViewModels;
 
 namespace Fakunator.Views;
@@ -10,11 +11,16 @@ namespace Fakunator.Views;
 public partial class SidebarAnalyzeView : UserControl
 {
     private bool _syncing;
+    private AnalyzeViewModel? _vm;
 
     public SidebarAnalyzeView()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        Loc.Instance.LanguageChanged += (_, _) =>
+        {
+            if (_vm != null) SyncFromVm(_vm);
+        };
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -24,6 +30,7 @@ public partial class SidebarAnalyzeView : UserControl
 
         if (e.NewValue is AnalyzeViewModel vm)
         {
+            _vm = vm;
             vm.PropertyChanged += OnVmPropertyChanged;
             SyncFromVm(vm);
         }
@@ -62,9 +69,9 @@ public partial class SidebarAnalyzeView : UserControl
             if (ProviderModels.TryGetValue(providerLower, out var models))
             {
                 TxtMiniName.Text = models.mini;
-                TxtMiniPrice.Text = models.miniPrice;
+                TxtMiniPrice.Text = FormatPrice(models.miniPriceIn, models.miniPriceOut);
                 TxtFullName.Text = models.full;
-                TxtFullPrice.Text = models.fullPrice;
+                TxtFullPrice.Text = FormatPrice(models.fullPriceIn, models.fullPriceOut);
 
                 // Choose which radio is checked from vm.Model.
                 // If vm.Model matches neither card (stale value from older versions),
@@ -120,18 +127,21 @@ public partial class SidebarAnalyzeView : UserControl
     private void UpdateEstimate(AnalyzeViewModel vm)
     {
         var (cost, tokIn, tokOut, capped) = vm.EstimateBudget();
-        TxtEstCost.Text = capped ? $"≤ $ {cost:F2}" : $"~$ {cost:F2}";
-        var capNote = capped ? "  (упёрся в лимит)" : "";
-        TxtEstTokens.Text = $"~{tokIn:N0} вх. токенов · ~{tokOut:N0} вых. токенов{capNote}";
+        TxtEstCost.Text = string.Format(Loc.T(capped ? "analyze.sidebar.estCostCapped" : "analyze.sidebar.estCostNormal"), cost);
+        var capNote = capped ? Loc.T("analyze.sidebar.estCappedNote") : "";
+        TxtEstTokens.Text = string.Format(Loc.T("analyze.sidebar.estTokens"), tokIn, tokOut, capNote);
     }
 
     // ── Settings handlers ───────────────────────────────────────────
 
-    private static readonly Dictionary<string, (string mini, string miniPrice, string full, string fullPrice)> ProviderModels = new()
+    private static readonly Dictionary<string, (string mini, string miniPriceIn, string miniPriceOut, string full, string fullPriceIn, string fullPriceOut)> ProviderModels = new()
     {
-        ["openai"] = ("gpt-4o-mini", "$0.15/M вход · $0.60/M выход", "gpt-4o", "$2.50/M вход · $10.0/M выход"),
-        ["anthropic"] = ("claude-haiku-4-5", "$0.80/M вход · $4.00/M выход", "claude-sonnet-4-5", "$3.00/M вход · $15.0/M выход"),
+        ["openai"] = ("gpt-4o-mini", "$0.15", "$0.60", "gpt-4o", "$2.50", "$10.0"),
+        ["anthropic"] = ("claude-haiku-4-5", "$0.80", "$4.00", "claude-sonnet-4-5", "$3.00", "$15.0"),
     };
+
+    private static string FormatPrice(string priceIn, string priceOut) =>
+        string.Format(Loc.T("analyze.sidebar.priceFormat"), priceIn, priceOut);
 
     private void OnProviderChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -145,9 +155,9 @@ public partial class SidebarAnalyzeView : UserControl
         if (ProviderModels.TryGetValue(provider, out var models))
         {
             TxtMiniName.Text = models.mini;
-            TxtMiniPrice.Text = models.miniPrice;
+            TxtMiniPrice.Text = FormatPrice(models.miniPriceIn, models.miniPriceOut);
             TxtFullName.Text = models.full;
-            TxtFullPrice.Text = models.fullPrice;
+            TxtFullPrice.Text = FormatPrice(models.fullPriceIn, models.fullPriceOut);
             RbMini.IsChecked = true;
             // ApplyModelCardVisuals will run via OnModelChanged
         }

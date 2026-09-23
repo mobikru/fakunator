@@ -1,13 +1,14 @@
 <UserControl x:Class="Fakunator.Views.SidebarCleanupView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:controls="clr-namespace:Fakunator.Controls">
+             xmlns:controls="clr-namespace:Fakunator.Controls"
+             xmlns:core="clr-namespace:Fakunator.Core">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="12,14">
 
             <!-- ══ Section 1: КАТЕГОРИИ ══════════════════════════ -->
-            <TextBlock Text="КАТЕГОРИИ" FontSize="10" FontWeight="SemiBold"
+            <TextBlock Text="{core:Tr cleanup.sidebar.categories}" FontSize="10" FontWeight="SemiBold"
                        Foreground="{DynamicResource Fg3Brush}" Margin="0,0,0,8">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
@@ -41,7 +42,7 @@
             <Border Height="16"/>
 
             <!-- ══ Section 2: ЧЁРНЫЕ СПИСКИ ══════════════════════ -->
-            <TextBlock Text="ЧЁРНЫЕ СПИСКИ" FontSize="10" FontWeight="SemiBold"
+            <TextBlock Text="{core:Tr cleanup.sidebar.blacklists}" FontSize="10" FontWeight="SemiBold"
                        Foreground="{DynamicResource Fg3Brush}" Margin="0,0,0,8">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
@@ -59,13 +60,13 @@
                         <TextBlock DockPanel.Dock="Right" Text="197 957"
                                    Foreground="{DynamicResource Fg3Brush}" FontSize="12"
                                    VerticalAlignment="Center"/>
-                        <TextBlock Text="Одноразовые сервисы" FontWeight="SemiBold" FontSize="12.5"
+                        <TextBlock Text="{core:Tr cleanup.sidebar.disposableTitle}" FontWeight="SemiBold" FontSize="12.5"
                                    VerticalAlignment="Center"/>
                     </DockPanel>
-                    <TextBlock Text="Mailinator, 10minutemail и аналоги"
+                    <TextBlock Text="{core:Tr cleanup.sidebar.disposableDesc}"
                                Foreground="{DynamicResource Fg4Brush}" FontSize="11"
                                Margin="16,4,0,4"/>
-                    <TextBlock Text="Открыть файл →" Foreground="{DynamicResource AccentBrush}"
+                    <TextBlock Text="{core:Tr cleanup.sidebar.openFile}" Foreground="{DynamicResource AccentBrush}"
                                FontSize="11" Cursor="Hand" Margin="16,0,0,0"
                                MouseLeftButtonDown="OnOpenBlacklistFile" Tag="disposable"/>
                 </StackPanel>
@@ -80,13 +81,13 @@
                         <TextBlock DockPanel.Dock="Right" Text="59"
                                    Foreground="{DynamicResource Fg3Brush}" FontSize="12"
                                    VerticalAlignment="Center"/>
-                        <TextBlock Text="Спам-ловушки" FontWeight="SemiBold" FontSize="12.5"
+                        <TextBlock Text="{core:Tr cleanup.sidebar.trapTitle}" FontWeight="SemiBold" FontSize="12.5"
                                    VerticalAlignment="Center"/>
                     </DockPanel>
-                    <TextBlock Text="Honeypot и trap-домены"
+                    <TextBlock Text="{core:Tr cleanup.sidebar.trapDesc}"
                                Foreground="{DynamicResource Fg4Brush}" FontSize="11"
                                Margin="16,4,0,4"/>
-                    <TextBlock Text="Открыть файл →" Foreground="{DynamicResource AccentBrush}"
+                    <TextBlock Text="{core:Tr cleanup.sidebar.openFile}" Foreground="{DynamicResource AccentBrush}"
                                FontSize="11" Cursor="Hand" Margin="16,0,0,0"
                                MouseLeftButtonDown="OnOpenBlacklistFile" Tag="trap"/>
                 </StackPanel>
@@ -101,13 +102,13 @@
                         <TextBlock DockPanel.Dock="Right" Text="188"
                                    Foreground="{DynamicResource Fg3Brush}" FontSize="12"
                                    VerticalAlignment="Center"/>
-                        <TextBlock Text="Ролевые префиксы" FontWeight="SemiBold" FontSize="12.5"
+                        <TextBlock Text="{core:Tr cleanup.sidebar.roleTitle}" FontWeight="SemiBold" FontSize="12.5"
                                    VerticalAlignment="Center"/>
                     </DockPanel>
-                    <TextBlock Text="info, support, admin, sales, ..."
+                    <TextBlock Text="{core:Tr cleanup.sidebar.roleDesc}"
                                Foreground="{DynamicResource Fg4Brush}" FontSize="11"
                                Margin="16,4,0,4"/>
-                    <TextBlock Text="Открыть файл →" Foreground="{DynamicResource AccentBrush}"
+                    <TextBlock Text="{core:Tr cleanup.sidebar.openFile}" Foreground="{DynamicResource AccentBrush}"
                                FontSize="11" Cursor="Hand" Margin="16,0,0,0"
                                MouseLeftButtonDown="OnOpenBlacklistFile" Tag="role"/>
                 </StackPanel>
@@ -122,20 +123,20 @@
                         <TextBlock DockPanel.Dock="Right" Text="962"
                                    Foreground="{DynamicResource Fg3Brush}" FontSize="12"
                                    VerticalAlignment="Center"/>
-                        <TextBlock Text="Whitelist (allow-list)" FontWeight="SemiBold" FontSize="12.5"
+                        <TextBlock Text="{core:Tr cleanup.sidebar.whitelistTitle}" FontWeight="SemiBold" FontSize="12.5"
                                    VerticalAlignment="Center"/>
                     </DockPanel>
-                    <TextBlock Text="Заведомо легитимные провайдеры, override-safeguard"
+                    <TextBlock Text="{core:Tr cleanup.sidebar.whitelistDesc}"
                                Foreground="{DynamicResource Fg4Brush}" FontSize="11"
                                Margin="16,4,0,4" TextWrapping="Wrap"/>
-                    <TextBlock Text="Открыть файл →" Foreground="{DynamicResource AccentBrush}"
+                    <TextBlock Text="{core:Tr cleanup.sidebar.openFile}" Foreground="{DynamicResource AccentBrush}"
                                FontSize="11" Cursor="Hand" Margin="16,0,0,0"
                                MouseLeftButtonDown="OnOpenBlacklistFile" Tag="whitelist"/>
                 </StackPanel>
             </Border>
 
             <!-- Refresh button -->
-            <Button x:Name="BtnRefreshGitHub" Content="↻ Обновить из GitHub"
+            <Button x:Name="BtnRefreshGitHub" Content="{core:Tr cleanup.sidebar.refreshGithub}"
                     Style="{StaticResource GhostBtn}"
                     HorizontalAlignment="Stretch" Margin="0,4,0,0"
                     Click="OnRefreshFromGitHub"/>
@@ -150,7 +151,7 @@
             <Border Height="16"/>
 
             <!-- ══ Section 3: ДОП. ПРОВЕРКИ ══════════════════════ -->
-            <TextBlock Text="ДОП. ПРОВЕРКИ" FontSize="10" FontWeight="SemiBold"
+            <TextBlock Text="{core:Tr cleanup.sidebar.extraChecks}" FontSize="10" FontWeight="SemiBold"
                        Foreground="{DynamicResource Fg3Brush}" Margin="0,0,0,8">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
@@ -164,8 +165,8 @@
                                        VerticalAlignment="Center" Margin="8,0,0,0"
                                        Toggled="OnSpamhausToggled"/>
                 <StackPanel VerticalAlignment="Center">
-                    <TextBlock Text="Spamhaus DBL" FontSize="12.5" FontWeight="SemiBold"/>
-                    <TextBlock Text="DNS blacklist доменов" FontSize="11"
+                    <TextBlock Text="{core:Tr cleanup.sidebar.spamhausTitle}" FontSize="12.5" FontWeight="SemiBold"/>
+                    <TextBlock Text="{core:Tr cleanup.sidebar.spamhausDesc}" FontSize="11"
                                Foreground="{DynamicResource Fg3Brush}"/>
                 </StackPanel>
             </DockPanel>
@@ -174,7 +175,7 @@
             <Border Height="16"/>
 
             <!-- ══ Footer ════════════════════════════════════════ -->
-            <TextBlock Text="ℹ Никаких SMTP/MX-проверок — только локальные правила"
+            <TextBlock Text="{core:Tr cleanup.sidebar.footer}"
                        FontSize="10.5" Foreground="{DynamicResource Fg4Brush}"
                        TextWrapping="Wrap" Margin="0,0,0,8"/>
 

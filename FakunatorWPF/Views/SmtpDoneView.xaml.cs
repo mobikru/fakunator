@@ -14,10 +14,16 @@ namespace Fakunator.Views;
 
 public partial class SmtpDoneView : UserControl
 {
+    private SmtpViewModel? _vm;
+
     public SmtpDoneView()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        Loc.Instance.LanguageChanged += (_, _) =>
+        {
+            if (_vm?.State == SmtpViewModel.SmtpState.Done) PopulateFromSnapshot(_vm);
+        };
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -27,6 +33,7 @@ public partial class SmtpDoneView : UserControl
 
         if (e.NewValue is SmtpViewModel vm)
         {
+            _vm = vm;
             vm.PropertyChanged += OnVmPropertyChanged;
             if (vm.State == SmtpViewModel.SmtpState.Done)
                 PopulateFromSnapshot(vm);
@@ -47,9 +54,9 @@ public partial class SmtpDoneView : UserControl
         {
             // Защита от stale UI при отмене с нулевым прогрессом.
             HeroElapsed.Text = "00:00";
-            HeroSpeed.Text = "0/с";
+            HeroSpeed.Text = string.Format(Loc.T("unit.perSecN1"), 0);
             HeroTotal.Text = "0";
-            TxtSubtitle.Text = "Прогон отменён до старта";
+            TxtSubtitle.Text = Loc.T("smtp.done.cancelledSubtitle");
             VerdictPanel.Children.Clear();
             BtnErrors.Visibility = Visibility.Collapsed;
             return;
@@ -61,13 +68,13 @@ public partial class SmtpDoneView : UserControl
             ? ts.ToString(@"h\:mm\:ss")
             : ts.ToString(@"mm\:ss");
 
-        HeroSpeed.Text = $"{snap.Speed:N1}/с";
+        HeroSpeed.Text = string.Format(Loc.T("unit.perSecN1"), snap.Speed);
         HeroTotal.Text = snap.Total.ToString("N0");
 
         // Subtitle
         int validCount = snap.Counts.TryGetValue(Verdicts.Valid, out var vc) ? vc : 0;
         double validPct = snap.Total > 0 ? (double)validCount / snap.Total * 100 : 0;
-        TxtSubtitle.Text = $"Из {snap.Total:N0} адресов: {validCount:N0} валидных ({validPct:F1}%)";
+        TxtSubtitle.Text = string.Format(Loc.T("smtp.done.subtitle"), snap.Total, validCount, validPct);
 
         // Build verdict cards
         BuildVerdictCards(snap, vm);
@@ -89,7 +96,7 @@ public partial class SmtpDoneView : UserControl
             int count = snap.Counts.TryGetValue(verdict, out var v) ? v : 0;
             double pct = snap.Total > 0 ? (double)count / snap.Total * 100 : 0;
 
-            string label = Verdicts.Labels.TryGetValue(verdict, out var l) ? l : verdict;
+            string label = Verdicts.Labels.ContainsKey(verdict) ? Loc.T($"smtp.verdict.{verdict}") : verdict;
             string colorHex = Verdicts.Colors.TryGetValue(verdict, out var ch) ? ch : "#71717a";
             var color = ColorFromHex(colorHex);
 
@@ -275,7 +282,7 @@ public partial class SmtpDoneView : UserControl
         if (snap is null) return;
 
         var sb = new StringBuilder();
-        sb.AppendLine($"Последние {snap.RecentErrors.Count} ошибок:");
+        sb.AppendLine(string.Format(Loc.T("smtp.done.errorsHeader"), snap.RecentErrors.Count));
         sb.AppendLine();
         foreach (var err in snap.RecentErrors)
         {
@@ -288,7 +295,7 @@ public partial class SmtpDoneView : UserControl
         var owner = Window.GetWindow(this);
         var win = new Window
         {
-            Title = "Лог ошибок SMTP",
+            Title = Loc.T("smtp.done.errorsWindowTitle"),
             Width = 780, Height = 520,
             Owner = owner,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
@@ -301,7 +308,7 @@ public partial class SmtpDoneView : UserControl
 
         var closeBtn = new Button
         {
-            Content = "Закрыть",
+            Content = Loc.T("smtp.done.btnClose"),
             Padding = new Thickness(20, 6, 20, 6),
             HorizontalAlignment = HorizontalAlignment.Right,
             Margin = new Thickness(0, 12, 0, 0),

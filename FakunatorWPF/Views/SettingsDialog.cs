@@ -494,7 +494,7 @@ public class SettingsDialog : Window
         {
             try
             {
-                var logsDir = Path.Combine(Fakunator.Core.Paths.ExeDir, "_logs");
+                var logsDir = Path.Combine(Fakunator.Core.Paths.AppDataRoot, "_logs");
                 if (!Directory.Exists(logsDir))
                     Directory.CreateDirectory(logsDir);
                 Process.Start(new ProcessStartInfo(logsDir) { UseShellExecute = true });

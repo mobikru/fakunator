@@ -11,7 +11,20 @@ public partial class App : Application
 {
     protected override void OnStartup(StartupEventArgs e)
     {
+        // ДО base.OnStartup — WPF создаёт MainWindow (StartupUri) прямо внутри этого вызова,
+        // а его {core:Tr ...} биндинги уже трогают Config.Current через Loc. Миграция должна
+        // успеть перенести config.json/output/data в %APPDATA%\Fakunator раньше первого чтения.
+        DataMigration.RunIfNeeded();
+
         base.OnStartup(e);
+
+        if (DataMigration.MigratedExistingInstall)
+        {
+            MessageBox.Show(
+                Loc.T("startup.migration.body"),
+                Loc.T("startup.migration.title"),
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
 
         // Глобальные обработчики крашей — записываем stack trace в файл + показываем
         DispatcherUnhandledException += (_, ev) =>

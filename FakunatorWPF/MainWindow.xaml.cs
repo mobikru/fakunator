@@ -76,6 +76,37 @@ public partial class MainWindow : Window
 
         // Restore window geometry + theme from config
         RestoreFromConfig();
+
+        UpdateLangSwitchVisual();
+    }
+
+    // ── Language switch (RU/EN flags) ────────────────────────────────
+
+    private void OnLangButtonClick(object sender, RoutedEventArgs e)
+    {
+        LangPopup.IsOpen = !LangPopup.IsOpen;
+    }
+
+    private void OnLangRuClick(object sender, RoutedEventArgs e)
+    {
+        Loc.Instance.Language = "ru";
+        UpdateLangSwitchVisual();
+        LangPopup.IsOpen = false;
+    }
+
+    private void OnLangEnClick(object sender, RoutedEventArgs e)
+    {
+        Loc.Instance.Language = "en";
+        UpdateLangSwitchVisual();
+        LangPopup.IsOpen = false;
+    }
+
+    private void UpdateLangSwitchVisual()
+    {
+        bool isRu = Loc.Instance.Language == "ru";
+        IconLangCurrent.Country = isRu ? "ru" : "gb";
+        TxtLangRuCheck.Visibility = isRu ? Visibility.Visible : Visibility.Collapsed;
+        TxtLangEnCheck.Visibility = isRu ? Visibility.Collapsed : Visibility.Visible;
     }
 
     // ── Keyboard handlers ────────────────────────────────────────────

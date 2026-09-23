@@ -2,6 +2,7 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using Fakunator.Core;
 using Fakunator.ViewModels;
 using Microsoft.Win32;
 
@@ -71,7 +72,7 @@ public partial class CleanupIdleView : UserControl
     {
         var dlg = new OpenFileDialog
         {
-            Title = "Выберите файл с email-адресами",
+            Title = Loc.T("cleanup.idle.dialogTitle"),
             Filter = "Text files|*.txt;*.csv;*.tsv|All files|*.*",
             CheckFileExists = true
         };

@@ -22,14 +22,22 @@ public partial class CleanupRunningView : UserControl
         "role", "disposable", "corporate", "typo"
     ];
 
-    private readonly Dictionary<string, (TextBlock Count, TextBlock Pct)> _counterCards = new();
+    private readonly Dictionary<string, (TextBlock Label, TextBlock Count, TextBlock Pct)> _counterCards = new();
     private readonly List<UIElement> _feedRows = new();
+    private CleanupViewModel? _vm;
 
     public CleanupRunningView()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
         BuildCounterCards();
+        Loc.Instance.LanguageChanged += (_, _) =>
+        {
+            foreach (var cat in CounterCategories)
+                if (_counterCards.TryGetValue(cat, out var refs))
+                    refs.Label.Text = Loc.T($"cat.{cat}");
+            if (_vm != null) UpdateFromSnapshot(_vm.CurrentSnapshot, _vm);
+        };
     }
 
     // ── DataContext wiring ────────────────────────────────────────────
@@ -43,6 +51,7 @@ public partial class CleanupRunningView : UserControl
 
         if (e.NewValue is CleanupViewModel vm)
         {
+            _vm = vm;
             vm.PropertyChanged += OnViewModelPropertyChanged;
             Sparkline.Clear();
             FeedPanel.Children.Clear();
@@ -68,8 +77,8 @@ public partial class CleanupRunningView : UserControl
         if (snap is null)
         {
             TxtPercent.Text = "0.0%";
-            TxtProcessed.Text = "0 / 0 обработано";
-            TxtSpeed.Text = "скорость 0/с";
+            TxtProcessed.Text = string.Format(Loc.T("cleanup.running.processed"), 0, 0);
+            TxtSpeed.Text = string.Format(Loc.T("cleanup.running.speed"), 0);
             KpiProcessed.Text = "0";
             KpiClean.Text = "0";
             KpiRejected.Text = "0";
@@ -86,8 +95,8 @@ public partial class CleanupRunningView : UserControl
 
         double pct = snap.Total > 0 ? (double)snap.Processed / snap.Total * 100 : 0;
         TxtPercent.Text = $"{pct:F1}%";
-        TxtProcessed.Text = $"{snap.Processed:N0} / {snap.Total:N0} обработано";
-        TxtSpeed.Text = $"скорость {snap.Speed:N0}/с";
+        TxtProcessed.Text = string.Format(Loc.T("cleanup.running.processed"), snap.Processed, snap.Total);
+        TxtSpeed.Text = string.Format(Loc.T("cleanup.running.speed"), snap.Speed);
 
         // Progress bar: calculate width relative to parent track
         var trackBorder = ProgressFill.Parent as FrameworkElement;
@@ -110,7 +119,7 @@ public partial class CleanupRunningView : UserControl
         int rejected = snap.Processed - cleanCount;
         KpiRejected.Text = rejected.ToString("N0");
 
-        KpiSpeed.Text = $"{snap.Speed:N0}/с";
+        KpiSpeed.Text = string.Format(Loc.T("unit.perSecShort"), snap.Speed);
 
         var ts = TimeSpan.FromSeconds(snap.Elapsed);
         KpiElapsed.Text = ts.TotalHours >= 1
@@ -147,7 +156,7 @@ public partial class CleanupRunningView : UserControl
             var count = kv.Value;
 
             var colorHex = Tokens.ProviderColors.TryGetValue(key, out var ch) ? ch : "#64748b";
-            var label = Tokens.ProviderLabels.TryGetValue(key, out var lb) ? lb : key;
+            var label = Tokens.ProviderColors.ContainsKey(key) ? Loc.T($"provider.{key}") : key;
             var color = ColorFromHex(colorHex);
 
             var row = new DockPanel { Margin = new Thickness(0, 0, 0, 6) };
@@ -218,7 +227,7 @@ public partial class CleanupRunningView : UserControl
     private UIElement BuildFeedRow(string email, string category)
     {
         var colorHex = Tokens.CategoryColors.TryGetValue(category, out var ch) ? ch : "#71717a";
-        var label = Tokens.CategoryLabels.TryGetValue(category, out var lb) ? lb : category;
+        var label = Tokens.CategoryColors.ContainsKey(category) ? Loc.T($"cat.{category}") : category;
         var catColor = ColorFromHex(colorHex);
 
         var row = new DockPanel { Margin = new Thickness(0, 0, 0, 3) };
@@ -268,7 +277,7 @@ public partial class CleanupRunningView : UserControl
         foreach (var cat in CounterCategories)
         {
             var colorHex = Tokens.CategoryColors.TryGetValue(cat, out var ch) ? ch : "#71717a";
-            var label = Tokens.CategoryLabels.TryGetValue(cat, out var lb) ? lb : cat;
+            var label = Loc.T($"cat.{cat}");
             var catColor = ColorFromHex(colorHex);
 
             // Outer border (Card style applied manually so we can add the stripe)
@@ -339,7 +348,7 @@ public partial class CleanupRunningView : UserControl
             card.Child = innerStack;
             CounterGrid.Children.Add(card);
 
-            _counterCards[cat] = (countTb, pctTb);
+            _counterCards[cat] = (labelTb, countTb, pctTb);
         }
     }
 

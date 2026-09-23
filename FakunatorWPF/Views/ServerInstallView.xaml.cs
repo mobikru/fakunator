@@ -32,6 +32,16 @@ public partial class ServerInstallView : UserControl
     private readonly DnsTrustVm _dnsVm = new();
     private bool _userCancelledInstall;
 
+    // ── Кешированное состояние для безопасного пересчёта локализованного текста на LanguageChanged:
+    // никогда не переоткрываем SSH/не перезапрашиваем статус установки заново, только форматируем
+    // уже известные значения (см. RefreshStaticLocalizedText()). ──
+    private enum InstallUiState { Idle, Running, Success, Cancelled, Failed }
+    private InstallUiState _installUiState = InstallUiState.Idle;
+    private ServerConfig? _lastInstallSrv;
+    private TimeSpan _lastInstallDuration;
+    private ServerConfig? _lastTailSrv;
+    private string? _lastTailPath;
+
     // ── Дефолтные ссылки на пакеты. Поля "Ссылки на пакеты" в UI показывают
     // макрос %default_url% вместо самого URL (чтобы не светить наши ссылки) —
     // если юзер его не заменил своей ссылкой, при установке подставляется значение отсюда. ──
@@ -117,6 +127,88 @@ public partial class ServerInstallView : UserControl
                 OnNewInstallClick(this, new RoutedEventArgs());
             }
         };
+
+        // При смене языка НИКАКИХ повторных SSH-вызовов/переоткрытий сессии и никаких повторных
+        // preflight/install запросов — только пересчёт уже выставленного текста из закешированного
+        // состояния (см. RefreshStaticLocalizedText()). Живой лог установки (AppendLog/AppendTailLine)
+        // не трогаем — прошлые строки остаются на языке, на котором были получены, это ожидаемо.
+        Loc.Instance.LanguageChanged += (_, _) => RefreshStaticLocalizedText();
+    }
+
+    /// <summary>Пересчитывает статичные (не забинженные напрямую в XAML) текстовые подписи экрана
+    /// «Установка / настройка» из уже известного локального состояния — вызывается на
+    /// Loc.Instance.LanguageChanged. НЕ переоткрывает SSH, НЕ перезапускает preflight/install/tail,
+    /// не трогает уже написанные строки живого лога (AppendLog/AppendTailLine).</summary>
+    private void RefreshStaticLocalizedText()
+    {
+        // Шаг-индикатор и кнопки навигации — чистые функции от _wizardStep/_installingServerId.
+        UpdateWizardUi();
+        // Счётчики preflight — чистая функция от уже накопленной коллекции _preflight.
+        UpdatePreflightSummary();
+
+        // "Текущий компонент": если сейчас идёт активная фаза — переформатируем из уже известного
+        // chip'а; иначе, если установка ещё не запускалась в этой сессии — дефолтные подписи.
+        var activeChip = _phaseChips.FirstOrDefault(c => c.State == PhaseChipState.Active);
+        if (activeChip != null) UpdateCurrentComponent(activeChip);
+        else if (_installUiState == InstallUiState.Idle)
+        {
+            TxtCurrentName.Text = Loc.T("servers.wizard.install.currentDefaultName");
+            TxtCurrentDesc.Text = Loc.T("servers.wizard.install.currentDefaultDesc");
+        }
+        if (_phaseChips.Count > 0) UpdateProgress();
+
+        // Заголовок/подзаголовок/статус подвала Step 3 — по кешированному исходу установки.
+        switch (_installUiState)
+        {
+            case InstallUiState.Running:
+                TxtInstallHeader.Text = Loc.T("servers.wizard.install.headerRunning");
+                TxtInstTitle.Text = Loc.T("servers.wizard.install.title");
+                TxtInstSubtitle.Text = Loc.T("servers.wizard.install.subtitle");
+                TxtFootStatus.Text = _userCancelledInstall
+                    ? Loc.T("servers.wizard.install.footStatusStopping")
+                    : Loc.T("servers.wizard.install.footStatusDefault");
+                break;
+            case InstallUiState.Success:
+                TxtInstallHeader.Text = Loc.T("servers.wizard.install.headerDone");
+                TxtInstTitle.Text = Loc.T("servers.wizard.install.titleDone");
+                TxtFootStatus.Text = Loc.T("servers.wizard.install.footStatusDone");
+                if (_lastInstallSrv != null) PopulateStep4(_lastInstallSrv, true, _lastInstallDuration);
+                break;
+            case InstallUiState.Cancelled:
+                TxtInstallHeader.Text = Loc.T("servers.wizard.install.headerCancelled");
+                TxtInstTitle.Text = Loc.T("servers.wizard.install.titleCancelled");
+                TxtFootStatus.Text = Loc.T("servers.wizard.install.footStatusCancelled");
+                if (_lastInstallSrv != null) PopulateStep4(_lastInstallSrv, false, _lastInstallDuration);
+                break;
+            case InstallUiState.Failed:
+                TxtInstallHeader.Text = string.Format(Loc.T("servers.wizard.install.headerFailedFormat"), _lastInstallDuration.ToString(@"mm\:ss"));
+                TxtInstTitle.Text = Loc.T("servers.wizard.install.titleFailed");
+                TxtFootStatus.Text = Loc.T("servers.wizard.install.footStatusFailed");
+                if (InstallErrorBanner.Visibility == Visibility.Visible)
+                    TxtInstallErrorMsg.Text = _lastErrorText ?? Loc.T("servers.wizard.install.errorUnknown");
+                if (_lastInstallSrv != null) PopulateStep4(_lastInstallSrv, false, _lastInstallDuration);
+                break;
+        }
+
+        // Журнал (collapsible панель) и кнопка отмены — по текущему видимому состоянию, без сети.
+        if (BtnCancelInstall != null) BtnCancelInstall.Content = Loc.T("servers.wizard.install.btnCancel");
+        if (LogPanelBorder != null && BtnToggleLog != null)
+            BtnToggleLog.Content = LogPanelBorder.Visibility == Visibility.Visible
+                ? Loc.T("servers.wizard.install.btnHideLog")
+                : Loc.T("servers.wizard.install.btnShowLog");
+
+        // Live tail (вкладка "Логи") — переформатируем заголовок из уже известного srv/path,
+        // НЕ перезапускаем SSH-туннель.
+        if (_activeTailer != null && _activeTailer.IsRunning && _lastTailSrv != null)
+        {
+            TxtTailHeader.Text = string.Format(Loc.T("servers.logs.headerFormat"), _lastTailSrv.Ip, _lastTailPath);
+            BtnTailToggle.Content = Loc.T("servers.logs.btnStop");
+        }
+        else
+        {
+            TxtTailHeader.Text = Loc.T("servers.logs.notConnected");
+            BtnTailToggle.Content = Loc.T("servers.logs.btnStart");
+        }
     }
 
     private async void OnRefreshDnsClick(object sender, RoutedEventArgs e)
@@ -185,9 +277,9 @@ public partial class ServerInstallView : UserControl
     private void OnSshClick(object sender, RoutedEventArgs e)
     {
         var row = _vm.Selected;
-        if (row == null) { MessageBox.Show("Выбери сервер в таблице слева"); return; }
+        if (row == null) { MessageBox.Show(Loc.T("servers.confirm.selectServer")); return; }
         try { SshLauncher.OpenTerminal(row.Config); }
-        catch (Exception ex) { MessageBox.Show($"Не удалось открыть SSH: {ex.Message}", "SSH", MessageBoxButton.OK, MessageBoxImage.Error); }
+        catch (Exception ex) { MessageBox.Show(string.Format(Loc.T("servers.err.sshOpenFailedFormat"), ex.Message), Loc.T("servers.err.sshTitle"), MessageBoxButton.OK, MessageBoxImage.Error); }
     }
 
     private async void OnRestartServiceClick(object sender, RoutedEventArgs e)
@@ -197,8 +289,8 @@ public partial class ServerInstallView : UserControl
         var svcName = (sender as FrameworkElement)?.Tag as string;
         if (string.IsNullOrEmpty(svcName)) return;
 
-        var res = MessageBox.Show($"Перезапустить сервис '{svcName}' на {row.Name}?",
-            "Restart", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
+        var res = MessageBox.Show(string.Format(Loc.T("servers.confirm.restartServiceBodyFormat"), svcName, row.Name),
+            Loc.T("servers.confirm.restartServiceTitle"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
         if (res != MessageBoxResult.Yes) return;
 
         try
@@ -216,12 +308,12 @@ public partial class ServerInstallView : UserControl
                 return cmd.ExitStatus ?? 0;
             });
             await _vm.PollAllAsync();
-            MessageBox.Show($"Сервис '{svcName}' перезапущен", "Restart", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(string.Format(Loc.T("servers.info.restartServiceOkFormat"), svcName), Loc.T("servers.confirm.restartServiceTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Не удалось перезапустить {svcName}:\n{ex.GetType().Name}: {ex.Message}",
-                "Restart failed", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(string.Format(Loc.T("servers.err.restartServiceFailedFormat"), svcName, ex.GetType().Name, ex.Message),
+                Loc.T("servers.err.restartServiceFailedTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -230,8 +322,8 @@ public partial class ServerInstallView : UserControl
         var row = _vm.Selected;
         if (row == null) return;
         var res = MessageBox.Show(
-            $"Удалить сервер '{row.Name}' из мониторинга?\n(на самом сервере ничего не удалится)",
-            "Удалить сервер",
+            string.Format(Loc.T("servers.confirm.deleteServerBodyFormat"), row.Name),
+            Loc.T("servers.confirm.deleteServerTitle"),
             MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
         if (res != MessageBoxResult.Yes) return;
         _registry.Remove(row.Config.Id);
@@ -370,8 +462,8 @@ public partial class ServerInstallView : UserControl
             {
                 var busyRow = _vm.Rows.FirstOrDefault(r => r.Config.Id == _installingServerId);
                 MessageBox.Show(
-                    $"Уже идёт установка на сервере {busyRow?.Config.Domain ?? "?"}. Дождись её окончания.",
-                    "Установка занята", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    string.Format(Loc.T("servers.confirm.installBusyBodyFormat"), busyRow?.Config.Domain ?? "?"),
+                    Loc.T("servers.confirm.installBusyTitle"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             _wizardStep = 3;
@@ -417,7 +509,7 @@ public partial class ServerInstallView : UserControl
         try { await pf.RunAsync(srv, opts); }
         catch (Exception ex)
         {
-            MessageBox.Show($"Preflight упал: {ex.GetType().Name}: {ex.Message}", "Preflight", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(string.Format(Loc.T("servers.err.preflightCrashedFormat"), ex.GetType().Name, ex.Message), Loc.T("servers.err.preflightCrashedTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
@@ -441,7 +533,7 @@ public partial class ServerInstallView : UserControl
         TxtPreflightOk.Text = ok.ToString();
         TxtPreflightWarn.Text = warn.ToString();
         TxtPreflightFail.Text = fail.ToString();
-        TxtPreflightFailLabel.Text = fail == 1 ? " ошибка" : " ошибок";
+        TxtPreflightFailLabel.Text = fail == 1 ? Loc.T("servers.wizard.verify.failSuffixOne") : Loc.T("servers.wizard.verify.failSuffixMany");
         PreflightSummaryRunning.Visibility = _preflightRunning ? Visibility.Visible : Visibility.Collapsed;
         PreflightSummaryCounts.Visibility = _preflightRunning ? Visibility.Collapsed : Visibility.Visible;
 
@@ -467,8 +559,8 @@ public partial class ServerInstallView : UserControl
         _vm.Selected = _vm.Rows.FirstOrDefault(r => r.Config.Id == srv.Id);
         TabOverview.IsChecked = true;
         MessageBox.Show(
-            $"Сервер {srv.Name} добавлен в мониторинг.\nHealth-статус обновится через 1-2 сек.",
-            "Добавлен",
+            string.Format(Loc.T("servers.info.addedToMonitoringBodyFormat"), srv.Name),
+            Loc.T("servers.info.addedToMonitoringTitle"),
             MessageBoxButton.OK,
             MessageBoxImage.Information);
     }
@@ -499,7 +591,7 @@ public partial class ServerInstallView : UserControl
         UpdateStepSegment(StepSeg2, _wizardStep >= 3);
         UpdateStepSegment(StepSeg3, _wizardStep >= 4);
 
-        TxtWizardStepLabel.Text = $"  Шаг {_wizardStep} из 4";
+        TxtWizardStepLabel.Text = string.Format(Loc.T("servers.wizard.stepLabelFormat"), _wizardStep);
 
         BtnWizBack.IsEnabled = _wizardStep > 1 && _wizardStep != 3;
         BtnRerunPreflight.Visibility = _wizardStep == 2 ? Visibility.Visible : Visibility.Collapsed;
@@ -512,15 +604,15 @@ public partial class ServerInstallView : UserControl
 
         BtnWizNext.Content = _wizardStep switch
         {
-            2 when busyOnOther => "Занято другой установкой",
-            2 => "Начать установку",
-            3 => "…идёт установка",
-            4 => "Готово · закрыть",
-            _ => "Далее"
+            2 when busyOnOther => Loc.T("servers.wizard.nav.busyOtherInstall"),
+            2 => Loc.T("servers.wizard.nav.startInstall"),
+            3 => Loc.T("servers.wizard.nav.installing"),
+            4 => Loc.T("servers.wizard.nav.doneClose"),
+            _ => Loc.T("servers.wizard.nav.next")
         };
         BtnWizNext.IsEnabled = _wizardStep != 3 && !(busyOnOther && _wizardStep == 2);
         BtnWizNext.ToolTip = busyOnOther && _wizardStep == 2
-            ? "Уже идёт установка на другом сервере — дождись её окончания"
+            ? Loc.T("servers.wizard.nav.busyTooltip")
             : null;
     }
 
@@ -705,19 +797,19 @@ public partial class ServerInstallView : UserControl
     {
         bool show = LogPanelBorder.Visibility != Visibility.Visible;
         LogPanelBorder.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
-        BtnToggleLog.Content = show ? "Скрыть журнал" : "Показать журнал";
+        BtnToggleLog.Content = show ? Loc.T("servers.wizard.install.btnHideLog") : Loc.T("servers.wizard.install.btnShowLog");
     }
 
     private void OnCancelInstallClick(object sender, RoutedEventArgs e)
     {
         if (_activeInstaller == null) return;
         var res = MessageBox.Show(
-            "Остановить установку?\nУже установленные компоненты останутся на сервере.",
-            "Отменить установку", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+            Loc.T("servers.confirm.cancelInstallBody"),
+            Loc.T("servers.confirm.cancelInstallTitle"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
         if (res != MessageBoxResult.Yes) return;
 
         _userCancelledInstall = true;
-        TxtFootStatus.Text = "Останавливаем установку…";
+        TxtFootStatus.Text = Loc.T("servers.wizard.install.footStatusStopping");
         BtnCancelInstall.IsEnabled = false;
         _activeInstaller.Cancel();
     }
@@ -729,8 +821,8 @@ public partial class ServerInstallView : UserControl
         {
             var busyRow = _vm.Rows.FirstOrDefault(r => r.Config.Id == _installingServerId);
             MessageBox.Show(
-                $"Уже идёт установка на сервере {busyRow?.Config.Domain ?? "?"}. Дождись её окончания, потом запусти следующую.",
-                "Установка занята", MessageBoxButton.OK, MessageBoxImage.Warning);
+                string.Format(Loc.T("servers.confirm.installBusyBodyNextFormat"), busyRow?.Config.Domain ?? "?"),
+                Loc.T("servers.confirm.installBusyTitle"), MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
         // Если в форме те же IP+Domain что у выбранного сервера — переиспользуем его Id
@@ -747,15 +839,8 @@ public partial class ServerInstallView : UserControl
         if (existing?.Credentials != null && !string.IsNullOrEmpty(existing.Credentials.WebmailUrl))
         {
             var res = MessageBox.Show(
-                $"Сервер {existing.Domain} уже полностью установлен и имеет сохранённые реквизиты доступа " +
-                "(Webmail, PMTA, phpMyAdmin, zTDS, 3proxy, MySQL root).\n\n" +
-                "Если запустить установку снова:\n" +
-                "• Сгенерируются НОВЫЕ пароли и запишутся в servers.json\n" +
-                "• Старые (валидные для уже стоящей системы) будут потеряны\n" +
-                "• Установка скорее всего упадёт на apt install (пакеты уже стоят) — в итоге получишь набор паролей, которые не работают\n\n" +
-                "Продолжить установку?\n" +
-                "(если просто хочешь посмотреть креды — Нет и открой вкладку «📊 Обзор» → «🔑 Реквизиты доступа»)",
-                "Сервер уже установлен", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+                string.Format(Loc.T("servers.confirm.reinstallBodyFormat"), existing.Domain),
+                Loc.T("servers.confirm.reinstallTitle"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
             if (res != MessageBoxResult.Yes) return;
         }
 
@@ -797,16 +882,18 @@ public partial class ServerInstallView : UserControl
         _lastErrorText = null;
         _userCancelledInstall = false;
         InstallErrorBanner.Visibility = Visibility.Collapsed;
-        TxtInstallHeader.Text = "Установка идёт";
-        TxtInstTitle.Text = "Собираем ваш сервер";
-        TxtInstSubtitle.Text = "Устанавливаем и настраиваем необходимые компоненты. Это может занять несколько минут.";
-        TxtLogHeader.Text = $"root@{srv.Ip} — live install log";
-        TxtFootStatus.Text = "Не закрывайте окно до завершения";
+        _installUiState = InstallUiState.Running;
+        _lastInstallSrv = srv;
+        TxtInstallHeader.Text = Loc.T("servers.wizard.install.headerRunning");
+        TxtInstTitle.Text = Loc.T("servers.wizard.install.title");
+        TxtInstSubtitle.Text = Loc.T("servers.wizard.install.subtitle");
+        TxtLogHeader.Text = string.Format(Loc.T("servers.wizard.install.logHeaderFormat"), srv.Ip);
+        TxtFootStatus.Text = Loc.T("servers.wizard.install.footStatusDefault");
         BtnCancelInstall.IsEnabled = true;
-        BtnCancelInstall.Content = "Отменить установку";
+        BtnCancelInstall.Content = Loc.T("servers.wizard.install.btnCancel");
         StartElapsedTimer();
         Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(StartParticles));
-        AppendLog(EventLevel.Info, $"Стартую установку {srv.Domain} на {srv.Ip}");
+        AppendLog(EventLevel.Info, string.Format(Loc.T("servers.wizard.install.startingLogFormat"), srv.Domain, srv.Ip));
 
         var startedAt = DateTime.Now;
         var ok = await _activeInstaller.RunAsync();
@@ -819,12 +906,15 @@ public partial class ServerInstallView : UserControl
             BtnCancelInstall.IsEnabled = false;
 
             _registry.Update(srv);
+            _lastInstallSrv = srv;
+            _lastInstallDuration = duration;
             if (ok)
             {
+                _installUiState = InstallUiState.Success;
                 InstallErrorBanner.Visibility = Visibility.Collapsed;
-                TxtInstallHeader.Text = "Установка завершена ✓";
-                TxtInstTitle.Text = "Ваш сервер готов";
-                TxtFootStatus.Text = "Установка успешно завершена";
+                TxtInstallHeader.Text = Loc.T("servers.wizard.install.headerDone");
+                TxtInstTitle.Text = Loc.T("servers.wizard.install.titleDone");
+                TxtFootStatus.Text = Loc.T("servers.wizard.install.footStatusDone");
                 PopulateStep4(srv, ok, duration);
                 _wizardStep = 4;
                 UpdateWizardUi();
@@ -832,9 +922,10 @@ public partial class ServerInstallView : UserControl
             }
             else if (_userCancelledInstall)
             {
-                TxtInstallHeader.Text = "Установка отменена";
-                TxtInstTitle.Text = "Установка отменена";
-                TxtFootStatus.Text = "Остановлено пользователем — уже установленные компоненты остались на сервере";
+                _installUiState = InstallUiState.Cancelled;
+                TxtInstallHeader.Text = Loc.T("servers.wizard.install.headerCancelled");
+                TxtInstTitle.Text = Loc.T("servers.wizard.install.titleCancelled");
+                TxtFootStatus.Text = Loc.T("servers.wizard.install.footStatusCancelled");
                 InstallErrorBanner.Visibility = Visibility.Collapsed;
                 var activePhase = _phaseChips.FirstOrDefault(c => c.State == PhaseChipState.Active);
                 if (activePhase != null) activePhase.State = PhaseChipState.Pending;
@@ -843,11 +934,12 @@ public partial class ServerInstallView : UserControl
             else
             {
                 // При failure — остаёмся на Step 3, показываем красный баннер
-                TxtInstallHeader.Text = $"Установка прервана за {duration:mm\\:ss}";
-                TxtInstTitle.Text = "Установка приостановлена";
-                TxtFootStatus.Text = "Установка прервана — смотри причину ниже или журнал";
+                _installUiState = InstallUiState.Failed;
+                TxtInstallHeader.Text = string.Format(Loc.T("servers.wizard.install.headerFailedFormat"), duration.ToString(@"mm\:ss"));
+                TxtInstTitle.Text = Loc.T("servers.wizard.install.titleFailed");
+                TxtFootStatus.Text = Loc.T("servers.wizard.install.footStatusFailed");
                 InstallErrorBanner.Visibility = Visibility.Visible;
-                TxtInstallErrorMsg.Text = _lastErrorText ?? "Причина неизвестна — смотри последние строки лога ниже.";
+                TxtInstallErrorMsg.Text = _lastErrorText ?? Loc.T("servers.wizard.install.errorUnknown");
                 // Пометить активную фазу как Failed
                 var activePhase = _phaseChips.FirstOrDefault(c => c.State == PhaseChipState.Active);
                 if (activePhase != null) activePhase.State = PhaseChipState.Failed;
@@ -869,7 +961,7 @@ public partial class ServerInstallView : UserControl
             Clipboard.SetText(full);
             var btn = (Button)sender;
             var orig = btn.Content;
-            btn.Content = "✓ скопировано";
+            btn.Content = Loc.T("servers.report.copiedFlash");
             _ = Task.Delay(1200).ContinueWith(_ => Dispatcher.BeginInvoke(new Action(() => btn.Content = orig)));
         }
         catch { }
@@ -885,21 +977,21 @@ public partial class ServerInstallView : UserControl
         var c = srv.Credentials ?? new Credentials();
         var sb = new System.Text.StringBuilder();
 
-        sb.AppendLine($"✅ <b>{Esc(srv.Domain)}</b> успешно настроен! <i>({duration:mm\\:ss})</i>");
+        sb.AppendLine(string.Format(Loc.T("servers.report.successFormat"), Esc(srv.Domain), duration.ToString(@"mm\:ss")));
         sb.AppendLine();
-        sb.AppendLine("🔐 <b>Данные доступов:</b>");
+        sb.AppendLine(Loc.T("servers.report.credsHeader"));
         sb.AppendLine();
         if (!string.IsNullOrEmpty(c.PmtaMonitorUrl))
         {
-            sb.AppendLine($"➛ Monitor: {Esc(c.PmtaMonitorUrl)}");
-            sb.AppendLine($"➛ Логин: <code>{Esc(c.PmtaMonitorUser)}</code>");
-            sb.AppendLine($"➛ Пароль: <code>{Esc(c.PmtaMonitorPass)}</code>");
+            sb.AppendLine(string.Format(Loc.T("servers.report.monitorFormat"), Esc(c.PmtaMonitorUrl)));
+            sb.AppendLine(string.Format(Loc.T("servers.report.loginFormat"), Esc(c.PmtaMonitorUser)));
+            sb.AppendLine(string.Format(Loc.T("servers.report.passwordFormat"), Esc(c.PmtaMonitorPass)));
         }
         if (!string.IsNullOrEmpty(c.PmtaSmtpUser))
         {
-            sb.AppendLine($"➛ SMTP логин: <code>{Esc(c.PmtaSmtpUser)}</code>");
-            sb.AppendLine($"➛ SMTP пароль: <code>{Esc(c.PmtaSmtpPass)}</code>");
-            sb.AppendLine($"➛ SMTP порт: <code>{Esc(c.PmtaSmtpPort)}</code>");
+            sb.AppendLine(string.Format(Loc.T("servers.report.smtpLoginFormat"), Esc(c.PmtaSmtpUser)));
+            sb.AppendLine(string.Format(Loc.T("servers.report.smtpPasswordFormat"), Esc(c.PmtaSmtpPass)));
+            sb.AppendLine(string.Format(Loc.T("servers.report.smtpPortFormat"), Esc(c.PmtaSmtpPort)));
         }
 
         if (!string.IsNullOrEmpty(c.WebmailUrl))
@@ -907,13 +999,13 @@ public partial class ServerInstallView : UserControl
             sb.AppendLine();
             sb.AppendLine(ReportSep);
             sb.AppendLine();
-            sb.AppendLine($"➛ Почта: {Esc(c.WebmailUrl)}");
+            sb.AppendLine(string.Format(Loc.T("servers.report.mailFormat"), Esc(c.WebmailUrl)));
             if (c.MailAliases.Any(a => a.StartsWith("abuse@")))
-                sb.AppendLine($"➛ FBL: <code>{Esc(c.MailAliases.First(a => a.StartsWith("abuse@")))}</code>");
+                sb.AppendLine(string.Format(Loc.T("servers.report.fblFormat"), Esc(c.MailAliases.First(a => a.StartsWith("abuse@")))));
             sb.AppendLine($"➛ <code>{Esc(c.WebmailAdminEmail)}</code>");
             foreach (var alias in c.MailAliases.Where(a => !a.StartsWith("abuse@")))
                 sb.AppendLine($"➛ <code>{Esc(alias)}</code>");
-            sb.AppendLine($"➛ Пароль к почте: <code>{Esc(c.WebmailAdminPass)}</code>");
+            sb.AppendLine(string.Format(Loc.T("servers.report.mailPasswordFormat"), Esc(c.WebmailAdminPass)));
         }
 
         if (!string.IsNullOrEmpty(c.TdsUrl))
@@ -921,9 +1013,9 @@ public partial class ServerInstallView : UserControl
             sb.AppendLine();
             sb.AppendLine(ReportSep);
             sb.AppendLine();
-            sb.AppendLine($"➛ TDS: {Esc(c.TdsUrl)}");
-            sb.AppendLine($"➛ Логин: <code>{Esc(c.TdsUser)}</code>");
-            sb.AppendLine($"➛ Пароль: <code>{Esc(c.TdsPass)}</code>");
+            sb.AppendLine(string.Format(Loc.T("servers.report.tdsFormat"), Esc(c.TdsUrl)));
+            sb.AppendLine(string.Format(Loc.T("servers.report.loginFormat"), Esc(c.TdsUser)));
+            sb.AppendLine(string.Format(Loc.T("servers.report.passwordFormat"), Esc(c.TdsPass)));
         }
 
         if (!string.IsNullOrEmpty(c.PhpMyAdminUrl))
@@ -931,9 +1023,9 @@ public partial class ServerInstallView : UserControl
             sb.AppendLine();
             sb.AppendLine(ReportSep);
             sb.AppendLine();
-            sb.AppendLine($"➛ phpMyAdmin: {Esc(c.PhpMyAdminUrl)}");
-            sb.AppendLine($"➛ Логин: <code>{Esc(c.PhpMyAdminUser)}</code>");
-            sb.AppendLine($"➛ Пароль: <code>{Esc(c.PhpMyAdminPass)}</code>");
+            sb.AppendLine(string.Format(Loc.T("servers.report.pmaFormat"), Esc(c.PhpMyAdminUrl)));
+            sb.AppendLine(string.Format(Loc.T("servers.report.loginFormat"), Esc(c.PhpMyAdminUser)));
+            sb.AppendLine(string.Format(Loc.T("servers.report.passwordFormat"), Esc(c.PhpMyAdminPass)));
         }
 
         if (!string.IsNullOrEmpty(c.Proxy3Url))
@@ -941,7 +1033,7 @@ public partial class ServerInstallView : UserControl
             sb.AppendLine();
             sb.AppendLine(ReportSep);
             sb.AppendLine();
-            sb.AppendLine("📌 <b>Ваш прокси:</b>");
+            sb.AppendLine(Loc.T("servers.report.proxyHeader"));
             sb.AppendLine($"<code>{Esc(c.Proxy3Url)}</code>");
         }
 
@@ -950,7 +1042,7 @@ public partial class ServerInstallView : UserControl
             sb.AppendLine();
             sb.AppendLine(ReportSep);
             sb.AppendLine();
-            sb.AppendLine($"🌐 Лендинг: {Esc(c.LandingUrl)}");
+            sb.AppendLine(string.Format(Loc.T("servers.report.landingFormat"), Esc(c.LandingUrl)));
         }
 
         if (!string.IsNullOrEmpty(c.AmsStatsUrl))
@@ -958,10 +1050,10 @@ public partial class ServerInstallView : UserControl
             sb.AppendLine();
             sb.AppendLine(ReportSep);
             sb.AppendLine();
-            sb.AppendLine("📈 <b>AMS RealTime статистика:</b>");
+            sb.AppendLine(Loc.T("servers.report.amsStatsHeader"));
             sb.AppendLine(Esc(c.AmsStatsUrl));
-            if (!string.IsNullOrEmpty(c.AmsStatsUrlIp)) sb.AppendLine($"по IP: {Esc(c.AmsStatsUrlIp)}");
-            sb.AppendLine($"Пароль: <code>{Esc(c.AmsStatsPassword)}</code>");
+            if (!string.IsNullOrEmpty(c.AmsStatsUrlIp)) sb.AppendLine(string.Format(Loc.T("servers.report.amsStatsByIpFormat"), Esc(c.AmsStatsUrlIp)));
+            sb.AppendLine(string.Format(Loc.T("servers.report.passwordFormat"), Esc(c.AmsStatsPassword)));
         }
 
         if (!string.IsNullOrEmpty(c.PtrHostname))
@@ -969,7 +1061,7 @@ public partial class ServerInstallView : UserControl
             sb.AppendLine();
             sb.AppendLine(ReportSep);
             sb.AppendLine();
-            sb.AppendLine("📡 <b>PTR (пропиши у хостинг-провайдера):</b>");
+            sb.AppendLine(Loc.T("servers.report.ptrHeader"));
             sb.AppendLine($"{Esc(srv.Ip)} → <code>{Esc(c.PtrHostname)}</code>");
         }
 
@@ -978,11 +1070,11 @@ public partial class ServerInstallView : UserControl
             sb.AppendLine();
             sb.AppendLine(ReportSep);
             sb.AppendLine();
-            sb.AppendLine("📃 <b>DNS записи (для регистратора):</b>");
+            sb.AppendLine(Loc.T("servers.report.dnsHeader"));
             var aRecords = c.DnsRecords.Where(r => r.Type == "A").ToList();
             if (aRecords.Count > 0)
             {
-                sb.AppendLine("▫️ A записи:");
+                sb.AppendLine(Loc.T("servers.report.dnsARecords"));
                 foreach (var r in aRecords)
                 {
                     var name = r.Name == "@" ? srv.Domain : $"{r.Name}.{srv.Domain}";
@@ -993,13 +1085,13 @@ public partial class ServerInstallView : UserControl
             foreach (var r in c.DnsRecords.Where(r => r.Type is "MX" or "TXT"))
             {
                 var name = r.Name == "@" ? srv.Domain : $"{r.Name}.{srv.Domain}";
-                var label = r.Type == "MX" ? "MX запись" :
-                            r.Name.Contains("_domainkey") ? "DKIM" :
-                            r.Name.Contains("_dmarc") ? "DMARC" : "SPF";
+                var label = r.Type == "MX" ? Loc.T("servers.report.dnsMxLabel") :
+                            r.Name.Contains("_domainkey") ? Loc.T("servers.report.dnsDkimLabel") :
+                            r.Name.Contains("_dmarc") ? Loc.T("servers.report.dnsDmarcLabel") : Loc.T("servers.report.dnsSpfLabel");
                 sb.AppendLine($"▫️ {label}:");
-                sb.AppendLine($"➛ Имя: <code>{Esc(name)}.</code>");
-                sb.AppendLine($"➛ Значение: <code>{Esc(r.Value)}</code>");
-                if (r.Priority.HasValue) sb.AppendLine($"➛ Приоритет: {r.Priority.Value}");
+                sb.AppendLine(string.Format(Loc.T("servers.report.dnsNameFormat"), Esc(name)));
+                sb.AppendLine(string.Format(Loc.T("servers.report.dnsValueFormat"), Esc(r.Value)));
+                if (r.Priority.HasValue) sb.AppendLine(string.Format(Loc.T("servers.report.dnsPriorityFormat"), r.Priority.Value));
                 sb.AppendLine();
             }
         }
@@ -1008,7 +1100,7 @@ public partial class ServerInstallView : UserControl
         {
             sb.AppendLine(ReportSep);
             sb.AppendLine();
-            sb.AppendLine($"🔑 MySQL root: <code>{Esc(c.MysqlRootPass)}</code>");
+            sb.AppendLine(string.Format(Loc.T("servers.report.mysqlRootFormat"), Esc(c.MysqlRootPass)));
         }
 
         return sb.ToString();
@@ -1022,15 +1114,15 @@ public partial class ServerInstallView : UserControl
         var creds = srv.Credentials ?? new Credentials();
 
         TxtDoneTitle.Text = success
-            ? $"{srv.Domain} настроен"
-            : $"{srv.Domain} — установка провалилась";
+            ? string.Format(Loc.T("servers.wizard.done.titleSuccessFormat"), srv.Domain)
+            : string.Format(Loc.T("servers.wizard.done.titleFailedFormat"), srv.Domain);
         TxtDoneSubtitle.Text = success
-            ? $"Все компоненты установлены за {duration:mm\\:ss}"
-            : "Смотри Шаг 3 (лог) — там причина. Часть шагов могла успеть.";
+            ? string.Format(Loc.T("servers.wizard.done.subtitleSuccessFormat"), duration.ToString(@"mm\:ss"))
+            : Loc.T("servers.wizard.done.subtitleFailed");
 
-        TxtPmtaUrl.Text   = string.IsNullOrEmpty(creds.PmtaMonitorUrl) ? "не устанавливалось" : creds.PmtaMonitorUrl;
+        TxtPmtaUrl.Text   = string.IsNullOrEmpty(creds.PmtaMonitorUrl) ? Loc.T("servers.wizard.done.notInstalled") : creds.PmtaMonitorUrl;
         TxtPmtaCreds.Text = string.IsNullOrEmpty(creds.PmtaMonitorUser) ? "" : $"{creds.PmtaMonitorUser} · {creds.PmtaMonitorPass}";
-        TxtPmtaSmtp.Text  = string.IsNullOrEmpty(creds.PmtaSmtpUser) ? "" : $"SMTP {creds.PmtaSmtpUser} · {creds.PmtaSmtpPass} · порт {creds.PmtaSmtpPort}";
+        TxtPmtaSmtp.Text  = string.IsNullOrEmpty(creds.PmtaSmtpUser) ? "" : string.Format(Loc.T("servers.wizard.done.smtpInlineFormat"), creds.PmtaSmtpUser, creds.PmtaSmtpPass, creds.PmtaSmtpPort);
         BtnCopyPmta.Tag   = $"PMTA Monitor\n{TxtPmtaUrl.Text}\n{TxtPmtaCreds.Text}\n{TxtPmtaSmtp.Text}";
 
         TxtWebmailUrl.Text   = creds.WebmailUrl;
@@ -1041,21 +1133,21 @@ public partial class ServerInstallView : UserControl
         TxtPmaCreds.Text = $"{creds.PhpMyAdminUser} · {creds.PhpMyAdminPass}";
         BtnCopyPma.Tag   = $"phpMyAdmin\n{TxtPmaUrl.Text}\n{TxtPmaCreds.Text}";
 
-        TxtTdsUrl.Text   = string.IsNullOrEmpty(creds.TdsUrl) ? "не устанавливалось" : creds.TdsUrl;
+        TxtTdsUrl.Text   = string.IsNullOrEmpty(creds.TdsUrl) ? Loc.T("servers.wizard.done.notInstalled") : creds.TdsUrl;
         TxtTdsCreds.Text = string.IsNullOrEmpty(creds.TdsUser) ? "" : $"{creds.TdsUser} · {creds.TdsPass}";
         BtnCopyTds.Tag   = $"zTDS Admin\n{TxtTdsUrl.Text}\n{TxtTdsCreds.Text}";
 
-        Txt3proxyUrl.Text   = string.IsNullOrEmpty(creds.Proxy3Url) ? "не устанавливалось" : creds.Proxy3Url;
+        Txt3proxyUrl.Text   = string.IsNullOrEmpty(creds.Proxy3Url) ? Loc.T("servers.wizard.done.notInstalled") : creds.Proxy3Url;
         Txt3proxyCreds.Text = string.IsNullOrEmpty(creds.Proxy3User) ? "" : $"{creds.Proxy3User} · {creds.Proxy3Pass}";
         BtnCopy3proxy.Tag   = $"3proxy SOCKS5\n{Txt3proxyUrl.Text}\n{Txt3proxyCreds.Text}";
 
-        TxtLandingUrl.Text = string.IsNullOrEmpty(creds.LandingUrl) ? "не устанавливалось" : creds.LandingUrl;
-        BtnCopyLanding.Tag = $"Лендинг\n{TxtLandingUrl.Text}";
+        TxtLandingUrl.Text = string.IsNullOrEmpty(creds.LandingUrl) ? Loc.T("servers.wizard.done.notInstalled") : creds.LandingUrl;
+        BtnCopyLanding.Tag = Loc.T("servers.creds.landingLabel") + "\n" + TxtLandingUrl.Text;
 
-        TxtAmsStatsUrl.Text   = string.IsNullOrEmpty(creds.AmsStatsUrl) ? "не устанавливалось" : creds.AmsStatsUrl;
-        TxtAmsStatsUrlIp.Text = string.IsNullOrEmpty(creds.AmsStatsUrlIp) ? "" : $"по IP: {creds.AmsStatsUrlIp}";
-        TxtAmsStatsCreds.Text = string.IsNullOrEmpty(creds.AmsStatsPassword) ? "" : $"пароль: {creds.AmsStatsPassword}";
-        BtnCopyAmsStats.Tag   = $"AMS RealTime статистика\n{TxtAmsStatsUrl.Text}\n{TxtAmsStatsUrlIp.Text}\n{TxtAmsStatsCreds.Text}";
+        TxtAmsStatsUrl.Text   = string.IsNullOrEmpty(creds.AmsStatsUrl) ? Loc.T("servers.wizard.done.notInstalled") : creds.AmsStatsUrl;
+        TxtAmsStatsUrlIp.Text = string.IsNullOrEmpty(creds.AmsStatsUrlIp) ? "" : string.Format(Loc.T("servers.report.amsStatsByIpFormat"), creds.AmsStatsUrlIp);
+        TxtAmsStatsCreds.Text = string.IsNullOrEmpty(creds.AmsStatsPassword) ? "" : string.Format(Loc.T("servers.wizard.done.passwordInlineFormat"), creds.AmsStatsPassword);
+        BtnCopyAmsStats.Tag   = Loc.T("servers.creds.amsStatsLabel") + $"\n{TxtAmsStatsUrl.Text}\n{TxtAmsStatsUrlIp.Text}\n{TxtAmsStatsCreds.Text}";
 
         // DNS records — рендерим в текстовый плоский формат для копипаста
         var sb = new System.Text.StringBuilder();
@@ -1064,7 +1156,7 @@ public partial class ServerInstallView : UserControl
             var pri = r.Priority.HasValue ? $" (priority {r.Priority.Value})" : "";
             sb.AppendLine($"{r.Type,-5} {r.Name,-25} {r.Value}{pri}");
         }
-        TxtDnsRecords.Text = sb.Length > 0 ? sb.ToString() : "нет данных";
+        TxtDnsRecords.Text = sb.Length > 0 ? sb.ToString() : Loc.T("servers.wizard.done.noDnsData");
     }
 
     // Фазы установщика (в порядке появления). Первое поле = ключевое слово для матча Event.Text,
@@ -1100,10 +1192,10 @@ public partial class ServerInstallView : UserControl
         TxtInstallProgressLbl.Text = "0%";
         ProgressFillCol.Width = new GridLength(0, GridUnitType.Star);
         ProgressRestCol.Width = new GridLength(100, GridUnitType.Star);
-        TxtPackagesDone.Text = $"0 из {_phaseChips.Count} компонентов";
+        TxtPackagesDone.Text = string.Format(Loc.T("servers.wizard.install.packagesDoneFormat"), 0, _phaseChips.Count);
         TxtCurrentIcon.Text = "⚙";
-        TxtCurrentName.Text = "Подготовка";
-        TxtCurrentDesc.Text = "Ожидание запуска установки";
+        TxtCurrentName.Text = Loc.T("servers.wizard.install.currentDefaultName");
+        TxtCurrentDesc.Text = Loc.T("servers.wizard.install.currentDefaultDesc");
         TxtElapsed.Text = "00:00";
     }
 
@@ -1158,7 +1250,7 @@ public partial class ServerInstallView : UserControl
     {
         TxtCurrentIcon.Text = "◐";
         TxtCurrentName.Text = chip.Label;
-        TxtCurrentDesc.Text = string.IsNullOrEmpty(chip.Detail) ? "Установка и настройка компонента" : chip.Detail;
+        TxtCurrentDesc.Text = string.IsNullOrEmpty(chip.Detail) ? Loc.T("servers.wizard.install.currentDesc") : chip.Detail;
     }
 
     private void UpdateProgress()
@@ -1170,7 +1262,7 @@ public partial class ServerInstallView : UserControl
         TxtInstallProgressLbl.Text = $"{(int)pct}%";
         ProgressFillCol.Width = new GridLength(pct, GridUnitType.Star);
         ProgressRestCol.Width = new GridLength(100 - pct, GridUnitType.Star);
-        TxtPackagesDone.Text = $"{done} из {_phaseChips.Count} компонентов";
+        TxtPackagesDone.Text = string.Format(Loc.T("servers.wizard.install.packagesDoneFormat"), done, _phaseChips.Count);
     }
 
     private void ClearLog()
@@ -1220,7 +1312,7 @@ public partial class ServerInstallView : UserControl
             return;
         }
         var row = _vm.Selected;
-        if (row == null) { MessageBox.Show("Выбери сервер в таблице слева"); return; }
+        if (row == null) { MessageBox.Show(Loc.T("servers.confirm.selectServer")); return; }
 
         var selectedItem = CmbLogSource.SelectedItem as ComboBoxItem;
         var path = selectedItem?.Tag as string ?? "/var/log/mail.log";
@@ -1232,14 +1324,16 @@ public partial class ServerInstallView : UserControl
     {
         StopTail();
         ClearTail();
-        TxtTailHeader.Text = $"root@{srv.Ip}  ·  tail -Fn 200 {logPath}";
-        BtnTailToggle.Content = "Стоп";
+        _lastTailSrv = srv;
+        _lastTailPath = logPath;
+        TxtTailHeader.Text = string.Format(Loc.T("servers.logs.headerFormat"), srv.Ip, logPath);
+        BtnTailToggle.Content = Loc.T("servers.logs.btnStop");
         BtnTailToggle.Style = (Style)FindResource("ActionBtnDanger");
         IconButtonHelper.SetIcon(BtnTailToggle, PhosphorIcons.XCircle);
 
         _activeTailer = new SshTailer(srv, $"tail -Fn 200 {logPath}");
         _activeTailer.LineReceived += line => Dispatcher.BeginInvoke(new Action(() => AppendTailLine(line)));
-        _activeTailer.Error += err => Dispatcher.BeginInvoke(new Action(() => AppendTailLine("[ошибка] " + err, isError: true)));
+        _activeTailer.Error += err => Dispatcher.BeginInvoke(new Action(() => AppendTailLine(Loc.T("servers.logs.errorPrefix") + err, isError: true)));
         _activeTailer.Start();
     }
 
@@ -1247,10 +1341,10 @@ public partial class ServerInstallView : UserControl
     {
         _activeTailer?.Stop();
         _activeTailer = null;
-        BtnTailToggle.Content = "Запустить";
+        BtnTailToggle.Content = Loc.T("servers.logs.btnStart");
         BtnTailToggle.Style = (Style)FindResource("ActionBtnGreen");
         IconButtonHelper.SetIcon(BtnTailToggle, PhosphorIcons.Play);
-        TxtTailHeader.Text = "not connected";
+        TxtTailHeader.Text = Loc.T("servers.logs.notConnected");
     }
 
     private void OnClearTailClick(object sender, RoutedEventArgs e) => ClearTail();
@@ -1301,14 +1395,14 @@ public partial class ServerInstallView : UserControl
     {
         if (sender is FrameworkElement fe && fe.Tag is string s && !string.IsNullOrEmpty(s))
         {
-            try { Clipboard.SetText(s); FlashButton((Button)sender, "✓ скопировано"); }
+            try { Clipboard.SetText(s); FlashButton((Button)sender, Loc.T("servers.report.copiedFlash")); }
             catch { }
         }
     }
 
     private void OnCopyDnsClick(object sender, RoutedEventArgs e)
     {
-        try { Clipboard.SetText(TxtDnsRecords.Text); FlashButton((Button)sender, "✓ скопировано"); }
+        try { Clipboard.SetText(TxtDnsRecords.Text); FlashButton((Button)sender, Loc.T("servers.report.copiedFlash")); }
         catch { }
     }
 

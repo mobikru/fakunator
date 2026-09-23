@@ -181,11 +181,16 @@ public class Blocklists
     }
 
     /// <summary>
-    /// Find the data/ folder. Tries several paths relative to the exe.
-    /// Returns the first one containing free_providers.txt.
+    /// Find the data/ folder. Предпочитаем Paths.DataDir (%APPDATA%\Fakunator\data) — туда
+    /// DataMigration переносит всё при первом запуске новой версии, и это единственное место,
+    /// куда точно можно писать (обновление блок-листов через "Обновить из GitHub" тоже пишет
+    /// сюда же). Обход ниже — фолбэк на случай если миграция почему-то ещё не отработала.
     /// </summary>
     public static string FindDataDir()
     {
+        if (File.Exists(Path.Combine(Paths.DataDir, "free_providers.txt")))
+            return Paths.DataDir;
+
         // Walk up from exe dir looking for data/free_providers.txt
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         for (int i = 0; i < 8 && dir != null; i++)

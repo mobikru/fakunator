@@ -8,6 +8,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Threading;
 using System.Threading.Tasks;
+using Fakunator.Core;
 using Fakunator.Core.DomainsManager;
 
 namespace Fakunator.Views;
@@ -32,7 +33,7 @@ public class DnsRecordsWindow : Window
         _domain = domain;
         _sessionId = sessionId;
 
-        Title = $"DNS-записи · {domain}";
+        Title = string.Format(Loc.T("domains.dnsRecordsWindow.title"), domain);
         Width = 900; Height = 560;
         MinWidth = 700; MinHeight = 400;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -50,7 +51,7 @@ public class DnsRecordsWindow : Window
             VerticalAlignment = VerticalAlignment.Center,
         };
         domainBlock.SetResourceReference(TextBlock.ForegroundProperty, "Fg1Brush");
-        domainBlock.Inlines.Add($"DNS-записи · ");
+        domainBlock.Inlines.Add(Loc.T("domains.dnsRecordsWindow.headingPrefix"));
         var mono = new System.Windows.Documents.Run(domain);
         mono.SetResourceReference(System.Windows.Documents.Run.FontFamilyProperty, "MonoFont");
         domainBlock.Inlines.Add(mono);
@@ -62,7 +63,7 @@ public class DnsRecordsWindow : Window
         var toolbar = new DockPanel { Margin = new Thickness(0, 0, 0, 12), LastChildFill = false };
         var btnAdd = new Button
         {
-            Content = "+ Запись",
+            Content = Loc.T("domains.dns.btnAddRecord"),
             Padding = new Thickness(14, 6, 14, 6),
             FontSize = 12,
             FontWeight = FontWeights.SemiBold,
@@ -72,7 +73,7 @@ public class DnsRecordsWindow : Window
         btnAdd.Click += async (_, _) => await AddAsync();
         var btnRefresh = new Button
         {
-            Content = "↻ Обновить",
+            Content = Loc.T("domains.dnsRecordsWindow.btnRefresh"),
             Padding = new Thickness(12, 6, 12, 6),
             FontSize = 11.5,
             Margin = new Thickness(8, 0, 0, 0),
@@ -86,7 +87,7 @@ public class DnsRecordsWindow : Window
         // ── Шаблоны: dropdown + apply + save-as ─────────────────────
         var btnApplyTemplate = new Button
         {
-            Content = "📄 Применить шаблон",
+            Content = Loc.T("domains.dnsRecordsWindow.btnApplyTemplate"),
             Padding = new Thickness(12, 6, 12, 6), FontSize = 11.5,
             Margin = new Thickness(8, 0, 0, 0), Cursor = Cursors.Hand,
         };
@@ -96,7 +97,7 @@ public class DnsRecordsWindow : Window
 
         var btnSaveTemplate = new Button
         {
-            Content = "⋯ Сохранить как шаблон",
+            Content = Loc.T("domains.dnsRecordsWindow.btnSaveTemplate"),
             Padding = new Thickness(12, 6, 12, 6), FontSize = 11.5,
             Margin = new Thickness(8, 0, 0, 0), Cursor = Cursors.Hand,
         };
@@ -109,7 +110,7 @@ public class DnsRecordsWindow : Window
             Content = "⚙",
             Padding = new Thickness(8, 6, 8, 6), FontSize = 12,
             Margin = new Thickness(4, 0, 0, 0), Cursor = Cursors.Hand,
-            ToolTip = "Редактор шаблонов",
+            ToolTip = Loc.T("domains.dnsRecordsWindow.tooltipManageTemplates"),
         };
         btnManageTemplates.SetResourceReference(StyleProperty, "GhostBtn");
         btnManageTemplates.Click += (_, _) => new DnsTemplateEditorDialog { Owner = this }.ShowDialog();
@@ -125,11 +126,11 @@ public class DnsRecordsWindow : Window
         _list.BorderThickness = new Thickness(0);
         _list.Background = Brushes.Transparent;
         var gv = new GridView { AllowsColumnReorder = false };
-        gv.Columns.Add(new GridViewColumn { Header = "ТИП", Width = 70, DisplayMemberBinding = new Binding("Type") });
-        gv.Columns.Add(new GridViewColumn { Header = "ИМЯ", Width = 220, DisplayMemberBinding = new Binding("Name") });
-        gv.Columns.Add(new GridViewColumn { Header = "ЗНАЧЕНИЕ", Width = 340, DisplayMemberBinding = new Binding("Value") });
-        gv.Columns.Add(new GridViewColumn { Header = "TTL", Width = 70, DisplayMemberBinding = new Binding("Ttl") });
-        gv.Columns.Add(new GridViewColumn { Header = "PRIO", Width = 60, DisplayMemberBinding = new Binding("Priority") });
+        gv.Columns.Add(new GridViewColumn { Header = Loc.T("domains.dns.colType"), Width = 70, DisplayMemberBinding = new Binding("Type") });
+        gv.Columns.Add(new GridViewColumn { Header = Loc.T("domains.dns.colName"), Width = 220, DisplayMemberBinding = new Binding("Name") });
+        gv.Columns.Add(new GridViewColumn { Header = Loc.T("domains.dns.colValue"), Width = 340, DisplayMemberBinding = new Binding("Value") });
+        gv.Columns.Add(new GridViewColumn { Header = Loc.T("domains.dns.colTtl"), Width = 70, DisplayMemberBinding = new Binding("Ttl") });
+        gv.Columns.Add(new GridViewColumn { Header = Loc.T("domains.dns.colPrio"), Width = 60, DisplayMemberBinding = new Binding("Priority") });
         // Actions column
         var actionsCol = new GridViewColumn { Header = "", Width = 80 };
         var factory = new System.Windows.FrameworkElementFactory(typeof(StackPanel));
@@ -141,7 +142,7 @@ public class DnsRecordsWindow : Window
         btnEditF.SetValue(Button.BorderThicknessProperty, new Thickness(0));
         btnEditF.SetValue(Button.CursorProperty, Cursors.Hand);
         btnEditF.SetValue(Button.PaddingProperty, new Thickness(6, 2, 6, 2));
-        btnEditF.SetValue(Button.ToolTipProperty, "Редактировать");
+        btnEditF.SetValue(Button.ToolTipProperty, Loc.T("domains.dnsRecordsWindow.tooltipEdit"));
         btnEditF.AddHandler(Button.ClickEvent, new RoutedEventHandler(async (s, _) =>
         {
             if (s is Button b && b.DataContext is DnsRecord rec) await EditAsync(rec);
@@ -155,7 +156,7 @@ public class DnsRecordsWindow : Window
         btnDelF.SetValue(Button.ForegroundProperty, new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44)));
         btnDelF.SetValue(Button.CursorProperty, Cursors.Hand);
         btnDelF.SetValue(Button.PaddingProperty, new Thickness(6, 2, 6, 2));
-        btnDelF.SetValue(Button.ToolTipProperty, "Удалить");
+        btnDelF.SetValue(Button.ToolTipProperty, Loc.T("domains.dnsRecordsWindow.tooltipDelete"));
         btnDelF.AddHandler(Button.ClickEvent, new RoutedEventHandler(async (s, _) =>
         {
             if (s is Button b && b.DataContext is DnsRecord rec) await DeleteAsync(rec);
@@ -185,13 +186,13 @@ public class DnsRecordsWindow : Window
     {
         if (_records.Count == 0)
         {
-            MessageBox.Show("Нет записей для сохранения.", "Пусто",
+            MessageBox.Show(Loc.T("domains.dnsRecordsWindow.err.noRecordsBody"), Loc.T("domains.dnsRecordsWindow.err.noRecordsTitle"),
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
         var name = Microsoft.VisualBasic.Interaction.InputBox(
-            "Как назвать шаблон? Все текущие записи будут скопированы, а вхождения имени домена заменены на {domain}.",
-            "Сохранить шаблон", $"{_domain} snapshot");
+            Loc.T("domains.dnsRecordsWindow.saveTemplatePrompt"),
+            Loc.T("domains.dnsRecordsWindow.saveTemplateTitle"), string.Format(Loc.T("domains.dnsRecordsWindow.saveTemplateDefaultName"), _domain));
         if (string.IsNullOrWhiteSpace(name)) return;
 
         var tpl = new Core.DomainsManager.DnsTemplate { Name = name.Trim() };
@@ -214,27 +215,27 @@ public class DnsRecordsWindow : Window
         }
         Core.Config.Current.DnsTemplates.Add(tpl);
         Core.Config.Current.SaveNow();
-        MessageBox.Show($"Шаблон «{tpl.Name}» сохранён ({tpl.Records.Count} записей).",
-            "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
+        MessageBox.Show(string.Format(Loc.T("domains.dnsRecordsWindow.templateSaved"), tpl.Name, tpl.Records.Count),
+            Loc.T("domains.dnsRecordsWindow.doneTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     private async Task LoadAsync()
     {
         if (_busy) return;
         _busy = true;
-        _status.Text = "Загрузка…";
+        _status.Text = Loc.T("domains.dnsRecordsWindow.loading");
         try
         {
             using var client = new IspApiClient(_account.Host);
             var list = await client.GetRecordsAsync(_sessionId, _domain);
             _records.Clear();
             foreach (var r in list) _records.Add(r);
-            _status.Text = $"Записей: {list.Count}";
+            _status.Text = string.Format(Loc.T("domains.dnsRecordsWindow.recordsCount"), list.Count);
         }
         catch (Exception ex)
         {
-            _status.Text = $"Ошибка: {ex.Message}";
-            MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            _status.Text = string.Format(Loc.T("domains.dnsRecordsWindow.errBody"), ex.Message);
+            MessageBox.Show(ex.Message, Loc.T("domains.dnsRecordsWindow.errTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally { _busy = false; }
     }
@@ -245,18 +246,18 @@ public class DnsRecordsWindow : Window
         if (dlg.ShowDialog() != true || dlg.Result == null) return;
         var r = dlg.Result;
         _busy = true;
-        _status.Text = "Добавление…";
+        _status.Text = Loc.T("domains.dnsRecordsWindow.adding");
         try
         {
             using var client = new IspApiClient(_account.Host);
             var ok = await client.UpsertRecordAsync(_sessionId, _domain, r.Type, r.Name, r.Value, r.Ttl, r.Priority);
             if (ok) { await LoadAsync(); return; }
-            _status.Text = "Не удалось добавить";
+            _status.Text = Loc.T("domains.dnsRecordsWindow.addFailed");
         }
         catch (Exception ex)
         {
-            _status.Text = $"Ошибка: {ex.Message}";
-            MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            _status.Text = string.Format(Loc.T("domains.dnsRecordsWindow.errBody"), ex.Message);
+            MessageBox.Show(ex.Message, Loc.T("domains.dnsRecordsWindow.errTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally { _busy = false; }
     }
@@ -267,18 +268,18 @@ public class DnsRecordsWindow : Window
         if (dlg.ShowDialog() != true || dlg.Result == null) return;
         var r = dlg.Result;
         _busy = true;
-        _status.Text = "Сохранение…";
+        _status.Text = Loc.T("domains.dnsRecordsWindow.saving");
         try
         {
             using var client = new IspApiClient(_account.Host);
             var ok = await client.UpsertRecordAsync(_sessionId, _domain, r.Type, r.Name, r.Value, r.Ttl, r.Priority, r.Rkey);
             if (ok) { await LoadAsync(); return; }
-            _status.Text = "Не удалось сохранить";
+            _status.Text = Loc.T("domains.dnsRecordsWindow.saveFailed");
         }
         catch (Exception ex)
         {
-            _status.Text = $"Ошибка: {ex.Message}";
-            MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            _status.Text = string.Format(Loc.T("domains.dnsRecordsWindow.errBody"), ex.Message);
+            MessageBox.Show(ex.Message, Loc.T("domains.dnsRecordsWindow.errTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally { _busy = false; }
     }
@@ -287,28 +288,28 @@ public class DnsRecordsWindow : Window
     {
         if (string.IsNullOrEmpty(rec.Rkey))
         {
-            MessageBox.Show("У этой записи нет rkey — удалить нельзя через API.", "Нет rkey",
+            MessageBox.Show(Loc.T("domains.dnsRecordsWindow.err.noRkeyBody"), Loc.T("domains.dnsRecordsWindow.err.noRkeyTitle"),
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
         var confirm = MessageBox.Show(
-            $"Удалить запись {rec.Type} {rec.Name} → {rec.Value}?",
-            "Удалить", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            string.Format(Loc.T("domains.dnsRecordsWindow.confirmDeleteBody"), rec.Type, rec.Name, rec.Value),
+            Loc.T("domains.dnsRecordsWindow.confirmDeleteTitle"), MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (confirm != MessageBoxResult.Yes) return;
 
         _busy = true;
-        _status.Text = "Удаление…";
+        _status.Text = Loc.T("domains.dnsRecordsWindow.deleting");
         try
         {
             using var client = new IspApiClient(_account.Host);
             var ok = await client.DeleteRecordAsync(_sessionId, _domain, rec.Rkey!);
             if (ok) { await LoadAsync(); return; }
-            _status.Text = "Не удалось удалить";
+            _status.Text = Loc.T("domains.dnsRecordsWindow.deleteFailed");
         }
         catch (Exception ex)
         {
-            _status.Text = $"Ошибка: {ex.Message}";
-            MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            _status.Text = string.Format(Loc.T("domains.dnsRecordsWindow.errBody"), ex.Message);
+            MessageBox.Show(ex.Message, Loc.T("domains.dnsRecordsWindow.errTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally { _busy = false; }
     }

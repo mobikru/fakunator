@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
+using Fakunator.Core;
 using Fakunator.Core.DomainScanner;
 
 namespace Fakunator.ViewModels;
@@ -48,12 +49,12 @@ public class DomainBrowserRowVm : INotifyPropertyChanged
     {
         get
         {
-            if (_h == null) return "…";
-            if (_h.CreatedAt == null) return "?";
+            if (_h == null) return Loc.T("domainscanner.browser.ageLoading");
+            if (_h.CreatedAt == null) return Loc.T("domainscanner.browser.ageUnknown");
             var d = (DateTime.UtcNow - _h.CreatedAt.Value).TotalDays;
-            if (d < 30) return $"{(int)d} дн.";
-            if (d < 365) return $"{(int)(d / 30)} мес.";
-            return $"{d / 365:F1} лет";
+            if (d < 30) return string.Format(Loc.T("domainscanner.browser.ageDays"), (int)d);
+            if (d < 365) return string.Format(Loc.T("domainscanner.browser.ageMonths"), (int)(d / 30));
+            return string.Format(Loc.T("domainscanner.browser.ageYears"), d / 365);
         }
     }
     public Brush AgeColor
@@ -73,11 +74,11 @@ public class DomainBrowserRowVm : INotifyPropertyChanged
     {
         get
         {
-            if (_h == null) return "…";
-            if (_h.ExpiresAt == null) return "?";
+            if (_h == null) return Loc.T("domainscanner.browser.ageLoading");
+            if (_h.ExpiresAt == null) return Loc.T("domainscanner.browser.ageUnknown");
             var d = (int)(_h.ExpiresAt.Value - DateTime.UtcNow).TotalDays;
-            if (d < 0) return $"истёк {-d}д";
-            return d + " дн.";
+            if (d < 0) return string.Format(Loc.T("domainscanner.browser.daysLeftExpired"), -d);
+            return string.Format(Loc.T("domainscanner.browser.daysLeftSuffix"), d);
         }
     }
     public Brush DaysLeftColor
@@ -93,29 +94,37 @@ public class DomainBrowserRowVm : INotifyPropertyChanged
     }
 
     // ── RBL ───────────────────────────────────────────────────────────
-    // Каждый hit хранится как "SPAMHAUS:spam" / "SURBL:phishing" — локализуем.
-    private static readonly Dictionary<string, string> RuCat = new()
+    // Каждый hit хранится как "SPAMHAUS:spam" / "SURBL:phishing" — локализуем через Loc.T,
+    // словарь хранит ключи Loc, а не готовый текст (текст зависит от текущего языка).
+    private static readonly Dictionary<string, string> RblCatKeys = new()
     {
-        ["spam"] = "спам", ["phishing"] = "фишинг", ["malware"] = "вирусы",
-        ["botnet"] = "ботнет", ["abuse"] = "злоупотр.", ["cracked"] = "взломан",
-        ["redirector"] = "редиректор", ["jwspamspy"] = "jwspam",
-        ["abused-spam"] = "угнан: спам", ["abused-phishing"] = "угнан: фишинг",
-        ["abused-malware"] = "угнан: вирусы", ["abused-botnet"] = "угнан: ботнет",
-        ["listed"] = "в списке",
+        ["spam"] = "domainscanner.browser.rblCat.spam",
+        ["phishing"] = "domainscanner.browser.rblCat.phishing",
+        ["malware"] = "domainscanner.browser.rblCat.malware",
+        ["botnet"] = "domainscanner.browser.rblCat.botnet",
+        ["abuse"] = "domainscanner.browser.rblCat.abuse",
+        ["cracked"] = "domainscanner.browser.rblCat.cracked",
+        ["redirector"] = "domainscanner.browser.rblCat.redirector",
+        ["jwspamspy"] = "domainscanner.browser.rblCat.jwspamspy",
+        ["abused-spam"] = "domainscanner.browser.rblCat.abusedSpam",
+        ["abused-phishing"] = "domainscanner.browser.rblCat.abusedPhishing",
+        ["abused-malware"] = "domainscanner.browser.rblCat.abusedMalware",
+        ["abused-botnet"] = "domainscanner.browser.rblCat.abusedBotnet",
+        ["listed"] = "domainscanner.browser.rblCat.listed",
     };
     public string RblText
     {
         get
         {
-            if (_h == null) return "…";
-            if (_h.RblHits.Count == 0) return "✓ чистый";
+            if (_h == null) return Loc.T("domainscanner.browser.ageLoading");
+            if (_h.RblHits.Count == 0) return Loc.T("domainscanner.browser.rblClean");
             // Собираем уникальные категории по всем hits, локализуем
             var cats = new HashSet<string>();
             foreach (var hit in _h.RblHits)
             {
                 var i = hit.IndexOf(':');
                 var cat = i >= 0 ? hit[(i + 1)..] : hit;
-                cats.Add(RuCat.TryGetValue(cat, out var ru) ? ru : cat);
+                cats.Add(RblCatKeys.TryGetValue(cat, out var key) ? Loc.T(key) : cat);
             }
             return "✗ " + string.Join(" · ", cats);
         }

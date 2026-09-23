@@ -42,12 +42,12 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
 
     private Brush _ispConnectedDot = DotGray;
     public Brush IspConnectedDot { get => _ispConnectedDot; set => SetField(ref _ispConnectedDot, value); }
-    private string _ispConnectionText = "нет связи";
+    private string _ispConnectionText = Loc.T("domains.conn.none");
     public string IspConnectionText { get => _ispConnectionText; set => SetField(ref _ispConnectionText, value); }
 
     private Brush _pmConnectedDot = DotGray;
     public Brush PostmasterConnectedDot { get => _pmConnectedDot; set => SetField(ref _pmConnectedDot, value); }
-    private string _pmConnectionText = "нет связи";
+    private string _pmConnectionText = Loc.T("domains.conn.none");
     public string PostmasterConnectionText { get => _pmConnectionText; set => SetField(ref _pmConnectionText, value); }
 
     private string _pmFooter = "";
@@ -198,7 +198,7 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
             _sessionAccount = acc;
             IspConnectedDot = DotGreen;
             IspConnectionText = acc.DisplayName;
-            Status = "FirstVDS подключён";
+            Status = Loc.T("domains.status.firstVdsConnected");
         });
         RemoveAccountCommand = new RelayCommand(o =>
         {
@@ -224,9 +224,9 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
             _sessionId = null;
             _sessionAccount = null;
             IspConnectedDot = DotGray;
-            IspConnectionText = "нет связи";
+            IspConnectionText = Loc.T("domains.conn.none");
             lock (_lock) DnsRows.Clear();
-            Status = "Отключено от DNS-панели";
+            Status = Loc.T("domains.status.disconnectedDns");
         });
 
         AddDomainCommand = new RelayCommand(_ => _ = AddDomainAsync());
@@ -270,8 +270,8 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
                       ?? (PostmasterAccounts.Count > 0 ? PostmasterAccounts[0].Model : null);
             if (acc == null)
             {
-                MessageBox.Show("Сначала подключи mail.ru аккаунт.",
-                    "Нет аккаунта", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(Loc.T("domains.err.noPostmasterAccountBody"),
+                    Loc.T("domains.err.noPostmasterAccountTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
             var win = new Views.PostmasterDomainsWindow(acc);
@@ -290,7 +290,7 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
                 PostmasterAccounts.Add(new PostmasterAccountChip(acc));
             }
             SavePostmasterToConfig();
-            Status = $"Подключён mail.ru: {acc.Username}";
+            Status = string.Format(Loc.T("domains.status.mailruConnected"), acc.Username);
             if (ActivePostmasterAccount == null)
             {
                 ActivePostmasterAccount = acc;
@@ -307,8 +307,8 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
             };
             if (acc == null) return;
             var confirm = MessageBox.Show(
-                $"Отключить mail.ru аккаунт {acc.Username}?",
-                "Отключить", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                string.Format(Loc.T("domains.confirm.removeMailRuBody"), acc.Username),
+                Loc.T("domains.confirm.removeMailRuTitle"), MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (confirm != MessageBoxResult.Yes) return;
             lock (_lock)
             {
@@ -318,7 +318,7 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
             SavePostmasterToConfig();
             if (ActivePostmasterAccount == acc)
                 ActivePostmasterAccount = PostmasterAccounts.Count > 0 ? PostmasterAccounts[0].Model : null;
-            Status = $"Отключён: {acc.Username}";
+            Status = string.Format(Loc.T("domains.status.mailruDisconnected"), acc.Username);
         });
         SelectPostmasterCommand = new RelayCommand(o =>
         {
@@ -337,11 +337,11 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
         {
             _pmAccessToken = null;
             PostmasterConnectedDot = DotGray;
-            PostmasterConnectionText = "нет связи";
+            PostmasterConnectionText = Loc.T("domains.conn.none");
             lock (_lock) PostmasterRows.Clear();
             PostmasterFooterText = "";
             RefreshDnsPostmasterStatus();
-            Status = "Отключено от Postmaster";
+            Status = Loc.T("domains.status.disconnectedPostmaster");
         });
 
         CloseDrawerCommand = new RelayCommand(_ => SelectedPostmasterDomain = null);
@@ -350,19 +350,33 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
         BindingOperations.EnableCollectionSynchronization(DrawerChartLegend, _lock);
 
         Config.Changed += (_, _) => LoadAccountsFromConfig();
+
+        // Локализованные тексты не хранятся статично — при смене языка пересчитываем всё,
+        // что уже отображено на экране (аналогично status-key подходу в DomainScannerViewModel).
+        Loc.Instance.LanguageChanged += (_, _) =>
+        {
+            lock (_lock)
+            {
+                foreach (var r in DnsRows) r.NotifyLocalizationChanged();
+                foreach (var r in PostmasterRows) r.NotifyLocalizationChanged();
+            }
+            RefreshDrawer();
+        };
     }
 
     // ── Drawer: содержимое карточки выбранного домена ─────────────────
-    private static readonly (string Key, string Label, string Color)[] DrawerSeries =
+    // LabelKey — ключ Loc, а не готовый текст: резолвится заново при каждом RefreshDrawer(),
+    // поэтому переживает смену языка (в отличие от строки, вычисленной один раз в статике).
+    private static readonly (string Key, string LabelKey, string Color)[] DrawerSeries =
     {
-        ("messages_sent",  "Отправлено писем",         "#8b5cf6"),
-        ("delivered",      "Доставлено",                "#22c55e"),
-        ("read",           "Прочитано",                 "#3b82f6"),
-        ("deleted_read",   "Удалено после прочтения",   "#a855f7"),
-        ("deleted_unread", "Удалено не читая",          "#f59e0b"),
-        ("spam",           "Попало в «Спам»",           "#ef4444"),
-        ("probably_spam",  "Возможно спам",             "#dc2626"),
-        ("complaints",     "Жалоб на спам",             "#7c2d12"),
+        ("messages_sent",  "domains.metric.messagesSent",  "#8b5cf6"),
+        ("delivered",      "domains.metric.delivered",     "#22c55e"),
+        ("read",           "domains.metric.read",          "#3b82f6"),
+        ("deleted_read",   "domains.metric.deletedRead",   "#a855f7"),
+        ("deleted_unread", "domains.metric.deletedUnread", "#f59e0b"),
+        ("spam",           "domains.metric.spam",          "#ef4444"),
+        ("probably_spam",  "domains.metric.probablySpam",  "#dc2626"),
+        ("complaints",     "domains.metric.complaints",    "#7c2d12"),
     };
 
     private void RefreshDrawer()
@@ -400,12 +414,12 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
         }
 
         // Легенда графика
-        foreach (var (k, label, colorHex) in DrawerSeries)
+        foreach (var (k, labelKey, colorHex) in DrawerSeries)
         {
             if (!s.ContainsKey(k)) continue;
             var color = (Color)ColorConverter.ConvertFromString(colorHex)!;
             var b = new SolidColorBrush(color); b.Freeze();
-            DrawerChartLegend.Add(new ChartLegendItem(label, b));
+            DrawerChartLegend.Add(new ChartLegendItem(Loc.T(labelKey), b));
         }
     }
 
@@ -414,14 +428,14 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
         var ru = System.Globalization.CultureInfo.GetCultureInfo("ru-RU");
         string label = key switch
         {
-            "read" => "Прочитано",
-            "deleted_read" => "Удалено после прочтения",
-            "deleted_unread" => "Удалено не читая",
-            "spam" => "Попало в «Спам»",
-            "probably_spam" => "Возможно спам",
-            "probably_spam_percent" => "Доля «возможно спам»",
-            "complaints" => "Жалоб на спам",
-            "trend" => "Тренд",
+            "read" => Loc.T("domains.metric.read"),
+            "deleted_read" => Loc.T("domains.metric.deletedRead"),
+            "deleted_unread" => Loc.T("domains.metric.deletedUnread"),
+            "spam" => Loc.T("domains.metric.spam"),
+            "probably_spam" => Loc.T("domains.metric.probablySpam"),
+            "probably_spam_percent" => Loc.T("domains.metric.probablySpamPercent"),
+            "complaints" => Loc.T("domains.metric.complaints"),
+            "trend" => Loc.T("domains.metric.trend"),
             _ => key
         };
         string formatted = key.EndsWith("percent")
@@ -621,14 +635,14 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(ActiveAccountChip));
             IspConnectedDot = DotGreen;
             IspConnectionText = acc.DisplayName;
-            Status = "FirstVDS подключён";
+            Status = Loc.T("domains.status.firstVdsConnected");
             return;
         }
 
         Busy = true;
-        Status = $"Проверка входа {acc.Username}@{acc.Host}…";
+        Status = string.Format(Loc.T("domains.status.checkingLogin"), acc.Username, acc.Host);
         IspConnectedDot = DotAmber;
-        IspConnectionText = "подключение…";
+        IspConnectionText = Loc.T("domains.conn.connecting");
         try
         {
             using var client = new IspApiClient(acc.Host);
@@ -641,19 +655,21 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
             _sessionAccount = acc;
             IspConnectedDot = DotGreen;
             IspConnectionText = $"{acc.Username}@{acc.Host}";
-            Status = "Аккаунт добавлен";
+            Status = Loc.T("domains.status.accountAdded");
         }
         catch (IspApiException ex)
         {
             IspConnectedDot = DotRed;
-            IspConnectionText = "ошибка входа";
-            MessageBox.Show($"Не удалось войти:\n{ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            IspConnectionText = Loc.T("domains.conn.loginError");
+            MessageBox.Show(string.Format(Loc.T("domains.err.loginFailedBody"), ex.Message),
+                Loc.T("domains.err.loginFailedTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
         catch (Exception ex)
         {
             IspConnectedDot = DotRed;
-            IspConnectionText = "ошибка сети";
-            MessageBox.Show($"Ошибка соединения:\n{ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            IspConnectionText = Loc.T("domains.conn.networkError");
+            MessageBox.Show(string.Format(Loc.T("domains.err.networkBody"), ex.Message),
+                Loc.T("domains.err.networkTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally { Busy = false; }
     }
@@ -661,8 +677,8 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
     private void RemoveAccount(IspAccount acc)
     {
         var confirm = MessageBox.Show(
-            $"Удалить аккаунт {acc.Username}@{acc.Host}?",
-            "Удалить", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            string.Format(Loc.T("domains.confirm.removeIspAccountBody"), acc.Username, acc.Host),
+            Loc.T("domains.confirm.removeIspAccountTitle"), MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (confirm != MessageBoxResult.Yes) return;
         lock (_lock)
         {
@@ -692,8 +708,8 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
                 return _sessionId;
             }
             MessageBox.Show(
-                "Сессия FirstVDS истекла. Нажми «Подключить FirstVDS» в шапке карточки — откроется окно логина.",
-                "Нужен повторный вход", MessageBoxButton.OK, MessageBoxImage.Information);
+                Loc.T("domains.err.sessionExpiredBody"),
+                Loc.T("domains.err.sessionExpiredTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
             return null;
         }
         try
@@ -706,9 +722,9 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             IspConnectedDot = DotRed;
-            IspConnectionText = "ошибка входа";
-            MessageBox.Show($"Не удалось войти в панель: {ex.Message}",
-                "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            IspConnectionText = Loc.T("domains.conn.loginError");
+            MessageBox.Show(string.Format(Loc.T("domains.err.panelLoginFailed"), ex.Message),
+                Loc.T("domains.err.genericTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
             return null;
         }
     }
@@ -719,9 +735,9 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
         if (acc == null) { lock (_lock) DnsRows.Clear(); return; }
 
         Busy = true;
-        Status = $"Загрузка доменов {acc.Username}@{acc.Host}…";
+        Status = string.Format(Loc.T("domains.status.loadingDomains"), acc.Username, acc.Host);
         IspConnectedDot = DotAmber;
-        IspConnectionText = "загрузка…";
+        IspConnectionText = Loc.T("domains.conn.loading");
         try
         {
             if (force) _sessionId = null;
@@ -738,7 +754,7 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
             }
             IspConnectedDot = DotGreen;
             IspConnectionText = $"{acc.Username}@{acc.Host}";
-            Status = $"Загружено доменов: {list.Count}";
+            Status = string.Format(Loc.T("domains.status.domainsLoaded"), list.Count);
 
             // Асинхронно резолвим NS + определяем provider (не блокируем UI)
             _ = ResolveNsForRowsAsync(rows);
@@ -749,8 +765,8 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             IspConnectedDot = DotRed;
-            IspConnectionText = "ошибка";
-            MessageBox.Show($"Ошибка: {ex.Message}", "Загрузка доменов",
+            IspConnectionText = Loc.T("domains.conn.error");
+            MessageBox.Show(string.Format(Loc.T("domains.err.genericBody"), ex.Message), Loc.T("domains.err.loadDomainsTitle"),
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally { Busy = false; }
@@ -845,7 +861,7 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
         var acc = ActiveAccount;
         if (acc == null)
         {
-            MessageBox.Show("Выберите аккаунт.", "Добавить домен",
+            MessageBox.Show(Loc.T("domains.err.selectAccountBody"), Loc.T("domains.err.selectAccountTitle"),
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
@@ -855,14 +871,14 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
         if (string.IsNullOrWhiteSpace(domain)) return;
 
         Busy = true;
-        Status = $"Добавление {domain}…";
+        Status = string.Format(Loc.T("domains.status.addingDomain"), domain);
         try
         {
             var sid = await EnsureSessionAsync(acc);
             if (sid == null) return;
             using var client = new IspApiClient(acc.Host);
             var ok = await client.AddDomainAsync(sid, domain, "master", ip);
-            if (ok) { Status = $"Добавлен {domain}"; await LoadDomainsAsync(); }
+            if (ok) { Status = string.Format(Loc.T("domains.status.domainAdded"), domain); await LoadDomainsAsync(); }
         }
         catch (Exception ex)
         {
@@ -871,12 +887,12 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
             {
                 await LoadDomainsAsync();
                 MessageBox.Show(
-                    $"Домен {domain} уже был в панели.", "Уже существует",
+                    string.Format(Loc.T("domains.err.domainExistsBody"), domain), Loc.T("domains.err.domainExistsTitle"),
                     MessageBoxButton.OK, MessageBoxImage.Information);
             }
             else
             {
-                MessageBox.Show($"Ошибка: {ex.Message}", "Добавление домена",
+                MessageBox.Show(string.Format(Loc.T("domains.err.genericBody"), ex.Message), Loc.T("domains.err.addDomainTitle"),
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -906,8 +922,8 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
         var acc = ActiveAccount;
         if (acc == null) return;
         var confirm = MessageBox.Show(
-            $"Удалить домен {dom.Name} из панели?",
-            "Удалить", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            string.Format(Loc.T("domains.confirm.deleteDomainBody"), dom.Name),
+            Loc.T("domains.confirm.deleteDomainTitle"), MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (confirm != MessageBoxResult.Yes) return;
 
         Busy = true;
@@ -918,13 +934,13 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
             using var client = new IspApiClient(acc.Host);
             if (await client.DeleteDomainAsync(sid, dom.Name))
             {
-                Status = $"Удалён: {dom.Name}";
+                Status = string.Format(Loc.T("domains.status.domainDeleted"), dom.Name);
                 await LoadDomainsAsync();
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Ошибка: {ex.Message}", "Удаление",
+            MessageBox.Show(string.Format(Loc.T("domains.err.genericBody"), ex.Message), Loc.T("domains.err.deleteDomainTitle"),
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally { Busy = false; }
@@ -988,18 +1004,18 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
         {
             lock (_lock) PostmasterRows.Clear();
             PostmasterConnectedDot = DotGray;
-            PostmasterConnectionText = "нет связи";
+            PostmasterConnectionText = Loc.T("domains.conn.none");
             PostmasterFooterText = "";
             RefreshDnsPostmasterStatus();
             return;
         }
         PostmasterConnectedDot = DotAmber;
-        PostmasterConnectionText = "загрузка…";
+        PostmasterConnectionText = Loc.T("domains.conn.loading");
         var token = await EnsurePostmasterAccessAsync();
         if (token == null)
         {
             PostmasterConnectedDot = DotRed;
-            PostmasterConnectionText = "нет токена";
+            PostmasterConnectionText = Loc.T("domains.conn.noToken");
             return;
         }
         try
@@ -1019,7 +1035,7 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
                 };
                 bool verified = d.Verified;
                 bool rejected = d.Status.Equals("rejected", StringComparison.OrdinalIgnoreCase);
-                row.VerificationText = rejected ? "отклонён" : (verified ? "верифицирован" : "ожидание");
+                row.VerificationStatus = rejected ? PmChipStatus.Rejected : (verified ? PmChipStatus.Verified : PmChipStatus.Pending);
                 row.VerificationFg = rejected ? DotRed : (verified ? DotGreen : DotAmber);
                 row.VerificationIcon = rejected ? "✕" : (verified ? "●" : "○");
                 row.StatusDot = row.VerificationFg;
@@ -1033,9 +1049,10 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
             }
             PostmasterConnectedDot = DotGreen;
             PostmasterConnectionText = acc.Username;
-            PostmasterFooterText = rows.All(r => r.VerificationText == "верифицирован")
-                ? "все домены верифицированы"
-                : $"{rows.Count(r => r.VerificationText == "верифицирован")} из {rows.Count} верифицированы";
+            PostmasterFooterText = rows.All(r => r.VerificationStatus == PmChipStatus.Verified)
+                ? Loc.T("domains.pmList.allVerified")
+                : string.Format(Loc.T("domains.pmList.someVerified"),
+                    rows.Count(r => r.VerificationStatus == PmChipStatus.Verified), rows.Count);
             RefreshDnsPostmasterStatus();
 
             // Загрузим метрики по каждому домену параллельно (макс. 4 одновременно, rate-limit API)
@@ -1044,8 +1061,8 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             PostmasterConnectedDot = DotRed;
-            PostmasterConnectionText = $"ошибка API";
-            Status = $"Postmaster: {ex.Message}";
+            PostmasterConnectionText = Loc.T("domains.conn.apiError");
+            Status = string.Format(Loc.T("domains.status.postmasterError"), ex.Message);
         }
     }
 
@@ -1098,14 +1115,13 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
                         row.ProbablySpamBarWidth = row.ProbablySpamPct / 100.0 * BarTotalWidth;
                         row.SpamBarWidth = row.SpamPct / 100.0 * BarTotalWidth;
                         var ru = System.Globalization.CultureInfo.GetCultureInfo("ru-RU");
-                        row.DeliverabilityTooltip = $"Доставлено {row.DeliveredPct.ToString("N1", ru)}%  ·  " +
-                                                    $"Возможно спам {row.ProbablySpamPct.ToString("N1", ru)}%  ·  " +
-                                                    $"Спам {row.SpamPct.ToString("N1", ru)}%";
+                        row.DeliverabilityTooltip = string.Format(Loc.T("domains.deliverability.tooltip"),
+                            row.DeliveredPct.ToString("N1", ru), row.ProbablySpamPct.ToString("N1", ru), row.SpamPct.ToString("N1", ru));
                     }
                     else
                     {
                         row.DeliveredBarWidth = row.ProbablySpamBarWidth = row.SpamBarWidth = 0;
-                        row.DeliverabilityTooltip = "нет данных";
+                        row.DeliverabilityTooltip = Loc.T("domains.deliverability.noData");
                     }
                     if (rep.HasValue)
                     {
@@ -1137,16 +1153,16 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
         Application.Current?.Dispatcher.Invoke(() =>
         {
             var verified = new HashSet<string>(
-                PostmasterRows.Where(r => r.VerificationText == "верифицирован").Select(r => r.Domain),
+                PostmasterRows.Where(r => r.VerificationStatus == PmChipStatus.Verified).Select(r => r.Domain),
                 StringComparer.OrdinalIgnoreCase);
             var rejected = new HashSet<string>(
-                PostmasterRows.Where(r => r.VerificationText == "отклонён").Select(r => r.Domain),
+                PostmasterRows.Where(r => r.VerificationStatus == PmChipStatus.Rejected).Select(r => r.Domain),
                 StringComparer.OrdinalIgnoreCase);
             foreach (var row in DnsRows)
             {
                 if (verified.Contains(row.Domain))
                 {
-                    row.PostmasterStatusText = "верифицирован";
+                    row.PostmasterStatus = PmChipStatus.Verified;
                     row.PostmasterChipBg = new SolidColorBrush(Color.FromArgb(0x1a, 0x34, 0xd3, 0x99));
                     row.PostmasterChipBd = new SolidColorBrush(Color.FromArgb(0x40, 0x34, 0xd3, 0x99));
                     row.PostmasterChipFg = DotGreen;
@@ -1154,7 +1170,7 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
                 }
                 else if (rejected.Contains(row.Domain))
                 {
-                    row.PostmasterStatusText = "отклонён";
+                    row.PostmasterStatus = PmChipStatus.Rejected;
                     row.PostmasterChipBg = new SolidColorBrush(Color.FromArgb(0x1a, 0xef, 0x44, 0x44));
                     row.PostmasterChipBd = new SolidColorBrush(Color.FromArgb(0x40, 0xef, 0x44, 0x44));
                     row.PostmasterChipFg = DotRed;
@@ -1162,7 +1178,7 @@ public class DomainsManagerViewModel : INotifyPropertyChanged
                 }
                 else
                 {
-                    row.PostmasterStatusText = "не добавлен";
+                    row.PostmasterStatus = PmChipStatus.NotAdded;
                     row.PostmasterChipBg = new SolidColorBrush(Color.FromArgb(0x20, 0x9c, 0xa3, 0xaf));
                     row.PostmasterChipBd = new SolidColorBrush(Color.FromArgb(0x40, 0x9c, 0xa3, 0xaf));
                     row.PostmasterChipFg = new SolidColorBrush(Color.FromRgb(0x9c, 0xa3, 0xaf));

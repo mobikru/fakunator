@@ -20,6 +20,9 @@ public class AmsViewModel : INotifyPropertyChanged
 {
     private readonly object _lock = new();
     private AmsApiClient? _api;
+    private string _lastCfgHost = "";
+    private string _lastCfgKey = "";
+    private bool _lastCfgHttps;
     private DispatcherTimer? _pollTimer;
     private bool _polling;
     private CancellationTokenSource? _pollCts;
@@ -75,7 +78,7 @@ public class AmsViewModel : INotifyPropertyChanged
 
     private int _selectedPresetThreads;
     public int SelectedPresetThreads { get => _selectedPresetThreads; set => SetField(ref _selectedPresetThreads, value); }
-    public string SelectedPresetThreadsText => _selectedPresetThreads > 0 ? $"{_selectedPresetThreads} потоков" : "—";
+    public string SelectedPresetThreadsText => _selectedPresetThreads > 0 ? string.Format(Loc.T("ams.threadsFormat"), _selectedPresetThreads) : "—";
 
     private string _selectedPresetMethod = "—";
     public string SelectedPresetMethod { get => _selectedPresetMethod; set => SetField(ref _selectedPresetMethod, value); }
@@ -98,7 +101,7 @@ public class AmsViewModel : INotifyPropertyChanged
         set
         {
             if (SetField(ref _selectedSender, value) && !_updatingSelection && value != null)
-                _ = ApplyComponentChangeAsync("senderAccount", value.Id, "отправителя");
+                _ = ApplyComponentChangeAsync("senderAccount", value.Id, "ams.component.sender");
         }
     }
 
@@ -109,7 +112,7 @@ public class AmsViewModel : INotifyPropertyChanged
         set
         {
             if (SetField(ref _selectedList, value) && !_updatingSelection && value != null)
-                _ = ApplyComponentChangeAsync("mailList", value.Id, "список рассылки");
+                _ = ApplyComponentChangeAsync("mailList", value.Id, "ams.component.mailList");
         }
     }
 
@@ -120,7 +123,7 @@ public class AmsViewModel : INotifyPropertyChanged
         set
         {
             if (SetField(ref _selectedMessage, value) && !_updatingSelection && value != null)
-                _ = ApplyComponentChangeAsync("message", value.Id, "письмо");
+                _ = ApplyComponentChangeAsync("message", value.Id, "ams.component.message");
         }
     }
 
@@ -131,18 +134,21 @@ public class AmsViewModel : INotifyPropertyChanged
         set
         {
             if (SetField(ref _selectedPreset, value) && !_updatingSelection && value != null)
-                _ = ApplyComponentChangeAsync("deliveryPreset", value.Id, "профиль отправки");
+                _ = ApplyComponentChangeAsync("deliveryPreset", value.Id, "ams.component.deliveryPreset");
         }
     }
 
-    private async Task ApplyComponentChangeAsync(string key, int refId, string label)
+    /// <summary>labelKey — ключ локализации нейтральной (именительный падеж) формы компонента,
+    /// подставляется в кавычки в сообщениях ниже (см. ams.confirm.workingLockedBody и т.п.).</summary>
+    private async Task ApplyComponentChangeAsync(string key, int refId, string labelKey)
     {
         var row = _selectedMailing;
         if (row == null || _api == null) return;
+        var label = Loc.T(labelKey);
         if (row.IsWorking)
         {
             MessageBox.Show(
-                $"Нельзя менять {label} у работающей рассылки — сначала останови её кнопкой «Стоп».",
+                string.Format(Loc.T("ams.confirm.workingLockedBody"), label),
                 "AMS", MessageBoxButton.OK, MessageBoxImage.Information);
             await LoadSelectedDetailsAsync();
             return;
@@ -152,7 +158,7 @@ public class AmsViewModel : INotifyPropertyChanged
             var ok = await _api.SetMailingComponentAsync(row.Model.Id, key, refId);
             if (!ok)
             {
-                MessageBox.Show($"AMS не принял смену: {label}.", "AMS",
+                MessageBox.Show(string.Format(Loc.T("ams.err.componentRejectedFormat"), label), "AMS",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
             }
             // В любом случае — перечитать актуальную конфигурацию рассылки
@@ -160,7 +166,7 @@ public class AmsViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Ошибка при смене «{label}»: {ex.Message}", "AMS",
+            MessageBox.Show(string.Format(Loc.T("ams.err.componentChangeFormat"), label, ex.Message), "AMS",
                 MessageBoxButton.OK, MessageBoxImage.Error);
             await LoadSelectedDetailsAsync();
         }
@@ -192,12 +198,12 @@ public class AmsViewModel : INotifyPropertyChanged
             var preset = DeliveryPresets.FirstOrDefault(x => x.Id == (s.DeliveryPreset?.Id ?? -1));
 
             SelectedSenderEmail = sender?.SenderEmail ?? "—";
-            SelectedSenderReply = string.IsNullOrEmpty(sender?.ReplyToEmail) ? "не задан" : sender.ReplyToEmail;
+            SelectedSenderReply = string.IsNullOrEmpty(sender?.ReplyToEmail) ? Loc.T("ams.replyNotSet") : sender.ReplyToEmail;
             SelectedPresetThreads = preset?.SendingThreads ?? 0;
             OnPropertyChanged(nameof(SelectedPresetThreadsText));
             SelectedPresetMethod = preset?.SendingMethod ?? "—";
             SelectedPresetMode = preset?.DeliveryMode ?? "—";
-            SelectedPresetProxy = preset != null ? (preset.ProxyUsed ? "включено" : "выкл.") : "—";
+            SelectedPresetProxy = preset != null ? Loc.T(preset.ProxyUsed ? "ams.proxyOn" : "ams.proxyOff") : "—";
 
             // Ставим SelectedItem для ComboBox'ов БЕЗ триггера editMailing.
             _updatingSelection = true;
@@ -267,7 +273,7 @@ public class AmsViewModel : INotifyPropertyChanged
         get
         {
             var cfg = Config.Current;
-            if (string.IsNullOrWhiteSpace(cfg.AmsApiHost)) return "хост не задан";
+            if (string.IsNullOrWhiteSpace(cfg.AmsApiHost)) return Loc.T("ams.endpoint.noHost");
             return cfg.AmsApiHost;
         }
     }
@@ -322,11 +328,42 @@ public class AmsViewModel : INotifyPropertyChanged
     private Brush _statusDot = Brushes.Gray;
     public Brush StatusDot { get => _statusDot; set => SetField(ref _statusDot, value); }
 
-    private string _statusText = "нет подключения";
+    private string _statusText = "";
     public string StatusText { get => _statusText; set => SetField(ref _statusText, value); }
 
     private string _footerText = "";
     public string FooterText { get => _footerText; set => SetField(ref _footerText, value); }
+
+    // Статус/футер хранятся как ключ+параметры (не готовый текст) — так StatusText/FooterText
+    // можно пересобрать заново при смене языка (см. подписку в конструкторе).
+    private string _statusKey = "ams.status.notConnected";
+    private object[] _statusArgs = Array.Empty<object>();
+    private void SetStatus(string key, params object[] args)
+    {
+        _statusKey = key;
+        _statusArgs = args;
+        ApplyStatusText();
+    }
+    private void ApplyStatusText()
+    {
+        var fmt = Loc.T(_statusKey);
+        StatusText = _statusArgs.Length > 0 ? string.Format(fmt, _statusArgs) : fmt;
+    }
+
+    private string _footerKey = "";
+    private object[] _footerArgs = Array.Empty<object>();
+    private void SetFooter(string key, params object[] args)
+    {
+        _footerKey = key;
+        _footerArgs = args;
+        ApplyFooterText();
+    }
+    private void ApplyFooterText()
+    {
+        if (string.IsNullOrEmpty(_footerKey)) { FooterText = ""; return; }
+        var fmt = Loc.T(_footerKey);
+        FooterText = _footerArgs.Length > 0 ? string.Format(fmt, _footerArgs) : fmt;
+    }
 
     private bool _schedulerRunning;
     public bool SchedulerRunning
@@ -384,7 +421,41 @@ public class AmsViewModel : INotifyPropertyChanged
         StartSchedulerCommand = new RelayCommand(_ => _ = StartSchedulerAsync());
         PreviewMessageCommand = new RelayCommand(_ => _ = PreviewSelectedMessageAsync());
 
-        Config.Changed += (_, _) => { ResetClient(); RaiseConfigDependentProps(); };
+        // Config.Changed — общий сигнал "конфиг сохранён", дёргается на ЛЮБОЕ изменение
+        // (включая переключение языка интерфейса). Пересоздавать AMS-клиента нужно только
+        // если реально поменялись хост/ключ/https — иначе смена языка рвала бы соединение.
+        Config.Changed += (_, _) =>
+        {
+            var cfg = Config.Current;
+            if (cfg.AmsApiHost != _lastCfgHost || cfg.AmsApiKey != _lastCfgKey || cfg.AmsUseHttps != _lastCfgHttps)
+                ResetClient();
+            RaiseConfigDependentProps();
+        };
+
+        ApplyStatusText();
+
+        // При смене языка: пересобрать StatusText/FooterText из сохранённых ключей+параметров,
+        // переоценить вычисляемые EndpointText/SelectedPresetThreadsText, обновить строки рассылок
+        // (TypeText/StateText/UpdatedText локализуются на лету через Loc.T) и пересчитать готовый
+        // текст SelectedSenderReply/SelectedPresetProxy локально — БЕЗ повторного похода в сеть
+        // (LoadSelectedDetailsAsync раньше дёргался заново, но лишний GetMailingAsync на каждое
+        // переключение языка мог упасть на любой сетевой заминке — а тихий catch в этом методе
+        // обнулял все поля карточки, из-за чего смена языка выглядела как "пропали все данные").
+        Loc.Instance.LanguageChanged += (_, _) =>
+        {
+            ApplyStatusText();
+            ApplyFooterText();
+            OnPropertyChanged(nameof(EndpointText));
+            OnPropertyChanged(nameof(SelectedPresetThreadsText));
+            foreach (var r in Mailings) r.RefreshLocalization();
+            if (_selectedMailing != null)
+            {
+                SelectedSenderReply = string.IsNullOrEmpty(_selectedSender?.ReplyToEmail)
+                    ? Loc.T("ams.replyNotSet") : _selectedSender.ReplyToEmail;
+                SelectedPresetProxy = _selectedPreset != null
+                    ? Loc.T(_selectedPreset.ProxyUsed ? "ams.proxyOn" : "ams.proxyOff") : "—";
+            }
+        };
     }
 
     private AmsMailingRow? RowFrom(object? o) => o as AmsMailingRow;
@@ -408,18 +479,21 @@ public class AmsViewModel : INotifyPropertyChanged
         if (string.IsNullOrWhiteSpace(cfg.AmsApiHost) || string.IsNullOrWhiteSpace(cfg.AmsApiKey))
         {
             StatusDot = DotGray;
-            StatusText = "хост и ключ не заданы — открой Настройки";
+            SetStatus("ams.status.noHostKey");
             return null;
         }
         try
         {
+            _lastCfgHost = cfg.AmsApiHost;
+            _lastCfgKey = cfg.AmsApiKey;
+            _lastCfgHttps = cfg.AmsUseHttps;
             _api ??= new AmsApiClient(cfg.AmsApiHost, cfg.AmsApiKey, cfg.AmsUseHttps);
             return _api;
         }
         catch (Exception ex)
         {
             StatusDot = DotRed;
-            StatusText = $"конфигурация: {ex.Message}";
+            SetStatus("ams.status.configErrorFormat", ex.Message);
             return null;
         }
     }
@@ -430,7 +504,7 @@ public class AmsViewModel : INotifyPropertyChanged
         if (api == null) return;
         Busy = true;
         StatusDot = DotAmber;
-        StatusText = "загрузка…";
+        SetStatus("ams.status.loading");
         try
         {
             SchedulerRunning = await api.IsSchedulerRunningAsync();
@@ -458,8 +532,8 @@ public class AmsViewModel : INotifyPropertyChanged
                 DeliveryPresets.Clear(); foreach (var x in ps) DeliveryPresets.Add(x);
             }
             StatusDot = DotGreen;
-            StatusText = SchedulerRunning ? "подключено · планировщик работает" : "подключено · планировщик остановлен";
-            FooterText = $"рассылок: {ms.Count} · отправителей: {ss.Count} · списков: {ls.Count} · писем: {msgs.Count} · профилей: {ps.Count}";
+            SetStatus(SchedulerRunning ? "ams.status.connectedSchedulerRunning" : "ams.status.connectedSchedulerStopped");
+            SetFooter("ams.footer.summaryFormat", ms.Count, ss.Count, ls.Count, msgs.Count, ps.Count);
             _lastFullRefresh = DateTime.UtcNow;
 
             EnsurePollTimer();
@@ -467,7 +541,7 @@ public class AmsViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             StatusDot = DotRed;
-            StatusText = "ошибка: " + ex.Message;
+            SetStatus("ams.status.errorPrefixFormat", ex.Message);
         }
         finally { Busy = false; }
     }
@@ -636,9 +710,8 @@ public class AmsViewModel : INotifyPropertyChanged
                 if (!ok)
                 {
                     var confirm = MessageBox.Show(
-                        "Планировщик рассылок AMS остановлен — без него отправка не пойдёт.\n\n" +
-                        "Запустить планировщик и после этого стартовать рассылку?",
-                        "Планировщик остановлен",
+                        Loc.T("ams.confirm.schedulerStoppedBody"),
+                        Loc.T("ams.confirm.schedulerStoppedTitle"),
                         MessageBoxButton.YesNo, MessageBoxImage.Question);
                     if (confirm != MessageBoxResult.Yes) return;
                     await _api.RunSchedulerAsync();
@@ -650,23 +723,23 @@ public class AmsViewModel : INotifyPropertyChanged
             if (startOk)
             {
                 row.SetState("working");
-                StatusText = $"запуск рассылки #{row.Model.Id} отправлен ({startMode})";
+                SetStatus("ams.status.launchSentFormat", row.Model.Id, startMode);
                 await PollMailingsAsync();
             }
-            else MessageBox.Show("AMS вернул отказ — запуск не удался.", "AMS", MessageBoxButton.OK, MessageBoxImage.Warning);
+            else MessageBox.Show(Loc.T("ams.err.startRejected"), "AMS", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Ошибка: {ex.Message}", "AMS", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(string.Format(Loc.T("ams.err.genericFormat"), ex.Message), "AMS", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
     private async Task PreviewSelectedMessageAsync()
     {
-        if (_selectedMessage == null) { MessageBox.Show("Не выбрано письмо.", "Превью", MessageBoxButton.OK, MessageBoxImage.Information); return; }
+        if (_selectedMessage == null) { MessageBox.Show(Loc.T("ams.err.noMessageSelectedBody"), Loc.T("ams.err.noMessageSelectedTitle"), MessageBoxButton.OK, MessageBoxImage.Information); return; }
         if (_api == null && BuildClient() == null)
         {
-            MessageBox.Show("Сначала настрой подключение к AMS в Настройках.", "AMS",
+            MessageBox.Show(Loc.T("ams.err.notConfiguredBody"), "AMS",
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
@@ -683,11 +756,11 @@ public class AmsViewModel : INotifyPropertyChanged
         {
             await _api.RunSchedulerAsync();
             SchedulerRunning = await _api.IsSchedulerRunningAsync();
-            StatusText = SchedulerRunning ? "подключено · планировщик работает" : "планировщик не отвечает";
+            SetStatus(SchedulerRunning ? "ams.status.connectedSchedulerRunning" : "ams.status.schedulerNotResponding");
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Не удалось запустить планировщик: " + ex.Message, "AMS",
+            MessageBox.Show(string.Format(Loc.T("ams.err.schedulerStartFailedFormat"), ex.Message), "AMS",
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -699,10 +772,8 @@ public class AmsViewModel : INotifyPropertyChanged
         // высоким процентом, чтобы юзер не «переотправил» всё с нуля случайно.
         var pct = row.PercentDone;
         var confirm = MessageBox.Show(
-            $"Запустить рассылку «{row.Name}» ЗАНОВО?\n\n" +
-            $"Текущий прогресс ({pct}%) будет стёрт и отправка начнётся с первого адреса. " +
-            $"Всем получателям придёт новое письмо.\n\nПродолжить?",
-            "Перезапуск рассылки",
+            string.Format(Loc.T("ams.confirm.restartBodyFormat"), row.Name, pct),
+            Loc.T("ams.confirm.restartTitle"),
             MessageBoxButton.YesNo,
             pct >= 100 ? MessageBoxImage.Question : MessageBoxImage.Warning);
         if (confirm != MessageBoxResult.Yes) return;
@@ -719,7 +790,7 @@ public class AmsViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Ошибка: {ex.Message}", "AMS", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(string.Format(Loc.T("ams.err.genericFormat"), ex.Message), "AMS", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -734,13 +805,13 @@ public class AmsViewModel : INotifyPropertyChanged
             if (s == null || s.SenderAccount == null || s.MailList == null
                 || s.Message == null || s.DeliveryPreset == null)
             {
-                MessageBox.Show("Не удалось прочитать настройки исходной рассылки.", "Клонирование",
+                MessageBox.Show(Loc.T("ams.err.cloneReadFailedBody"), Loc.T("ams.err.cloneTitle"),
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             var newId = await _api.AddMailingAsync(new AmsMailingCreate
             {
-                Name = row.Name + " (копия)",
+                Name = row.Name + Loc.T("ams.cloneSuffix"),
                 Type = row.Model.Type,
                 SenderAccountId = s.SenderAccount.Id,
                 MessageId = s.Message.Id,
@@ -749,17 +820,17 @@ public class AmsViewModel : INotifyPropertyChanged
             });
             if (newId > 0)
             {
-                StatusText = $"копия создана (id {newId})";
+                SetStatus("ams.status.cloneCreatedFormat", newId);
                 await RefreshAllAsync();
                 var newRow = Mailings.FirstOrDefault(x => x.Model.Id == newId);
                 if (newRow != null) SelectedMailing = newRow;
             }
-            else MessageBox.Show("AMS не вернул id копии.", "Клонирование",
+            else MessageBox.Show(Loc.T("ams.err.cloneNoIdBody"), Loc.T("ams.err.cloneTitle"),
                 MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Ошибка клонирования: " + ex.Message, "AMS",
+            MessageBox.Show(string.Format(Loc.T("ams.err.cloneFailedFormat"), ex.Message), "AMS",
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -769,7 +840,7 @@ public class AmsViewModel : INotifyPropertyChanged
     {
         if (row == null || _api == null) return;
         var newName = Microsoft.VisualBasic.Interaction.InputBox(
-            "Новое название рассылки:", "Переименовать", row.Name);
+            Loc.T("ams.rename.prompt"), Loc.T("ams.rename.title"), row.Name);
         if (string.IsNullOrWhiteSpace(newName) || newName == row.Name) return;
         try
         {
@@ -780,7 +851,7 @@ public class AmsViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Ошибка переименования: " + ex.Message, "AMS",
+            MessageBox.Show(string.Format(Loc.T("ams.err.renameFailedFormat"), ex.Message), "AMS",
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -789,8 +860,8 @@ public class AmsViewModel : INotifyPropertyChanged
     {
         if (row == null || _api == null) return;
         var confirm = MessageBox.Show(
-            $"Удалить рассылку «{row.Name}» (id {row.Model.Id})?\nЭто действие необратимо.",
-            "Удаление", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            string.Format(Loc.T("ams.confirm.deleteBodyFormat"), row.Name, row.Model.Id),
+            Loc.T("ams.confirm.deleteTitle"), MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (confirm != MessageBoxResult.Yes) return;
         try
         {
@@ -799,7 +870,7 @@ public class AmsViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Ошибка: {ex.Message}", "AMS", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(string.Format(Loc.T("ams.err.genericFormat"), ex.Message), "AMS", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -807,7 +878,7 @@ public class AmsViewModel : INotifyPropertyChanged
     {
         if (_api == null && BuildClient() == null)
         {
-            MessageBox.Show("Сначала настрой подключение к AMS в Настройках.", "AMS",
+            MessageBox.Show(Loc.T("ams.err.notConfiguredBody"), "AMS",
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }

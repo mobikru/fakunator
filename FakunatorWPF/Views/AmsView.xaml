@@ -214,7 +214,7 @@
                             <Border DockPanel.Dock="Top" Background="#F6F7FB" CornerRadius="10,10,0,0"
                                     BorderBrush="#E4E7EF" BorderThickness="0,0,0,1" Padding="12,9">
                                 <DockPanel LastChildFill="False">
-                                    <TextBlock DockPanel.Dock="Left" Text="Списки рассылки" FontSize="11"
+                                    <TextBlock DockPanel.Dock="Left" Text="{core:Tr ams.combo.listsTitle}" FontSize="11"
                                                FontWeight="Bold" Foreground="#131C3D" VerticalAlignment="Center"/>
                                     <Viewbox DockPanel.Dock="Right" Width="9" Height="9" Margin="6,0,0,0">
                                         <Path Data="{x:Static core:PhosphorIcons.CaretDown}" Fill="#7582A3">
@@ -224,8 +224,10 @@
                                         </Path>
                                     </Viewbox>
                                     <TextBlock DockPanel.Dock="Right" FontSize="10.5" Foreground="#7582A3"
-                                               VerticalAlignment="Center"
-                                               Text="{Binding ItemsSource.Count, RelativeSource={RelativeSource TemplatedParent}, StringFormat={}{0} списков}"/>
+                                               VerticalAlignment="Center">
+                                        <Run Text="{Binding ItemsSource.Count, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}"/>
+                                        <Run Text="{core:Tr ams.combo.listsCountSuffix}"/>
+                                    </TextBlock>
                                 </DockPanel>
                             </Border>
                             <ScrollViewer MaxHeight="320" VerticalScrollBarVisibility="Auto">
@@ -264,7 +266,7 @@
                             <Path Data="{x:Static core:PhosphorIcons.Envelope}" Fill="#4b5bff"/>
                         </Viewbox>
                     </Border>
-                    <TextBlock Text="AMS Enterprise" FontSize="17" FontWeight="Bold"
+                    <TextBlock Text="{core:Tr ams.header.title}" FontSize="17" FontWeight="Bold"
                                Foreground="#131C3D" VerticalAlignment="Center" Margin="0,0,12,0"/>
                     <!-- Chip AMS API status -->
                     <Border Background="#F6F7FB" BorderBrush="#E4E7EF" BorderThickness="1"
@@ -294,18 +296,18 @@
 
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                     <!-- Кнопка «Запустить планировщик» — видна только когда он остановлен -->
-                    <Button Content="Запустить планировщик"
+                    <Button Content="{core:Tr ams.header.btnStartScheduler}"
                             Command="{Binding StartSchedulerCommand}"
                             core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.Play}"
                             Style="{StaticResource ActionBtnGreen}"
                             Margin="0,0,8,0"
-                            ToolTip="Без планировщика рассылки не отправляются"
+                            ToolTip="{core:Tr ams.header.btnStartSchedulerTooltip}"
                             Visibility="{Binding SchedulerStopped, Converter={StaticResource BoolToVis}}"/>
-                    <Button Content="Обновить" Command="{Binding RefreshCommand}"
+                    <Button Content="{core:Tr ams.header.btnRefresh}" Command="{Binding RefreshCommand}"
                             Style="{StaticResource ActionBtnPrimary}"
                             core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.ArrowClockwise}"
                             Margin="0,0,8,0"/>
-                    <Button Content="Настройки API" Command="{Binding OpenSettingsCommand}"
+                    <Button Content="{core:Tr ams.header.btnSettings}" Command="{Binding OpenSettingsCommand}"
                             Style="{StaticResource ActionBtnNeutral}"
                             core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.Gear}"/>
                 </StackPanel>
@@ -320,13 +322,13 @@
                 <Viewbox Width="52" Height="52" Opacity="0.35">
                     <Path Data="{x:Static core:PhosphorIcons.Envelope}" Fill="#4b5bff"/>
                 </Viewbox>
-                <TextBlock Text="AMS Enterprise не подключён"
+                <TextBlock Text="{core:Tr ams.header.notConnectedTitle}"
                            FontSize="18" FontWeight="Bold" TextAlignment="Center"
                            Foreground="#131C3D" Margin="0,14,0,6"/>
                 <TextBlock TextAlignment="Center" TextWrapping="Wrap" FontSize="12.5"
                            Foreground="#7582A3" LineHeight="19"
-                           Text="Укажи хост AMS-сервера и API-ключ в настройках — после этого здесь появятся твои рассылки, учётные записи, списки адресов и профили отправки."/>
-                <Button Content="Открыть настройки"
+                           Text="{core:Tr ams.header.notConnectedDesc}"/>
+                <Button Content="{core:Tr ams.header.btnOpenSettings}"
                         Command="{Binding OpenSettingsCommand}"
                         core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.Gear}"
                         Style="{StaticResource ActionBtnGreen}"
@@ -352,13 +354,13 @@
                 <DockPanel Margin="12,12,12,12">
                     <!-- Header + counter -->
                     <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
-                        <TextBlock Text="ВАШИ РАССЫЛКИ" FontSize="10.5"
+                        <TextBlock Text="{core:Tr ams.left.header}" FontSize="10.5"
                                    FontWeight="SemiBold" Opacity="0.75"
                                    Foreground="#7582A3" VerticalAlignment="Center"/>
                         <TextBlock DockPanel.Dock="Right" FontSize="10.5"
                                    Foreground="#7582A3" VerticalAlignment="Center" TextAlignment="Right">
                             <Run Text="{Binding CountAll, Mode=OneWay}"/>
-                            <Run Text=" / "/>
+                            <Run Text="{core:Tr ams.left.countSep}"/>
                             <Run Text="{Binding CountAll, Mode=OneWay}"/>
                         </TextBlock>
                     </DockPanel>
@@ -373,7 +375,7 @@
                             <TextBox Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}"
                                      BorderThickness="0" Background="Transparent" FontSize="11.5"
                                      Foreground="#131C3D" VerticalContentAlignment="Center"
-                                     Tag="поиск рассылки"/>
+                                     Tag="{core:Tr ams.left.searchPlaceholder}"/>
                         </DockPanel>
                     </Border>
 
@@ -383,7 +385,7 @@
                                      IsChecked="{Binding IsFilterAll, Mode=OneWay}"
                                      Command="{Binding SelectFilterCommand}" CommandParameter="all">
                             <TextBlock>
-                                <Run Text="все "/>
+                                <Run Text="{core:Tr ams.left.filterAll}"/>
                                 <Run Text="{Binding CountAll, Mode=OneWay}" FontWeight="SemiBold"/>
                             </TextBlock>
                         </RadioButton>
@@ -392,16 +394,16 @@
                                      Command="{Binding SelectFilterCommand}" CommandParameter="working"
                                      Visibility="{Binding HasWorking, Converter={StaticResource BoolToVis}}">
                             <TextBlock>
-                                <Run Text="идут "/>
+                                <Run Text="{core:Tr ams.left.filterWorking}"/>
                                 <Run Text="{Binding CountWorking, Mode=OneWay}" FontWeight="SemiBold"/>
                             </TextBlock>
                         </RadioButton>
                         <RadioButton GroupName="AmsFilter" Style="{StaticResource FilterChip}"
                                      IsChecked="{Binding IsFilterRecent, Mode=OneWay}"
                                      Command="{Binding SelectFilterCommand}" CommandParameter="recent"
-                                     ToolTip="Последние 20 запущенных рассылок">
+                                     ToolTip="{core:Tr ams.left.filterRecentTooltip}">
                             <TextBlock>
-                                <Run Text="недавние "/>
+                                <Run Text="{core:Tr ams.left.filterRecent}"/>
                                 <Run Text="{Binding CountRecent, Mode=OneWay}" FontWeight="SemiBold"/>
                             </TextBlock>
                         </RadioButton>
@@ -411,28 +413,28 @@
                     <Border DockPanel.Dock="Bottom" BorderBrush="#E4E7EF"
                             BorderThickness="0,1,0,0" Padding="0,10,0,0" Margin="0,10,0,0">
                         <StackPanel>
-                            <TextBlock Text="УПРАВЛЕНИЕ РАССЫЛКАМИ" FontSize="10"
+                            <TextBlock Text="{core:Tr ams.left.manageHeader}" FontSize="10"
                                        FontWeight="SemiBold" Opacity="0.75"
                                        Foreground="#7582A3" Margin="0,0,0,8"/>
                             <DockPanel>
-                                <Button DockPanel.Dock="Left" Content="Создать"
+                                <Button DockPanel.Dock="Left" Content="{core:Tr ams.left.btnCreate}"
                                         Command="{Binding LaunchCampaignCommand}"
                                         core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.Plus}"
                                         Style="{StaticResource ActionBtnGreen}"/>
                                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                                     <Button Style="{StaticResource ActionBtnNeutral}" Content=""
                                             core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.PencilSimple}"
-                                            Padding="9,9" Margin="6,0,0,0" ToolTip="Переименовать"
+                                            Padding="9,9" Margin="6,0,0,0" ToolTip="{core:Tr ams.left.tooltipRename}"
                                             Command="{Binding EditMailingCommand}"
                                             IsEnabled="{Binding HasSelection}"/>
                                     <Button Style="{StaticResource ActionBtnNeutral}" Content=""
                                             core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.Copy}"
-                                            Padding="9,9" Margin="6,0,0,0" ToolTip="Дублировать"
+                                            Padding="9,9" Margin="6,0,0,0" ToolTip="{core:Tr ams.left.tooltipClone}"
                                             Command="{Binding CloneMailingCommand}"
                                             IsEnabled="{Binding HasSelection}"/>
                                     <Button Style="{StaticResource ActionBtnDanger}" Content=""
                                             core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.Trash}"
-                                            Padding="9,9" Margin="6,0,0,0" ToolTip="Удалить"
+                                            Padding="9,9" Margin="6,0,0,0" ToolTip="{core:Tr ams.left.tooltipDelete}"
                                             Command="{Binding DeleteMailingCommand}"
                                             CommandParameter="{Binding SelectedMailing}"
                                             IsEnabled="{Binding HasSelection}"/>
@@ -522,10 +524,10 @@
                         <Viewbox Width="38" Height="38" Opacity="0.35">
                             <Path Data="{x:Static core:PhosphorIcons.Envelope}" Fill="#4b5bff"/>
                         </Viewbox>
-                        <TextBlock Text="Выберите рассылку слева"
+                        <TextBlock Text="{core:Tr ams.center.emptyTitle}"
                                    Foreground="#7582A3" FontSize="14"
                                    Margin="0,10,0,0"/>
-                        <TextBlock Text="или нажмите «Создать» чтобы запустить новую"
+                        <TextBlock Text="{core:Tr ams.center.emptyDesc}"
                                    Foreground="#7582A3" Opacity="0.8" FontSize="11"
                                    Margin="0,4,0,0" HorizontalAlignment="Center"/>
                     </StackPanel>
@@ -564,18 +566,18 @@
                                                 </EventTrigger>
                                             </Border.Triggers>
                                         </Border>
-                                        <TextBlock Text="Идёт отправка" FontSize="11.5"
+                                        <TextBlock Text="{core:Tr ams.center.sentBadge}" FontSize="11.5"
                                                    FontWeight="SemiBold" Foreground="#131C3D"/>
                                     </StackPanel>
                                 </Border>
-                                <Button Content="Пауза"
+                                <Button Content="{core:Tr ams.center.btnPause}"
                                         Command="{Binding DataContext.StopMailingCommand,
                                             RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}"
                                         core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.Pause}"
                                         Style="{StaticResource ActionBtnNeutral}"
                                         IsEnabled="{Binding CanStop}"/>
-                                <Button Content="Стоп"
+                                <Button Content="{core:Tr ams.center.btnStop}"
                                         Command="{Binding DataContext.StopMailingCommand,
                                             RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}"
@@ -583,23 +585,23 @@
                                         Style="{StaticResource ActionBtnNeutral}"
                                         Margin="6,0,0,0"
                                         IsEnabled="{Binding CanStop}"/>
-                                <Button Content="Старт"
+                                <Button Content="{core:Tr ams.center.btnStart}"
                                         Command="{Binding DataContext.StartMailingCommand,
                                             RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}"
                                         core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.Play}"
                                         Style="{StaticResource ActionBtnGreen}"
                                         Margin="6,0,0,0"
-                                        ToolTip="Продолжить с текущей позиции"
+                                        ToolTip="{core:Tr ams.center.btnStartTooltip}"
                                         Visibility="{Binding CanContinue, Converter={StaticResource BoolToVis}}"/>
-                                <Button Content="С начала"
+                                <Button Content="{core:Tr ams.center.btnRestart}"
                                         Command="{Binding DataContext.RestartMailingCommand,
                                             RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}"
                                         core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.ArrowClockwise}"
                                         Style="{StaticResource ActionBtnDanger}"
                                         Margin="6,0,0,0"
-                                        ToolTip="Стереть прогресс и запустить рассылку заново с первого адреса"
+                                        ToolTip="{core:Tr ams.center.btnRestartTooltip}"
                                         Visibility="{Binding CanRestart, Converter={StaticResource BoolToVis}}"/>
                             </StackPanel>
                         </DockPanel>
@@ -607,11 +609,11 @@
                         <!-- Meta line -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
                             <TextBlock FontSize="11" Foreground="#7582A3">
-                                <Run Text="ID "/>
+                                <Run Text="{core:Tr ams.center.metaId}"/>
                                 <Run Text="{Binding DisplayId, Mode=OneWay}" Foreground="#131C3D"/>
-                                <Run Text="   ·   обновлено "/>
+                                <Run Text="{core:Tr ams.center.metaUpdatedSep}"/>
                                 <Run Text="{Binding UpdatedText, Mode=OneWay}" Foreground="#131C3D"/>
-                                <Run Text="   ·   тип "/>
+                                <Run Text="{core:Tr ams.center.metaTypeSep}"/>
                                 <Run Text="{Binding TypeText, Mode=OneWay}" Foreground="#131C3D"/>
                             </TextBlock>
                         </StackPanel>
@@ -648,10 +650,10 @@
                                                 <Viewbox Width="11" Height="11" Margin="0,0,6,0">
                                                     <Path Data="{x:Static core:PhosphorIcons.Envelope}" Fill="#7582A3"/>
                                                 </Viewbox>
-                                                <TextBlock Text="С УЧЁТНОЙ ЗАПИСИ" FontSize="10.5"
+                                                <TextBlock Text="{core:Tr ams.card.sender.label}" FontSize="10.5"
                                                            FontWeight="SemiBold" Opacity="0.8" Foreground="#7582A3"/>
                                             </StackPanel>
-                                            <TextBlock DockPanel.Dock="Right" Text="SMTP ok" FontSize="10"
+                                            <TextBlock DockPanel.Dock="Right" Text="{core:Tr ams.card.sender.smtpOk}" FontSize="10"
                                                        Foreground="#22c55e" VerticalAlignment="Center"/>
                                         </DockPanel>
                                         <ComboBox ItemsSource="{Binding DataContext.SenderAccounts,
@@ -684,11 +686,14 @@
                                                 <Viewbox Width="11" Height="11" Margin="0,0,6,0">
                                                     <Path Data="{x:Static core:PhosphorIcons.ChartBar}" Fill="#7582A3"/>
                                                 </Viewbox>
-                                                <TextBlock Text="НА СПИСОК АДРЕСОВ" FontSize="10.5"
+                                                <TextBlock Text="{core:Tr ams.card.list.label}" FontSize="10.5"
                                                            FontWeight="SemiBold" Opacity="0.8" Foreground="#7582A3"/>
                                             </StackPanel>
-                                            <TextBlock DockPanel.Dock="Right" Text="{Binding TotalCompact, StringFormat={}{0} адр.}"
-                                                       FontSize="10" Foreground="#7582A3" VerticalAlignment="Center"/>
+                                            <TextBlock DockPanel.Dock="Right"
+                                                       FontSize="10" Foreground="#7582A3" VerticalAlignment="Center">
+                                                <Run Text="{Binding TotalCompact, Mode=OneWay}"/>
+                                                <Run Text="{core:Tr ams.card.list.countSuffix}"/>
+                                            </TextBlock>
                                         </DockPanel>
                                         <ComboBox ItemsSource="{Binding DataContext.FlatMailingLists,
                                                      RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -719,16 +724,16 @@
                                                 <Viewbox Width="11" Height="11" Margin="0,0,6,0">
                                                     <Path Data="{x:Static core:PhosphorIcons.FileText}" Fill="#7582A3"/>
                                                 </Viewbox>
-                                                <TextBlock Text="ПОСЛАТЬ ПИСЬМО" FontSize="10.5"
+                                                <TextBlock Text="{core:Tr ams.card.message.label}" FontSize="10.5"
                                                            FontWeight="SemiBold" Opacity="0.8" Foreground="#7582A3"/>
                                             </StackPanel>
-                                            <Button DockPanel.Dock="Right" Content="Просмотр" VerticalAlignment="Center"
+                                            <Button DockPanel.Dock="Right" Content="{core:Tr ams.card.message.btnPreview}" VerticalAlignment="Center"
                                                     core:IconButtonHelper.Icon="{x:Static core:PhosphorIcons.Eye}"
                                                     Style="{StaticResource ActionBtnNeutral}"
                                                     Padding="10,3" FontSize="10.5"
                                                     Command="{Binding DataContext.PreviewMessageCommand,
                                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                    ToolTip="Открыть письмо в окне превью (WebView2)"/>
+                                                    ToolTip="{core:Tr ams.card.message.previewTooltip}"/>
                                         </DockPanel>
                                         <ComboBox ItemsSource="{Binding DataContext.Messages,
                                                      RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -760,7 +765,7 @@
                                                 <Viewbox Width="11" Height="11" Margin="0,0,6,0">
                                                     <Path Data="{x:Static core:PhosphorIcons.Gear}" Fill="#7582A3"/>
                                                 </Viewbox>
-                                                <TextBlock Text="ПРОФИЛЬ ОТПРАВКИ" FontSize="10.5"
+                                                <TextBlock Text="{core:Tr ams.card.preset.label}" FontSize="10.5"
                                                            FontWeight="SemiBold" Opacity="0.8" Foreground="#7582A3"/>
                                             </StackPanel>
                                             <TextBlock DockPanel.Dock="Right"
@@ -795,7 +800,7 @@
                                         <Viewbox Width="11" Height="11" Margin="0,0,6,0">
                                             <Path Data="{x:Static core:PhosphorIcons.ChartBar}" Fill="#7582A3"/>
                                         </Viewbox>
-                                        <TextBlock Text="ПРОГРЕСС ОТПРАВКИ" FontSize="10.5"
+                                        <TextBlock Text="{core:Tr ams.progress.header}" FontSize="10.5"
                                                    FontWeight="SemiBold" Opacity="0.8"
                                                    VerticalAlignment="Center" Foreground="#7582A3"/>
                                     </StackPanel>
@@ -888,7 +893,7 @@
                                     <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding Sent, Mode=OneWay, StringFormat={}{0:N0}}"
                                                    FontSize="22" FontWeight="Bold" Foreground="#131C3D"/>
-                                        <TextBlock Text="ОТПРАВЛЕНО" FontSize="10" Opacity="0.85"
+                                        <TextBlock Text="{core:Tr ams.stats.sent}" FontSize="10" Opacity="0.85"
                                                    FontWeight="SemiBold" Foreground="#7582A3"/>
                                     </StackPanel>
                                 </StackPanel>
@@ -903,7 +908,7 @@
                                     <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding Total, Mode=OneWay, StringFormat={}{0:N0}}"
                                                    FontSize="22" FontWeight="Bold" Foreground="#131C3D"/>
-                                        <TextBlock Text="ВСЕГО ПИСЕМ" FontSize="10" Opacity="0.85"
+                                        <TextBlock Text="{core:Tr ams.stats.total}" FontSize="10" Opacity="0.85"
                                                    FontWeight="SemiBold" Foreground="#7582A3"/>
                                     </StackPanel>
                                 </StackPanel>
@@ -918,7 +923,7 @@
                                     <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding NotSent, Mode=OneWay, StringFormat={}{0:N0}}"
                                                    FontSize="22" FontWeight="Bold" Foreground="#131C3D"/>
-                                        <TextBlock Text="НЕ ОТПРАВЛЕНО" FontSize="10" Opacity="0.85"
+                                        <TextBlock Text="{core:Tr ams.stats.notSent}" FontSize="10" Opacity="0.85"
                                                    FontWeight="SemiBold" Foreground="#7582A3"/>
                                     </StackPanel>
                                 </StackPanel>
@@ -933,7 +938,7 @@
                                     <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding Bad, Mode=OneWay, StringFormat={}{0:N0}}"
                                                    FontSize="22" FontWeight="Bold" Foreground="#131C3D"/>
-                                        <TextBlock Text="ПЛОХИХ АДРЕСОВ" FontSize="10" Opacity="0.85"
+                                        <TextBlock Text="{core:Tr ams.stats.bad}" FontSize="10" Opacity="0.85"
                                                    FontWeight="SemiBold" Foreground="#7582A3"/>
                                     </StackPanel>
                                 </StackPanel>
@@ -948,7 +953,7 @@
                                     <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding Refused, Mode=OneWay, StringFormat={}{0:N0}}"
                                                    FontSize="22" FontWeight="Bold" Foreground="#131C3D"/>
-                                        <TextBlock Text="НЕ ПРИНЯТЫХ" FontSize="10" Opacity="0.85"
+                                        <TextBlock Text="{core:Tr ams.stats.refused}" FontSize="10" Opacity="0.85"
                                                    FontWeight="SemiBold" Foreground="#7582A3"/>
                                     </StackPanel>
                                 </StackPanel>
@@ -963,7 +968,7 @@
                                     <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding Excluded, Mode=OneWay, StringFormat={}{0:N0}}"
                                                    FontSize="22" FontWeight="Bold" Foreground="#131C3D"/>
-                                        <TextBlock Text="ИСКЛЮЧЕНО" FontSize="10" Opacity="0.85"
+                                        <TextBlock Text="{core:Tr ams.stats.excluded}" FontSize="10" Opacity="0.85"
                                                    FontWeight="SemiBold" Foreground="#7582A3"/>
                                     </StackPanel>
                                 </StackPanel>
@@ -983,7 +988,7 @@
                 <Border Background="White" BorderBrush="#E4E7EF" BorderThickness="1"
                         CornerRadius="12" Padding="16,16" Margin="0,0,0,12">
                 <StackPanel>
-                <TextBlock Text="REALTIME СТАТИСТИКА" FontSize="10.5"
+                <TextBlock Text="{core:Tr ams.rt.header}" FontSize="10.5"
                            FontWeight="SemiBold" Opacity="0.75"
                            Foreground="#7582A3" Margin="0,0,0,10"/>
                 <UniformGrid Columns="2" Rows="2" DataContext="{Binding SelectedMailing}">
@@ -995,7 +1000,7 @@
                             <TextBlock Text="{Binding Opened, StringFormat={}{0:N0}}"
                                        FontSize="20" FontWeight="Bold"
                                        Foreground="#3b82f6" Margin="0,4,0,2"/>
-                            <TextBlock Text="ПИСЕМ ОТКРЫТО" FontSize="9" Opacity="0.85"
+                            <TextBlock Text="{core:Tr ams.rt.opened}" FontSize="9" Opacity="0.85"
                                        FontWeight="SemiBold" Foreground="#7582A3"/>
                         </StackPanel>
                     </Border>
@@ -1007,7 +1012,7 @@
                             <TextBlock Text="{Binding Clicks, StringFormat={}{0:N0}}"
                                        FontSize="20" FontWeight="Bold"
                                        Foreground="#8b5cf6" Margin="0,4,0,2"/>
-                            <TextBlock Text="КЛИКОВ НА ССЫЛКИ" FontSize="9" Opacity="0.85"
+                            <TextBlock Text="{core:Tr ams.rt.clicks}" FontSize="9" Opacity="0.85"
                                        FontWeight="SemiBold" Foreground="#7582A3"/>
                         </StackPanel>
                     </Border>
@@ -1019,7 +1024,7 @@
                             <TextBlock Text="{Binding UnsubscribeCount, StringFormat={}{0:N0}}"
                                        FontSize="20" FontWeight="Bold"
                                        Foreground="#ef4444" Margin="0,4,0,2"/>
-                            <TextBlock Text="ОТПИСОК" FontSize="9" Opacity="0.85"
+                            <TextBlock Text="{core:Tr ams.rt.unsubscribed}" FontSize="9" Opacity="0.85"
                                        FontWeight="SemiBold" Foreground="#7582A3"/>
                         </StackPanel>
                     </Border>
@@ -1032,7 +1037,7 @@
                                        FontSize="16" FontWeight="Bold"
                                        Foreground="#22c55e" Margin="0,4,0,2"
                                        TextTrimming="CharacterEllipsis"/>
-                            <TextBlock Text="СКОРОСТЬ" FontSize="9" Opacity="0.85"
+                            <TextBlock Text="{core:Tr ams.rt.speed}" FontSize="9" Opacity="0.85"
                                        FontWeight="SemiBold" Foreground="#7582A3"/>
                         </StackPanel>
                     </Border>
@@ -1045,7 +1050,7 @@
                         CornerRadius="12" Padding="16,16">
                 <StackPanel>
                 <DockPanel Margin="0,0,0,10">
-                    <TextBlock Text="ПРОФИЛЬ ОТПРАВКИ" FontSize="10.5"
+                    <TextBlock Text="{core:Tr ams.profile.header}" FontSize="10.5"
                                FontWeight="SemiBold" Opacity="0.75"
                                Foreground="#7582A3" VerticalAlignment="Center"/>
                     <TextBlock DockPanel.Dock="Right"
@@ -1068,14 +1073,14 @@
                         <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,10">
                             <TextBlock Text="{Binding SelectedPresetThreads}" FontSize="14"
                                        FontWeight="Bold" Foreground="#131C3D"/>
-                            <TextBlock Text="ПОТОКОВ" FontSize="9" Opacity="0.85" FontWeight="SemiBold"
+                            <TextBlock Text="{core:Tr ams.profile.threads}" FontSize="9" Opacity="0.85" FontWeight="SemiBold"
                                        Foreground="#7582A3"/>
                         </StackPanel>
                         <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,10">
                             <TextBlock Text="{Binding SelectedPresetMethod}" FontSize="12"
                                        FontWeight="Bold" Foreground="#131C3D"
                                        TextTrimming="CharacterEllipsis"/>
-                            <TextBlock Text="МЕТОД" FontSize="9" Opacity="0.85" FontWeight="SemiBold"
+                            <TextBlock Text="{core:Tr ams.profile.method}" FontSize="9" Opacity="0.85" FontWeight="SemiBold"
                                        Foreground="#7582A3"/>
                         </StackPanel>
 
@@ -1083,13 +1088,13 @@
                             <TextBlock Text="{Binding SelectedPresetMode}" FontSize="12"
                                        FontWeight="Bold" Foreground="#131C3D"
                                        TextTrimming="CharacterEllipsis"/>
-                            <TextBlock Text="РЕЖИМ ДОСТАВКИ" FontSize="9" Opacity="0.85" FontWeight="SemiBold"
+                            <TextBlock Text="{core:Tr ams.profile.mode}" FontSize="9" Opacity="0.85" FontWeight="SemiBold"
                                        Foreground="#7582A3"/>
                         </StackPanel>
                         <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,10">
                             <TextBlock Text="{Binding SelectedPresetProxy}" FontSize="12"
                                        FontWeight="Bold" Foreground="#131C3D"/>
-                            <TextBlock Text="ПРОКСИ" FontSize="9" Opacity="0.85" FontWeight="SemiBold"
+                            <TextBlock Text="{core:Tr ams.profile.proxy}" FontSize="9" Opacity="0.85" FontWeight="SemiBold"
                                        Foreground="#7582A3"/>
                         </StackPanel>
 
@@ -1097,14 +1102,14 @@
                             <TextBlock Text="{Binding SelectedSenderEmail}" FontSize="11"
                                        FontWeight="Bold" Foreground="#131C3D"
                                        TextTrimming="CharacterEllipsis"/>
-                            <TextBlock Text="ОТПРАВИТЕЛЬ" FontSize="9" Opacity="0.85" FontWeight="SemiBold"
+                            <TextBlock Text="{core:Tr ams.profile.sender}" FontSize="9" Opacity="0.85" FontWeight="SemiBold"
                                        Foreground="#7582A3"/>
                         </StackPanel>
                         <StackPanel Grid.Row="2" Grid.Column="1">
                             <TextBlock Text="{Binding SelectedSenderReply}" FontSize="11"
                                        FontWeight="Bold" Foreground="#131C3D"
                                        TextTrimming="CharacterEllipsis"/>
-                            <TextBlock Text="REPLY-TO" FontSize="9" Opacity="0.85" FontWeight="SemiBold"
+                            <TextBlock Text="{core:Tr ams.profile.replyTo}" FontSize="9" Opacity="0.85" FontWeight="SemiBold"
                                        Foreground="#7582A3"/>
                         </StackPanel>
                     </Grid>
